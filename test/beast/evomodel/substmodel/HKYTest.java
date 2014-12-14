@@ -1,0 +1,153 @@
+/*
+ * HKYTest.java
+ *
+ * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
+ * Copyright (C) 2014 BEAST Developers
+ *
+ * BEAST is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with BEAST.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package beast.evomodel.substmodel;
+
+import beast.evolution.datatype.Nucleotides;
+import beast.inference.model.Parameter;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * Test HKY matrix exponentiation
+ *
+ * @author Joseph Heled
+ *         Date: 7/11/2007
+ */
+public class HKYTest {
+
+    interface Instance {
+        double[] getPi();
+
+        double getKappa();
+
+        double getDistance();
+
+        double[] getExpectedResult();
+    }
+
+    /*
+     * Results obtained by running the following scilab code,
+     *
+     * k = 5 ; piQ = diag([.2, .3, .25, .25]) ; d = 0.1 ;
+     * % Q matrix with zeroed diagonal
+     * XQ = [0 1 k 1; 1 0 1 k; k 1 0 1; 1 k 1 0];
+     *
+     * xx = XQ * piQ ;
+     *
+     * % fill diagonal and normalize by total substitution rate
+     * q0 = (xx + diag(-sum(xx,2))) / sum(piQ * sum(xx,2)) ;
+     * expm(q0 * d)
+     */
+    Instance test0 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.25, 0.25, 0.25, 0.25};
+        }
+
+        public double getKappa() {
+            return 2;
+        }
+
+        public double getDistance() {
+            return 0.1;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.906563342722, 0.023790645491, 0.045855366296, 0.023790645491,
+                    0.023790645491, 0.906563342722, 0.023790645491, 0.045855366296,
+                    0.045855366296, 0.023790645491, 0.906563342722, 0.023790645491,
+                    0.023790645491, 0.045855366296, 0.023790645491, 0.906563342722
+            };
+        }
+    };
+
+    Instance test1 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.50, 0.20, 0.2, 0.1};
+        }
+
+        public double getKappa() {
+            return 2;
+        }
+
+        public double getDistance() {
+            return 0.1;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.928287993055, 0.021032136637, 0.040163801989, 0.010516068319,
+                    0.052580341593, 0.906092679369, 0.021032136637, 0.020294842401,
+                    0.100409504972, 0.021032136637, 0.868042290072, 0.010516068319,
+                    0.052580341593, 0.040589684802, 0.021032136637, 0.885797836968
+            };
+        }
+    };
+
+    Instance test2 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.20, 0.30, 0.25, 0.25};
+        }
+
+        public double getKappa() {
+            return 5;
+        }
+
+        public double getDistance() {
+            return 0.1;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.904026219693, 0.016708646875, 0.065341261036, 0.013923872396,
+                    0.011139097917, 0.910170587813, 0.013923872396, 0.064766441875,
+                    0.052273008829, 0.016708646875, 0.917094471901, 0.013923872396,
+                    0.011139097917, 0.077719730250, 0.013923872396, 0.897217299437
+            };
+        }
+    };
+
+    Instance[] all = {test2, test1, test0};
+
+    @Test
+    public void testHKY() {
+        for (Instance test : all) {
+            Parameter kappa = new Parameter.Default(1, test.getKappa());
+            double[] pi = test.getPi();
+
+            Parameter freqs = new Parameter.Default(pi);
+            FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+            HKY hky = new HKY(kappa, f);
+
+            double distance = test.getDistance();
+
+            double[] mat = new double[4 * 4];
+            hky.getTransitionProbabilities(distance, mat);
+            final double[] result = test.getExpectedResult();
+
+            for (int k = 0; k < mat.length; ++k) {
+                assertEquals(mat[k], result[k], 1e-10);
+                // System.out.print(" " + (mat[k] - result[k]));
+            }
+        }
+    }
+}

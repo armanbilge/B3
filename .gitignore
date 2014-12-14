@@ -1,0 +1,10 @@
+.ant-targets-build.xml
+*.iml
+*.ipr
+.idea/
+build/
+lib/
+dist/
+build-test/
+test-lib/
+reports/

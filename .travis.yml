@@ -1,0 +1,18 @@
+language: java
+jdk:
+  - oraclejdk8
+notifications:
+  email: false
+before_deploy: ant
+deploy:
+  provider: s3
+  access_key_id: AKIAJCQK3W224DZVXBTQ
+  secret_access_key:
+    secure: KQewhr4NNVaoky89m3/Zv2LWgrnXFZBnv4lpG/1HVZRKfokWqTwYDGk+TvJTLzkwvmU0QaToNjSAU4QU3pGRSAfBmdPs25ALiTbBvix4hc6WjSKbI/oO8HAPn6+fQQbLDWUPgezryLXS1hCJZjLrY1IfurYQ2k5wf0l7bwqlrUM=
+  bucket: build.compevol.org
+  local-dir: dist
+  upload-dir: beast3
+  on:
+    repo: armanbilge/BEAST3
+	branch: master
+  skip_cleanup: true
