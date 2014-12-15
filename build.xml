@@ -47,35 +47,32 @@
 		</condition>
 	</target>
 
-	<target name="compile-dependencies" depends="init" if="lib-unavailable">
+	<target name="get-dependencies" depends="init" if="lib-unavailable">
 		<mkdir dir="${lib}"/>
+  		<get src="http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3.jar"
+  			 dest="${lib}/asm.jar"/>
 		<get src="http://beast-mcmc.googlecode.com/svn/trunk/lib/beagle.jar"
 			 dest="${lib}/beagle.jar"/>
+ 		<get src="http://search.maven.org/remotecontent?filepath=org/apache/commons/commons-math3/3.3/commons-math3-3.3.jar"
+ 			 dest="${lib}/commons-math3.jar"/>
 	 	<get src="http://search.maven.org/remotecontent?filepath=com/esotericsoftware/kryo/3.0.0/kryo-3.0.0.jar"
 	 		 dest="${lib}/kryo.jar"/>
-		<get src="http://search.maven.org/remotecontent?filepath=org/apache/commons/commons-math3/3.3/commons-math3-3.3.jar"
-			 dest="${lib}/commons-math3.jar"/>
  		<get src="http://sourceforge.net/projects/jebl/files/latest/download"
 			 dest="${lib}/jebl.jar"/>
-	</target>
-	
-	<target name="dist-dependencies"
-		    depends="init,compile-dependencies"
-			if="lib-unavailable">
- 		<get src="http://search.maven.org/remotecontent?filepath=com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar"
-			 dest="${lib}/minlog.jar"/>
-  		<get src="http://search.maven.org/remotecontent?filepath=org/objenesis/objenesis/2.1/objenesis-2.1.jar"
- 			 dest="${lib}/objenesis.jar"/>		
+  		<get src="http://search.maven.org/remotecontent?filepath=com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar"
+ 			 dest="${lib}/minlog.jar"/>
+   		<get src="http://search.maven.org/remotecontent?filepath=org/objenesis/objenesis/2.1/objenesis-2.1.jar"
+  			 dest="${lib}/objenesis.jar"/>
+ 		<get src="http://central.maven.org/maven2/com/esotericsoftware/reflectasm/reflectasm/1.09/reflectasm-1.09.jar"
+ 			 dest="${lib}/reflectasm.jar"/>
 	</target>
 
-	<target name="test-dependencies"
-		    depends="init,compile-dependencies,dist-dependencies"
-			if="test-lib-unavailable">
+	<target name="get-test-dependencies" depends="init" if="test-lib-unavailable">
 		<mkdir dir="${test-lib}"/>
         <get src="http://search.maven.org/remotecontent?filepath=junit/junit/4.12/junit-4.12.jar"
              dest="${test-lib}/junit.jar"/>
         <get src="http://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar"
-             dest="${test-lib}/hamcrest-core.jar"/>		
+             dest="${test-lib}/hamcrest-core.jar"/>
 	</target>
 
     <target name="clean">
@@ -88,7 +85,7 @@
 
     <target name="build" depends="compile,dist"/>
 
-    <target name="compile" depends="compile-dependencies">
+    <target name="compile" depends="get-dependencies">
         <mkdir dir="${build}"/>
         <javac source="${JDK_VERSION}"
 			   target="${JDK_VERSION}"
@@ -103,7 +100,7 @@
         </javac>
     </target>
 
-    <target name="dist" depends="compile,dist-dependencies">
+    <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
         <jar jarfile="${dist}/beast.jar">
             <manifest>
@@ -121,7 +118,7 @@
         </jar>
     </target>
 
-    <target name="compile-test" depends="test-dependencies">
+    <target name="compile-test" depends="get-test-dependencies">
         <mkdir dir="${build-test}"/>
         <javac source="${JDK_VERSION}"
 			   target="${JDK_VERSION}"
