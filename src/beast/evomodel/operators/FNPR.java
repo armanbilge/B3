@@ -178,10 +178,6 @@ public class FNPR extends AbstractTreeOperator {
             return FNPR;
         }
 
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "FixedNodeheightSubtreePruneRegraft"};
-        }
-
         public FNPR parseXMLObject(XMLObject xo) throws XMLParseException {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);

@@ -156,11 +156,6 @@ public class NNI extends AbstractTreeOperator {
             return NNI;
         }
 
-        @Override
-        public String[] getParserNames() {
-            return new String[]{getParserName(), "NearestNeighborInterchange"};
-        }
-
         public NNI parseXMLObject(XMLObject xo) throws XMLParseException {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
