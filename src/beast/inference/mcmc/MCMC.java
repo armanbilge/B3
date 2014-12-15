@@ -292,7 +292,6 @@ public class MCMC implements Identifiable, Spawnable {
          */
         public void currentState(long state, Model currentModel) {
 
-            if (MCMC.this == null) throw new RuntimeException("Gotcha!");
             currentState = state;
 
             if (loggers != null) {

@@ -53,7 +53,7 @@ public class Serializer<T extends Identifiable> {
         if (fileName == null)
             fileName = object.getClass().getSimpleName();
         fileName += ".state";
-        file = new File(fileName);
+        file = FileHelpers.getFile(fileName);
     }
 
     public Serializer(final File file, final Class<? extends T> objectClass) throws FileNotFoundException {
