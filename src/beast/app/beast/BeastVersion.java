@@ -22,6 +22,10 @@ package beast.app.beast;
 
 import beast.util.Version;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * This class provides a mechanism for returning the version number of the
  * dr software. It relies on the administrator of the dr source using the
@@ -47,7 +51,19 @@ public class BeastVersion implements Version {
 
     private static final boolean IS_PRERELEASE = true;
 
-    private static final String REVISION = "$Rev: 6542 $";
+    private static final String REVISION;
+    static {
+        final Properties properties = new Properties();
+        final InputStream stream = BeastVersion.class.getResourceAsStream("version.properties");
+        if (stream != null) {
+            try {
+                properties.load(stream);
+            } catch (final IOException ioe) {
+                // Do nothing; defaults loaded below
+            }
+        }
+        REVISION = properties.getProperty("revision", "???");
+    }
 
     public String getVersion() {
         return VERSION;
@@ -117,10 +133,6 @@ public class BeastVersion implements Version {
     }
 
     public String getBuildString() {
-        try {
-            return "r" + REVISION.split(" ")[1];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return "Invalid Revision String : " + REVISION;
-        }
+        return REVISION;
     }
 }

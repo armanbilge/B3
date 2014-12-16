@@ -32,6 +32,10 @@
 	<property name="reports" location="reports"/>
 	<property name="debug" value="true"/>
 
+	<available file=".git" type="dir" property="git-available"/>
+	<property name="version.properties"
+		      value="${src}/beast/app/beast/version.properties"/>
+
     <property name="BEAST_main" value="beast.app.beast.BeastMain"/>
 
 	<target name="init">
@@ -100,7 +104,10 @@
         </javac>
     </target>
 
-    <target name="dist" depends="compile">
+    <target name="dist" depends="compile,get-revision">
+		<propertyfile file="${version.properties}">
+			<entry key="revision" value="${revision}"/>
+		</propertyfile>
         <mkdir dir="${dist}"/>
         <jar jarfile="${dist}/beast.jar">
             <manifest>
@@ -111,11 +118,12 @@
                 <include name="**/*.class"/>
             </fileset>
             <fileset dir="${src}">
-                <include name="beast/**/*.png"/>
-                <include name="beast/**/*.properties"/>
+                <include name="**/*.png"/>
+                <include name="**/*.properties"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="*.jar"/>
         </jar>
+		<delete file="${version.properties}"/>
     </target>
 
     <target name="compile-test" depends="get-test-dependencies">
@@ -151,5 +159,23 @@
 		</junit>
 		<fail if="failed" status="1"/>
     </target>
+
+	<target name="get-revision" if="git-available">
+	    <exec executable="git"
+			  outputproperty="git.revision"
+			  failifexecutionfails="false"
+			  errorproperty="">
+	        <arg value="describe"/>
+	        <arg value="--tags"/>
+	        <arg value="--always"/>
+	        <arg value="HEAD"/>
+	    </exec>
+		<condition property="revision" value="${git.revision}" else="???">
+			<and>
+				<isset property="git.revision"/>
+				<length string="${git.revision}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+	</target>
 
 </project>
