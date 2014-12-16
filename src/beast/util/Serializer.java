@@ -20,6 +20,9 @@
 
 package beast.util;
 
+import beagle.BeagleJNIImpl;
+import beagle.BeagleJNIWrapper;
+import beast.beagle.treelikelihood.BeagleTreeLikelihood;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -64,6 +67,22 @@ public class Serializer<T extends Identifiable> {
                 }
             });
         }
+
+        final com.esotericsoftware.kryo.Serializer<BeagleTreeLikelihood> beagleTreeLikelihoodSerializer =
+                kryo.getSerializer(BeagleTreeLikelihood.class);
+        kryo.register(BeagleTreeLikelihood.class, new com.esotericsoftware.kryo.Serializer<BeagleTreeLikelihood>() {
+            @Override
+            public void write(Kryo kryo, Output output, BeagleTreeLikelihood beagleTreeLikelihood) {
+                beagleTreeLikelihoodSerializer.write(kryo, output, beagleTreeLikelihood);
+            }
+            @Override
+            public BeagleTreeLikelihood read(Kryo kryo, Input input, Class<BeagleTreeLikelihood> aClass) {
+                final BeagleTreeLikelihood beagleTreeLikelihood =
+                        beagleTreeLikelihoodSerializer.read(kryo, input, aClass);
+                if (BeagleJNIWrapper.INSTANCE == null) BeagleJNIWrapper.loadBeagleLibrary();
+                return beagleTreeLikelihood;
+            }
+        });
     }
 
     public Serializer(final T object) {
