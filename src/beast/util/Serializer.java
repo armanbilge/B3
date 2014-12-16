@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by armanbilge on 11/25/14.
@@ -37,15 +39,32 @@ public class Serializer<T extends Identifiable> {
 
     final T object;
     final File file;
-    final Kryo kryo = new Kryo() {
-        @Override
-        public com.esotericsoftware.kryo.Serializer getDefaultSerializer(Class type) {
-            final com.esotericsoftware.kryo.Serializer s = super.getDefaultSerializer(type);
-            if (s instanceof FieldSerializer)
-                ((FieldSerializer) s).setIgnoreSyntheticFields(false);
-            return s;
+    final Kryo kryo;
+
+    {
+        kryo = new Kryo() {
+            @Override
+            public com.esotericsoftware.kryo.Serializer getDefaultSerializer(Class type) {
+                final com.esotericsoftware.kryo.Serializer s = super.getDefaultSerializer(type);
+                if (s instanceof FieldSerializer)
+                    ((FieldSerializer) s).setIgnoreSyntheticFields(false);
+                return s;
+            }
+        };
+
+        for (final Charset cs : Charset.availableCharsets().values()) {
+            kryo.register(cs.getClass(), new com.esotericsoftware.kryo.Serializer<Charset>() {
+                @Override
+                public void write(Kryo kryo, Output output, Charset charset) {
+                    // Nothing to do
+                }
+                @Override
+                public Charset read(Kryo kryo, Input input, Class aClass) {
+                    return cs;
+                }
+            });
         }
-    };
+    }
 
     public Serializer(final T object) {
         this.object = object;
