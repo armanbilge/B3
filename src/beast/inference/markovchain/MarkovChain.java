@@ -109,14 +109,12 @@ public final class MarkovChain {
         likelihood.makeDirty();
         currentScore = evaluate(likelihood, prior);
 
-        long currentState = currentLength;
-
         final Model currentModel = likelihood.getModel();
 
-        if (currentState == 0) {
+        if (currentLength == 0) {
             initialScore = currentScore;
             bestScore = currentScore;
-            fireBestModel(currentState, currentModel);
+            fireBestModel(currentLength, currentModel);
         }
 
         if (currentScore == Double.NEGATIVE_INFINITY) {
@@ -161,12 +159,13 @@ public final class MarkovChain {
             usingFullEvaluation = false;
         boolean fullEvaluationError = false;
 
-        while (!pleaseStop && (currentState < (currentLength + length))) {
+        final long totalLength = currentLength + length;
+        while (!pleaseStop && (currentLength < totalLength)) {
 
             String diagnosticStart = "";
 
             // periodically log states
-            fireCurrentModel(currentState, currentModel);
+            fireCurrentModel(currentLength, currentModel);
 
             if (pleaseStop) {
                 isStopped = true;
@@ -249,16 +248,16 @@ public final class MarkovChain {
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
-                    Logger.getLogger("error").severe("State " + currentState + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
+                    Logger.getLogger("error").severe("State " + currentLength + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
                 }
 
                 if (score == Double.POSITIVE_INFINITY ||
                         Double.isNaN(score) ) {
                     if (likelihood instanceof CompoundLikelihood) {
-                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
+                        Logger.getLogger("error").severe("State "+currentLength+": A likelihood returned with a numerical error:\n" +
                                 ((CompoundLikelihood)likelihood).getDiagnosis());
                     } else {
-                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
+                        Logger.getLogger("error").severe("State "+currentLength+": A likelihood returned with a numerical error.");
                     }
 
                     // If the user has chosen to ignore this error then we transform it
@@ -282,7 +281,7 @@ public final class MarkovChain {
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         Logger.getLogger("error").severe(
-                                "State "+currentState+": State was not correctly calculated after an operator move.\n"
+                                "State "+currentLength+": State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
                                         + "\nFull Likelihood evaluation: " + testScore
                                         + "\n" + "Operator: " + mcmcOperator
@@ -295,7 +294,7 @@ public final class MarkovChain {
 
                 if (score > bestScore) {
                     bestScore = score;
-                    fireBestModel(currentState, currentModel);
+                    fireBestModel(currentLength, currentModel);
                 }
 
                 accept = mcmcOperator instanceof GibbsOperator || acceptor.accept(oldScore, score, hastingsRatio, logr);
@@ -341,7 +340,7 @@ public final class MarkovChain {
 
 
                         final Logger logger = Logger.getLogger("error");
-                        logger.severe("State "+currentState+": State was not correctly restored after reject step.\n"
+                        logger.severe("State "+currentLength+": State was not correctly restored after reject step.\n"
                                 + "Likelihood before: " + oldScore
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator
@@ -361,7 +360,7 @@ public final class MarkovChain {
 
             if (usingFullEvaluation) {
                 if (schedule.getMinimumAcceptAndRejectCount() >= minOperatorCountForFullEvaluation &&
-                        currentState >= fullEvaluationCount) {
+                        currentLength >= fullEvaluationCount) {
                     // full evaluation is only switched off when each operator has done a
                     // minimum number of operations (currently 1) and fullEvalationCount
                     // operations in total.
@@ -377,12 +376,10 @@ public final class MarkovChain {
                 }
             }
 
-            fireEndCurrentIteration(currentState);
+            fireEndCurrentIteration(currentLength);
 
-            currentState += 1;
+            currentLength += 1;
         }
-
-        currentLength = currentState;
 
         return currentLength;
     }
