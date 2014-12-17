@@ -252,7 +252,7 @@ public class MCMC implements Identifiable, Spawnable {
         if (!chainInitialized) initChain();
 
         final long coercionDelay = getCoercionDelay();
-        final long chainLength = getChainLength() - coercionDelay;
+        final long chainLength = getChainLength();
 
         if (coercionDelay > currentState) {
             // Run the chain for coercionDelay steps with coercion disabled
