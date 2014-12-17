@@ -91,11 +91,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
     private static int instanceCount = 0;
-    private static List<Integer> resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
-    private static List<Integer> preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
-    private static List<Integer> requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
-    private static List<String> scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-    private static List<Integer> extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+    private static List<Integer> resourceOrder = null;
+    private static List<Integer> preferredOrder = null;
+    private static List<Integer> requiredOrder = null;
+    private static List<String> scalingOrder = null;
+    private static List<Integer> extraBufferOrder = null;
 
     // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
     private static final int RESCALE_FREQUENCY = 100;
@@ -163,6 +163,23 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+
+            // Attempt to get the resource order from the System Property
+            if (resourceOrder == null) {
+                resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+            }
+            if (preferredOrder == null) {
+                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+            }
+            if (requiredOrder == null) {
+                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+            }
+            if (scalingOrder == null) {
+                scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
+            }
+            if (extraBufferOrder == null) {
+                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+            }
 
             int extraBufferCount = -1; // default
             if (extraBufferOrder.size() > 0) {
