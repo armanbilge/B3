@@ -281,9 +281,6 @@ public class MCMC implements Identifiable, Spawnable {
 
     protected final MarkovChainListener chainListener = new MarkovChainListener() {
 
-        // Must be declared transient to avoid ConcurrentModificationException when serializing
-        private transient Serializer<MCMC> serializer = null;
-
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
 
@@ -580,6 +577,10 @@ public class MCMC implements Identifiable, Spawnable {
         this.options = options;
     }
 
+    public void setSerializer(final Serializer<MCMC> serializer) {
+        this.serializer = serializer;
+    }
+
     // PRIVATE TRANSIENTS
 
     //private FileLogger operatorLogger = null;
@@ -588,7 +589,6 @@ public class MCMC implements Identifiable, Spawnable {
     protected boolean showOperatorAnalysis = true;
     protected boolean chainInitialized = false;
     protected boolean chainTerminated = false;
-    protected boolean serializing = true;
     protected File operatorAnalysisFile = null;
     protected final beast.util.Timer timer = new beast.util.Timer();
     protected long currentState = 0;
@@ -610,6 +610,10 @@ public class MCMC implements Identifiable, Spawnable {
     private MarkovChainDelegate[] delegates;
 
     private String id = null;
+
+    // Must be declared transient to avoid ConcurrentModificationException when serializing
+    private transient Serializer<MCMC> serializer = null;
+    protected boolean serializing = true;
 
     public static final XMLObjectParser<MCMC> PARSER =
             new AbstractXMLObjectParser<MCMC>() {

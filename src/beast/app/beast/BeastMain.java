@@ -312,6 +312,7 @@ public class BeastMain {
     public BeastMain(final File file, final long chainLength) throws FileNotFoundException {
         final Serializer<MCMC> serializer = new Serializer<MCMC>(file, MCMC.class);
         final MCMC mcmc = serializer.getObject();
+        mcmc.setSerializer(serializer);
         if (chainLength != 0) {
             final MCMCOptions options = new MCMCOptions(chainLength, mcmc.getOptions());
             mcmc.setOptions(options);
