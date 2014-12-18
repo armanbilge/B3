@@ -20,7 +20,6 @@
 
 package beast.util;
 
-import beagle.BeagleJNIImpl;
 import beagle.BeagleJNIWrapper;
 import beast.beagle.treelikelihood.BeagleTreeLikelihood;
 import com.esotericsoftware.kryo.Kryo;
@@ -33,10 +32,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 /**
- * Created by armanbilge on 11/25/14.
+ * @author Arman Bilge
  */
 public class Serializer<T extends Identifiable> {
 
