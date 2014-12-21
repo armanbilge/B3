@@ -20,6 +20,12 @@
 
 package beast.inference.operators;
 
+import beast.xml.AttributeRule;
+import beast.xml.SimpleXMLObjectParser;
+import beast.xml.XMLObject;
+import beast.xml.XMLParseException;
+import beast.xml.XMLSyntaxRule;
+
 /**
  * An MCMC operator.
  *
@@ -157,6 +163,8 @@ public interface MCMCOperator {
 
     long getTotalEvaluationTime();
 
+    public @interface OperatorWeightAttribute {}
+
     class Utils {
 
         public static double getAcceptanceProbability(MCMCOperator op) {
@@ -167,6 +175,28 @@ public interface MCMCOperator {
 
         public static int getOperationCount(MCMCOperator op) {
             return op.getAcceptCount() + op.getRejectCount();
+        }
+
+        static {
+            SimpleXMLObjectParser.registerXMLComponentFactory(new SimpleXMLObjectParser.XMLComponentFactory<OperatorWeightAttribute>(OperatorWeightAttribute.class) {
+                @Override
+                public Class getParsedType() {
+                    return Double.class;
+                }
+                @Override
+                public SimpleXMLObjectParser.XMLComponent<Double> createXMLComponent(Class parameterType, OperatorWeightAttribute annotation) {
+                    return new SimpleXMLObjectParser.XMLComponent<Double>() {
+                        @Override
+                        public Double parse(XMLObject xo) throws XMLParseException {
+                            return xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+                        }
+                        @Override
+                        public XMLSyntaxRule getSyntaxRule() {
+                            return AttributeRule.newDoubleRule(MCMCOperator.WEIGHT);
+                        }
+                    };
+                }
+            });
         }
     }
 }

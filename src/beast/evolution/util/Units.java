@@ -20,6 +20,7 @@
 
 package beast.evolution.util;
 
+import beast.xml.SimpleXMLObjectParser;
 import beast.xml.StringAttributeRule;
 import beast.xml.XMLObject;
 import beast.xml.XMLParseException;
@@ -45,6 +46,28 @@ public interface Units extends Serializable {
         public String toString() {
             return super.toString().toLowerCase();
         }
+
+        static {
+            SimpleXMLObjectParser.registerXMLComponentFactory(new SimpleXMLObjectParser.XMLComponentFactory<UnitsAttribute>(UnitsAttribute.class) {
+                @Override
+                public Class getParsedType() {
+                    return Type.class;
+                }
+                @Override
+                public SimpleXMLObjectParser.XMLComponent<Type> createXMLComponent(Class parameterType, UnitsAttribute annotation) {
+                    return new SimpleXMLObjectParser.XMLComponent<Type>() {
+                        @Override
+                        public Type parse(XMLObject xo) throws XMLParseException {
+                            return parseUnitsAttribute(xo);
+                        }
+                        @Override
+                        public XMLSyntaxRule getSyntaxRule() {
+                            return UNITS_RULE;
+                        }
+                    };
+                }
+            });
+        }
     }
 
     /**
@@ -67,5 +90,7 @@ public interface Units extends Serializable {
         }
         return units;
     }
+
+    public @interface UnitsAttribute {}
 
 }
