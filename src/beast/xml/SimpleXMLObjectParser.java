@@ -26,13 +26,11 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Created by armanbilge on 11/25/14.
+ * @author Arman Bilge
  */
 public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
 
@@ -43,11 +41,11 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
     private final Map<XMLSyntaxRule,Constructor<T>> rulesToConstructors;
     private final XMLSyntaxRule[] rules;
 
-    public SimpleXMLObjectParser(final Class<T> parsedClass, final String description) {
+    public SimpleXMLObjectParser(final Class<T> parsedClass, final String description) throws ParserCreationException {
         this(Introspector.decapitalize(parsedClass.getSimpleName()), parsedClass, description);
     }
 
-    public SimpleXMLObjectParser(final String name, final Class<T> parsedClass, final String description) {
+    public SimpleXMLObjectParser(final String name, final Class<T> parsedClass, final String description) throws ParserCreationException {
         this.name = name;
         this.parsedClass = parsedClass;
         this.description = description;
@@ -61,13 +59,13 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                 for (int i = 0; i < components.length; ++i) {
                     for (final Annotation a : constructor.getParameterAnnotations()[i]) {
                         if (isParseableComponent(a)) {
-                            components[i] = new XMLComponent(constructor.getParameterTypes()[i], a);
+                            components[i] = createXMLComponent(constructor.getParameterTypes()[i], a);
                             break;
                         }
                     }
                     if (components[i] == null)
-                        throw new ParserCreationException(parsedClass, "Parameter missing parseable annotation.");
-                    constructorRules[i] = components[i].getRule();
+                        throw new ParserCreationException("Parameter missing parseable annotation.");
+                    constructorRules[i] = components[i].getSyntaxRule();
                 }
                 constructorsToComponents.put(constructor, components);
                 final AndRule rule = new AndRule(constructorRules);
@@ -75,7 +73,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                 rules.add(rule);
             }
         }
-        if (constructorsToComponents.size() == 0) throw new RuntimeException("No @Parseable constructors found!");
+        if (constructorsToComponents.size() == 0) throw new ParserCreationException("No @Parseable constructors found!");
         this.rules = new XMLSyntaxRule[]{new XORRule(rules.toArray(new XMLSyntaxRule[rules.size()]))};
     }
 
@@ -118,131 +116,266 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         return rules;
     }
 
-    private final class XMLComponent<T> {
-        private final XMLSyntaxRule rule;
-        private final Parser<T> parser;
-
-        public XMLComponent(final Class<T> c, final Annotation a) {
-            if (a instanceof BooleanAttribute) {
-                if (c != Boolean.class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Boolean attribute must be associated with boolean parameter.");
-                final BooleanAttribute ba = (BooleanAttribute) a;
-                final String name = ba.name();
-                rule = AttributeRule.newBooleanRule(name, ba.optional(), ba.description());
-                parser = (xo) -> xo.getAttribute(name, (T) (Boolean) ba.defaultValue());
-            } else if (a instanceof DoubleArrayAttribute) {
-                if (c != Double[].class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Double array attribute must be associated with double array parameter.");
-                final DoubleArrayAttribute daa = (DoubleArrayAttribute) a;
-                final String name = daa.name();
-                rule = AttributeRule.newDoubleArrayRule(name, daa.optional(), daa.description());
-                parser = (xo) -> (T) (xo.hasAttribute(name) ? xo.getDoubleArrayAttribute(name) : new double[0]);
-            } else if (a instanceof DoubleAttribute) {
-                if (c != Double.class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Double attribute must be associated with double parameter.");
-                final DoubleAttribute da = (DoubleAttribute) a;
-                final String name = da.name();
-                rule = AttributeRule.newDoubleRule(name, da.optional(), da.description());
-                parser = (xo) -> xo.getAttribute(name, (T) (Double) da.defaultValue());
-            } else if (a instanceof IntegerArrayAttribute) {
-                if (c != Integer[].class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Integer array attribute must be associated with integer array parameter.");
-                final IntegerArrayAttribute iaa = (IntegerArrayAttribute) a;
-                final String name = iaa.name();
-                rule = AttributeRule.newIntegerArrayRule(name, iaa.optional(), iaa.description());
-                parser = (xo) -> (T) (xo.hasAttribute(name) ? xo.getIntegerArrayAttribute(name) : new int[0]);
-            } else if (a instanceof IntegerAttribute) {
-                if (c != Integer.class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Integer attribute must be associated with integer parameter.");
-                final IntegerAttribute ia = (IntegerAttribute) a;
-                final String name = ia.name();
-                rule = AttributeRule.newIntegerRule(name, ia.optional(), ia.description());
-                parser = (xo) -> xo.getAttribute(name, (T) (Integer) ia.defaultValue());
-            } else if (a instanceof LongAttribute) {
-                if (c != Long.class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Long attribute must be associated with long parameter.");
-                final LongAttribute la = (LongAttribute) a;
-                final String name = la.name();
-                rule = AttributeRule.newLongIntegerRule(name, la.optional(), la.description());
-                parser = (xo) -> xo.getAttribute(name, (T) (Long) la.defaultValue());
-            } else if (a instanceof StringArrayAttribute) {
-                if (c != String[].class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "String array attribute must be associated with String array parameter.");
-                final StringArrayAttribute saa = (StringArrayAttribute) a;
-                final String name = saa.name();
-                rule = AttributeRule.newStringArrayRule(name, saa.optional(), saa.description());
-                parser = (xo) -> (T) (xo.hasAttribute(name) ? xo.getStringArrayAttribute(name) : new String[0]);
-            } else if (a instanceof StringAttribute) {
-                if (c != String.class)
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "String attribute must be associated with String parameter.");
-                final StringAttribute sa = (StringAttribute) a;
-                final String name = sa.name();
-                rule = AttributeRule.newStringRule(name, sa.optional(), sa.description());
-                parser = (xo) -> xo.getAttribute(name, (T) sa.defaultValue());
-            } else if (a instanceof ObjectArrayElement) {
-                if (!c.isArray())
-                    throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Object array element must be associated with object array parameter.");
-                final ObjectArrayElement oae = (ObjectArrayElement) a;
-                final String name = oae.name();
-                final Class componentType = c.getComponentType();
-                rule = new ElementRule(name, componentType, description, oae.min(), oae.max());
-                parser = (xo) -> {
-                    final ArrayList arrayList = new ArrayList();
-                    if (xo.hasChildNamed(name)) {
-                        final XMLObject cxo = xo.getChild(name);
-                        for (int i = 0; i < cxo.getChildCount(); ++i) {
-                            final Object o = cxo.getChild(i);
-                            if (componentType.isInstance(o))
-                                arrayList.add(o);
-                        }
-                    }
-                    try {
-                        return (T) arrayList.toArray((Object[]) Array.newInstance(componentType, arrayList.size()));
-                    } catch (final NegativeArraySizeException ex) {
-                        throw new XMLParseException(ex.getMessage());
-                    }
-                };
-            } else if (a instanceof ObjectElement) {
-                final ObjectElement oe = (ObjectElement) a;
-                rule = new ElementRule(oe.name(), c, oe.description(), oe.optional());
-                parser = (xo) -> xo.hasChildNamed(name) ? xo.getChild(name).getChild(c) : null;
-            } else {
-                throw new ParserCreationException(SimpleXMLObjectParser.this.getReturnType(), "Unknown annotation type.");
-            }
-        }
-
-        public T parse(final XMLObject xo) throws XMLParseException {
-            return parser.parse(xo);
-        }
-
-        public XMLSyntaxRule getRule() {
-            return rule;
-        }
-
+    private <X> XMLComponent<X> createXMLComponent(final Class<X> parameterType, Annotation annotation) throws ParserCreationException {
+        final XMLComponentFactory factory = PARSEABLE_ANNOTATIONS.get(annotation.annotationType());
+        if (!factory.validate(parameterType))
+            throw new ParserCreationException(factory.getAnnotationType().getSimpleName() + " annotation must be associated with " + factory.getParsedType().getSimpleName() + " parameter.");
+        return factory.createXMLComponent(parameterType, annotation);
     }
 
-    private interface Parser<T> {
+    public interface XMLComponent<T> {
         T parse(XMLObject xo) throws XMLParseException;
+        XMLSyntaxRule getSyntaxRule();
     }
+
+    public static abstract class XMLComponentFactory<A extends Annotation> {
+        private final Class<A> annotationType;
+        public XMLComponentFactory(final Class<A> annotationType) {
+            this.annotationType = annotationType;
+        }
+        public final Class<A> getAnnotationType() {
+            return annotationType;
+        }
+        public abstract Class getParsedType();
+        public boolean validate(final Class<?> c) {
+            return c.isAssignableFrom(getParsedType());
+        }
+        public abstract XMLComponent createXMLComponent(Class parameterType, A annotation);
+    }
+
+    private static final Map<Class<? extends Annotation>, XMLComponentFactory<?>> PARSEABLE_ANNOTATIONS = new HashMap<>();
 
     private static final boolean isParseableComponent(final Annotation annotation) {
-        for (final Class<? extends Annotation> c : PARSEABLE_ANNOTATIONS)
-            if (c.isInstance(annotation)) return true;
-        return false;
+        return PARSEABLE_ANNOTATIONS.keySet().contains(annotation.annotationType());
     }
 
-    private static final Set<Class<? extends Annotation>> PARSEABLE_ANNOTATIONS = new HashSet<>();
+    public static final void registerXMLComponentFactory(final XMLComponentFactory<?> factory) {
+        PARSEABLE_ANNOTATIONS.put(factory.getAnnotationType(), factory);
+    }
+
     static {
-        PARSEABLE_ANNOTATIONS.add(BooleanAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(DoubleArrayAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(DoubleAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(IntegerArrayAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(IntegerAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(LongAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(ObjectArrayElement.class);
-        PARSEABLE_ANNOTATIONS.add(ObjectElement.class);
-        PARSEABLE_ANNOTATIONS.add(StringArrayAttribute.class);
-        PARSEABLE_ANNOTATIONS.add(StringAttribute.class);
+        registerXMLComponentFactory(new XMLComponentFactory<BooleanAttribute>(BooleanAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return Boolean.class;
+            }
+            @Override
+            public XMLComponent<Boolean> createXMLComponent(final Class parameterType, final BooleanAttribute ba) {
+                return new XMLComponent<Boolean>() {
+                    @Override
+                    public Boolean parse(XMLObject xo) throws XMLParseException {
+                        return xo.getAttribute(ba.name(), ba.defaultValue());
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newBooleanRule(ba.name(), ba.optional(), ba.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<DoubleArrayAttribute>(DoubleArrayAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return double[].class;
+            }
+            @Override
+            public XMLComponent<double[]> createXMLComponent(final Class parameterType, final DoubleArrayAttribute daa) {
+                return new XMLComponent<double[]>() {
+                    @Override
+                    public double[] parse(XMLObject xo) throws XMLParseException {
+                        final String name = daa.name();
+                        return xo.hasAttribute(name) ? xo.getDoubleArrayAttribute(name) : null;
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newDoubleArrayRule(daa.name(), daa.optional(), daa.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<DoubleAttribute>(DoubleAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return Double.class;
+            }
+            @Override
+            public XMLComponent<Double> createXMLComponent(final Class parameterType, final DoubleAttribute da) {
+                return new XMLComponent<Double>() {
+                    @Override
+                    public Double parse(XMLObject xo) throws XMLParseException {
+                        return xo.getAttribute(da.name(), da.defaultValue());
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newDoubleRule(da.name(), da.optional(), da.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<IntegerArrayAttribute>(IntegerArrayAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return int[].class;
+            }
+            @Override
+            public XMLComponent<int[]> createXMLComponent(final Class parameterType, final IntegerArrayAttribute iaa) {
+                return new XMLComponent<int[]>() {
+                    @Override
+                    public int[] parse(XMLObject xo) throws XMLParseException {
+                        final String name = iaa.name();
+                        return xo.hasAttribute(name) ? xo.getIntegerArrayAttribute(name) : null;
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newIntegerArrayRule(iaa.name(), iaa.optional(), iaa.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<IntegerAttribute>(IntegerAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return Integer.class;
+            }
+            @Override
+            public XMLComponent<Integer> createXMLComponent(final Class parameterType, final IntegerAttribute ia) {
+                return new XMLComponent<Integer>() {
+                    @Override
+                    public Integer parse(XMLObject xo) throws XMLParseException {
+                        return xo.getAttribute(ia.name(), ia.defaultValue());
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newIntegerRule(ia.name(), ia.optional(), ia.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<LongAttribute>(LongAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return Long.class;
+            }
+            @Override
+            public XMLComponent<Long> createXMLComponent(final Class parameterType, final LongAttribute la) {
+                return new XMLComponent<Long>() {
+                    @Override
+                    public Long parse(XMLObject xo) throws XMLParseException {
+                        return xo.getAttribute(la.name(), la.defaultValue());
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newLongIntegerRule(la.name(), la.optional(), la.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<ObjectArrayElement>(ObjectArrayElement.class) {
+            @Override
+            public Class getParsedType() {
+                return Object[].class;
+            }
+            @Override
+            public boolean validate(Class c) {
+                return c.isArray();
+            }
+            @Override
+            public XMLComponent<Object[]> createXMLComponent(final Class parameterType, final ObjectArrayElement oae) {
+                return new XMLComponent<Object[]>() {
+                    @Override
+                    public Object[] parse(XMLObject xo) throws XMLParseException {
+                        final ArrayList arrayList = new ArrayList();
+                        final String name = oae.name();
+                        final Class componentType = parameterType.getComponentType();
+                        if (xo.hasChildNamed(name)) {
+                            final XMLObject cxo = xo.getChild(name);
+                            for (int i = 0; i < cxo.getChildCount(); ++i) {
+                                final Object o = cxo.getChild(i);
+                                if (componentType.isInstance(o))
+                                    arrayList.add(o);
+                            }
+                        }
+                        try {
+                            return arrayList.toArray((Object[]) Array.newInstance(componentType, arrayList.size()));
+                        } catch (final NegativeArraySizeException ex) {
+                            throw new XMLParseException(ex.getMessage());
+                        }
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return new ElementRule(oae.name(), parameterType.getComponentType(), oae.description(), oae.min(), oae.max());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<ObjectElement>(ObjectElement.class) {
+            @Override
+            public Class getParsedType() {
+                return Object.class;
+            }
+            @Override
+            public boolean validate(Class c) {
+                return true;
+            }
+            @Override
+            public XMLComponent<Object> createXMLComponent(final Class parameterType, final ObjectElement oe) {
+                return new XMLComponent<Object>() {
+                    @Override
+                    public Object parse(XMLObject xo) throws XMLParseException {
+                        final String name = oe.name();
+                        return xo.hasChildNamed(name) ? xo.getChild(name).getChild(parameterType) : null;
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return new ElementRule(oe.name(), parameterType, oe.description(), oe.optional());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<StringArrayAttribute>(StringArrayAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return String[].class;
+            }
+            @Override
+            public XMLComponent<String[]> createXMLComponent(final Class parameterType, final StringArrayAttribute saa) {
+                return new XMLComponent<String[]>() {
+                    @Override
+                    public String[] parse(XMLObject xo) throws XMLParseException {
+                        final String name = saa.name();
+                        return xo.hasAttribute(name) ? xo.getStringArrayAttribute(name) : null;
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newStringArrayRule(saa.name(), saa.optional(), saa.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<StringAttribute>(StringAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return String.class;
+            }
+            @Override
+            public XMLComponent<String> createXMLComponent(final Class parameterType, final StringAttribute sa) {
+                return new XMLComponent<String>() {
+                    @Override
+                    public String parse(XMLObject xo) throws XMLParseException {
+                        return xo.getAttribute(sa.name(), sa.defaultValue());
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return AttributeRule.newStringRule(sa.name(), sa.optional(), sa.description());
+                    }
+                };
+            }
+        });
     }
 
+    private class ParserCreationException extends Exception {
+        public ParserCreationException(final String msg) {
+            super("Failed to create parser for class " + parsedClass.getSimpleName() + ": "  + msg);
+        }
+    }
 }
