@@ -27,7 +27,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by armanbilge on 11/25/14.
+ * @author Arman Bilge
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -36,7 +36,6 @@ public @interface StringArrayAttribute {
 
     String name();
     boolean optional() default false;
-    String defaultValue() default "";
     String description() default "";
 
 }
