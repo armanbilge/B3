@@ -275,6 +275,27 @@ public class BeastMain {
         }
     }
 
+    public BeastMain(final File file, final long chainLength) {
+        final Logger infoLogger = Logger.getLogger("beast.app.beast");
+        final Serializer<MCMC> serializer;
+        try {
+            serializer = new Serializer<>(file, MCMC.class);
+        } catch (FileNotFoundException ex) {
+            infoLogger.severe("File error: " + ex.getMessage());
+            throw new RuntimeException("Terminate");
+        }
+        final MCMC mcmc = serializer.getObject();
+        mcmc.setSerializer(serializer);
+        String message = "Resuming MCMC analysis";
+        if (chainLength > mcmc.getChainLength()) {
+            final MCMCOptions options = new MCMCOptions(chainLength, mcmc.getOptions());
+            mcmc.setOptions(options);
+            message += "with new chain length " + chainLength;
+        }
+        infoLogger.info(message + ".");
+        mcmc.run();
+    }
+
     public static void centreLine(String line, int pageWidth) {
         int n = pageWidth - line.length();
         int n1 = n / 2;
@@ -300,6 +321,7 @@ public class BeastMain {
         arguments.printUsage("beast", "[<input-file-name>]");
         System.out.println();
         System.out.println("  Example: beast test.xml");
+        System.out.println("  Example: beast -resume mcmc.state");
         System.out.println("  Example: beast -window test.xml");
         System.out.println("  Example: beast -help");
         System.out.println();
@@ -307,17 +329,6 @@ public class BeastMain {
 
     private static long updateSeedByRank(long seed, int rank) {
         return seed + 1000 * 1000 * rank;
-    }
-
-    public BeastMain(final File file, final long chainLength) throws FileNotFoundException {
-        final Serializer<MCMC> serializer = new Serializer<MCMC>(file, MCMC.class);
-        final MCMC mcmc = serializer.getObject();
-        mcmc.setSerializer(serializer);
-        if (chainLength != 0) {
-            final MCMCOptions options = new MCMCOptions(chainLength, mcmc.getOptions());
-            mcmc.setOptions(options);
-        }
-        mcmc.run();
     }
 
     //Main method
@@ -385,16 +396,6 @@ public class BeastMain {
             System.out.println();
             printUsage(arguments);
             System.exit(1);
-        }
-
-        if (arguments.hasOption("resume")) {
-            final long chainLength;
-            if (arguments.hasOption("chainlength"))
-                chainLength = arguments.getLongOption("chainlength");
-            else
-                chainLength = 0;
-            new BeastMain(new File(arguments.getLeftoverArguments()[0]), chainLength);
-            return;
         }
 
         if (arguments.hasOption("version")) {
@@ -548,6 +549,10 @@ public class BeastMain {
             }
         }
 
+        final boolean resume = arguments.hasOption("resume");
+        final long chainLength = arguments.hasOption("chainlength") ? arguments.getLongOption("chainlength") : 0;
+
+
 //        if (useMPI) {
 //            String[] nullArgs = new String[0];
 //            try {
@@ -674,15 +679,6 @@ public class BeastMain {
 
         }
 
-        if (useBeagle) {
-            BeagleInfo.printVersionInformation();
-
-            if (BeagleInfo.getVersion().startsWith("1.")) {
-                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://beagle-lib.googlecode.com/\n");
-            }
-        }
-
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();
             return;
@@ -717,6 +713,11 @@ public class BeastMain {
             System.setProperty("user.dir", inputFile.getParent());
         }
 
+        if (resume) {
+            new BeastMain(inputFile, chainLength);
+            return;
+        }
+
         if (window) {
             if (inputFile == null) {
                 consoleApp.setTitle("null");
@@ -739,6 +740,12 @@ public class BeastMain {
 
         if (useBeagle) {
             additionalParsers.add("beagle");
+            BeagleInfo.printVersionInformation();
+
+            if (BeagleInfo.getVersion().startsWith("1.")) {
+                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
+                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://beagle-lib.googlecode.com/\n");
+            }
         }
 
         if (beagleFlags != 0) {
