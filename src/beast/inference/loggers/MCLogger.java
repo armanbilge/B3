@@ -287,7 +287,7 @@ public class MCLogger implements Logger {
 
     protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
 
-    private boolean performanceReportStarted = false;
+    private transient boolean performanceReportStarted = false;
     private long startTime;
     private long startState;
 
