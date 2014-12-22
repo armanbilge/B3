@@ -355,7 +355,7 @@ public class MCLogger implements Logger {
                 final BeastVersion version = new BeastVersion();
 
                 title = "BEAST " + version.getVersionString() +
-                        ", " + version.getBuildString() + "\n" +
+                        " " + version.getBuildString() + "\n" +
                         (header != null ? header + "\n" : "") +
                         "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]";
             } else {

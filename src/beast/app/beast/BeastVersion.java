@@ -70,7 +70,7 @@ public class BeastVersion implements Version {
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease " + getBuildString() : "");
+        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease" : "");
     }
 
     public String getDateString() {
