@@ -81,6 +81,24 @@ public class Serializer<T extends Identifiable> {
                 return beagleTreeLikelihood;
             }
         });
+
+        final com.esotericsoftware.kryo.Serializer<SerializablePrintWriter> printWriterSerializer =
+                kryo.getSerializer(SerializablePrintWriter.class);
+        kryo.register(SerializablePrintWriter.class, new com.esotericsoftware.kryo.Serializer<SerializablePrintWriter>() {
+            @Override
+            public void write(Kryo kryo, Output output, SerializablePrintWriter serializablePrintWriter) {
+                printWriterSerializer.write(kryo, output, serializablePrintWriter);
+            }
+            @Override
+            public SerializablePrintWriter read(Kryo kryo, Input input, Class<SerializablePrintWriter> aClass) {
+                final SerializablePrintWriter serializablePrintWriter = printWriterSerializer.read(kryo, input, aClass);
+                try {
+                    return new SerializablePrintWriter(serializablePrintWriter.getFile(), true);
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     public Serializer(final T object) {
