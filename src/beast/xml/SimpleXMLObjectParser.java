@@ -64,7 +64,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                         }
                     }
                     if (components[i] == null)
-                        throw new ParserCreationException("Parameter missing parseable annotation.");
+                        throw new ParserCreationException(parsedClass, "Parameter missing parseable annotation.");
                     constructorRules[i] = components[i].getSyntaxRule();
                 }
                 constructorsToComponents.put(constructor, components);
@@ -73,7 +73,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                 rules.add(rule);
             }
         }
-        if (constructorsToComponents.size() == 0) throw new ParserCreationException("No @Parseable constructors found!");
+        if (constructorsToComponents.size() == 0) throw new ParserCreationException(parsedClass, "No @Parseable constructors found!");
         this.rules = new XMLSyntaxRule[]{new XORRule(rules.toArray(new XMLSyntaxRule[rules.size()]))};
     }
 
@@ -119,7 +119,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
     private <X> XMLComponent<X> createXMLComponent(final Class<X> parameterType, Annotation annotation) throws ParserCreationException {
         final XMLComponentFactory factory = PARSEABLE_ANNOTATIONS.get(annotation.annotationType());
         if (!factory.validate(parameterType))
-            throw new ParserCreationException(factory.getAnnotationType().getSimpleName() + " annotation must be associated with " + factory.getParsedType().getSimpleName() + " parameter.");
+            throw new ParserCreationException(parsedClass, factory.getAnnotationType().getSimpleName() + " annotation must be associated with " + factory.getParsedType().getSimpleName() + " parameter.");
         return factory.createXMLComponent(parameterType, annotation);
     }
 
@@ -373,8 +373,8 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         });
     }
 
-    private class ParserCreationException extends Exception {
-        public ParserCreationException(final String msg) {
+    private static class ParserCreationException extends Exception {
+        public ParserCreationException(final Class parsedClass, final String msg) {
             super("Failed to create parser for class " + parsedClass.getSimpleName() + ": "  + msg);
         }
     }
