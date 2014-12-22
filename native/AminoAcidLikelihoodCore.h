@@ -1,5 +1,5 @@
-#ifndef _Included_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore
-#define _Included_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore
+#ifndef _Included_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore
+#define _Included_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore
 #include <jni.h>
 #ifdef __cplusplus
 extern "C" {
@@ -24,7 +24,7 @@ extern "C" {
 	 Calculates partial likelihoods at a node when both children have states.
 */
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeStatesStatesPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeStatesStatesPruning
 	(JNIEnv *, jobject, jintArray, jdoubleArray, jintArray, jdoubleArray, jint, jint, jdoubleArray);
 
 /*
@@ -32,7 +32,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihood
  * Method:    nativeStatesPartialsPruning
  * Signature: ([I[D[D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeStatesPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeStatesPartialsPruning
 	(JNIEnv *, jobject, jintArray, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jdoubleArray);
 
 /*
@@ -40,7 +40,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihood
  * Method:    nativePartialsPartialsPruning
  * Signature: ([D[D[D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativePartialsPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativePartialsPartialsPruning
 	(JNIEnv *, jobject, jdoubleArray, jdoubleArray, jdoubleArray, jdoubleArray, jint, jint, jdoubleArray);
 
 /*
@@ -48,7 +48,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihood
  * Method:    nativeIntegratePartials
  * Signature: ([D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeIntegratePartials
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeAminoAcidLikelihoodCore_nativeIntegratePartials
 	(JNIEnv *, jobject, jdoubleArray, jdoubleArray, jint, jint, jdoubleArray);
 
 #ifdef __cplusplus

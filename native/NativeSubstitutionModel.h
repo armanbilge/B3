@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class dr_evomodel_substmodel_NativeSubstitutionModel */
 
-#ifndef _Included_dr_evomodel_substmodel_NativeSubstitutionModel
-#define _Included_dr_evomodel_substmodel_NativeSubstitutionModel
+#ifndef _Included_beast_evomodel_substmodel_NativeSubstitutionModel
+#define _Included_beast_evomodel_substmodel_NativeSubstitutionModel
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +12,7 @@ extern "C" {
  * Method:    nativeStoreState
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeStoreState
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeStoreState
   (JNIEnv *, jobject);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativ
  * Method:    nativeRestoreState
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeRestoreState
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeRestoreState
   (JNIEnv *, jobject);
 
 /*
@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativ
  * Method:    nativeInitialiseEigen
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeInitialiseEigen
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeInitialiseEigen
   (JNIEnv *, jobject, jint);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativ
  * Method:    nativeSetup
  * Signature: ([[D[[D[D[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeSetup
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeSetup
   (JNIEnv *, jobject, jlong, jobjectArray, jobjectArray, jdoubleArray, jdoubleArray, jint);
 
 #ifdef __cplusplus

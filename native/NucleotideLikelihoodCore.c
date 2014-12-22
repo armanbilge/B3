@@ -24,7 +24,7 @@
 	 Calculates partial likelihoods at a node when both children have states.
 */
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeStatesStatesPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeStatesStatesPruning
 	(JNIEnv *env, jobject obj, jintArray inStates1, jdoubleArray inMatrices1, 
 								jintArray inStates2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,
@@ -111,7 +111,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoo
  * Method:    nativeStatesPartialsPruning
  * Signature: ([I[D[D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeStatesPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeStatesPartialsPruning
 	(JNIEnv *env, jobject obj, jintArray inStates1, jdoubleArray inMatrices1, 
 								jdoubleArray inPartials2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,
@@ -208,7 +208,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoo
  * Method:    nativePartialsPartialsPruning
  * Signature: ([D[D[D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativePartialsPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativePartialsPartialsPruning
 	(JNIEnv *env, jobject obj, jdoubleArray inPartials1, jdoubleArray inMatrices1, 
 								jdoubleArray inPartials2, jdoubleArray inMatrices2, 
 								jint patternCount, jint matrixCount,
@@ -289,7 +289,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoo
  * Method:    nativeIntegratePartials
  * Signature: ([D[DII[D)V
  */
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeIntegratePartials
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeNucleotideLikelihoodCore_nativeIntegratePartials
 	(JNIEnv *env, jobject obj, jdoubleArray inPartials, jdoubleArray inProportions, 
 								jint patternCount, jint matrixCount,
 								jdoubleArray outPartials)

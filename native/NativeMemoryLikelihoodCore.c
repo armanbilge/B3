@@ -16,17 +16,17 @@
 #define SIZE_INT	sizeof(int)
 
 
-JNIEXPORT jint JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeRealSize
+JNIEXPORT jint JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeRealSize
   (JNIEnv *env, jobject obj) {
 	return (jint) SIZE_REAL;
 }
 
-JNIEXPORT jint JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeIntSize
+JNIEXPORT jint JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeIntSize
   (JNIEnv *env, jobject obj) {
 	return (jint) SIZE_INT;
 }
 
-JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeMemoryArray
+JNIEXPORT jlong JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeMemoryArray
   (JNIEnv *env, jobject obj, jint length) 
 {  
 
@@ -49,7 +49,7 @@ JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCo
   return (jlong) data;
 } 
 
-JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeIntMemoryArray
+JNIEXPORT jlong JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_allocateNativeIntMemoryArray
   (JNIEnv *env, jobject obj, jint length) 
 {  
 
@@ -71,7 +71,7 @@ JNIEXPORT jlong JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCo
 } 
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_freeNativeMemoryArray
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_freeNativeMemoryArray
   (JNIEnv *env, jobject obj, jlong inNativePtr)
   {
 
@@ -90,7 +90,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
   }
 
 	
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_setNativeMemoryArray___3DIJII
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_setNativeMemoryArray___3DIJII
   (JNIEnv *env, jobject obj, jdoubleArray inFromJavaArray, jint fromOffset, jlong inNativePtr, jint toOffset, jint length) 
   {
   
@@ -121,7 +121,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 	
   }
   
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_setNativeMemoryArray___3IIJII
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_setNativeMemoryArray___3IIJII
   (JNIEnv *env, jobject obj, jintArray inFromJavaArray, jint fromOffset, jlong inNativePtr, jint toOffset, jint length) 
   {  
   
@@ -151,7 +151,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 	
   }
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeMemoryArray__JI_3DII
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeMemoryArray__JI_3DII
   (JNIEnv *env, jobject obj, jlong inNativePtr, jint fromOffset, jdoubleArray inToJavaArray, jint toOffset, jint length) 
   {
 
@@ -176,7 +176,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 
   }
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeMemoryArray__JI_3III
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_getNativeMemoryArray__JI_3III
   (JNIEnv *env, jobject obj, jlong inNativePtr, jint fromOffset, jintArray inToJavaArray, jint toOffset, jint length)
   {
   	jint *toJavaArray = (jint*)(*env)->GetPrimitiveArrayCritical(env, inToJavaArray, 0);
@@ -208,7 +208,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativePartialsPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativePartialsPartialsPruning
   (JNIEnv *env, jobject obj, jlong inPartials1, jlong inMatrices1, jlong inPartials2, jlong inMatrices2, 
   jint patternCount, jint matrixCount, jlong outPartials, jint stateCount)
 {
@@ -269,7 +269,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 }
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeStatesPartialsPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeStatesPartialsPruning
   (JNIEnv *env, jobject obj, jlong inStates1, jlong inMatrices1, jlong inPartials2, jlong inMatrices2, 
   jint patternCount, jint matrixCount, jlong outPartials, jint stateCount) 
 {
@@ -368,7 +368,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeIntegratePartials
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeIntegratePartials
   (JNIEnv *env, jobject obj, jlong inPartials, jdoubleArray inProportions, jint patternCount, jint matrixCount,
    jdoubleArray outPartials, jint stateCount)
 {
@@ -418,7 +418,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCor
 }
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeStatesStatesPruning
+JNIEXPORT void JNICALL Java_beast_evomodel_treelikelihood_NativeMemoryLikelihoodCore_nativeStatesStatesPruning
   (JNIEnv *env, jobject obj, jlong inStates1, jlong inMatrices1, jlong inStates2, jlong inMatrices2, jint patternCount,
    jint matrixCount, jlong inPartials3, jint stateCount) 
 {

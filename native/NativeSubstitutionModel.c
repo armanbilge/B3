@@ -19,18 +19,18 @@ int stateCountSquared = 0;
 										}}
 
 
-JNIEXPORT jlong JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_allocateNativeMemoryArray
+JNIEXPORT jlong JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_allocateNativeMemoryArray
   (JNIEnv *env, jobject obj, jint length) {
 	REAL *ptr = (REAL *)malloc(length * SIZE_REAL);
 	return (jlong) ptr;
   }
   
-  JNIEXPORT jint JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_getNativeRealSize
+  JNIEXPORT jint JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_getNativeRealSize
   (JNIEnv *env, jobject obj) {
 	return (jint) SIZE_REAL;
 }
   
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_copyNativeMemoryArray
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_copyNativeMemoryArray
   (JNIEnv *env, jobject obj, jlong inFrom, jlong inTo, jint length) {
   
   REAL *from = (REAL *) inFrom;
@@ -39,10 +39,10 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_copyN
 } 
  
 
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeStoreState
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeStoreState
   (JNIEnv *env, jobject obj) {}
 
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeRestoreState
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeRestoreState
   (JNIEnv *env, jobject obj) {}
 
 
@@ -53,7 +53,7 @@ REAL *deviceCache(int stateCount) {
 }
 
   
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeGetTransitionProbabilities
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeGetTransitionProbabilities
    (JNIEnv *env, jobject obj, jlong inCache, jdouble distance, jlong inPtr, jint states) {
 	
 	REAL *matrix, *iexp, *Ievc, *Evec, *Eval, *EvalImag;
@@ -116,7 +116,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativ
 	
    }
   
-  JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_getNativeMemoryArray
+  JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_getNativeMemoryArray
   (JNIEnv *env, jobject obj, jlong inNativePtr, jint fromOffset, jdoubleArray inToJavaArray, jint toOffset, jint length) 
   {
 
@@ -131,7 +131,7 @@ JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativ
   }
 
 
-JNIEXPORT void JNICALL Java_dr_evomodel_substmodel_NativeSubstitutionModel_nativeSetup
+JNIEXPORT void JNICALL Java_beast_evomodel_substmodel_NativeSubstitutionModel_nativeSetup
   (JNIEnv *env, jobject obj, jlong inPtr, jobjectArray inIevc, jobjectArray inEvec, jdoubleArray inEval, 
   jdoubleArray inEvalImag, jint stateCount) {
   
