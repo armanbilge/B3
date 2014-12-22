@@ -2,9 +2,8 @@
 *.iml
 *.ipr
 .idea/
-build/
-lib/
-dist/
-build-test/
-test-lib/
+*.class
+*.jar
+*.jnilib
+*.o
 reports/
