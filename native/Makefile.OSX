@@ -1,20 +1,14 @@
 CC=gcc
-CFLAGS_PPC=-arch ppc -O2 -funroll-loops 
+CFLAGS_PPC=-arch ppc -O2 -funroll-loops
 CFLAGS_I386=-arch i386 -O2 -funroll-loops -mtune=i686
 CFLAGS_X86_64=-arch x86_64 -O3 -fast -funroll-loops -mtune=i686
 
 INCLUDES=-I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
 
-# Exclude PPC version (no longer compiles on Lion)
-#all: libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib \
-#	libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib 
-#	lipo -create libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib -output libNucleotideLikelihoodCore.jnilib
-#	lipo -create libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib -output libAminoAcidLikelihoodCore.jnilib
-
-all: libNucleotideLikelihoodCore.PPC.jnilib libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib \
-	 libAminoAcidLikelihoodCore.PPC.jnilib libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib 
-	lipo -create libNucleotideLikelihoodCore.PPC.jnilib libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib -output libNucleotideLikelihoodCore.jnilib
-	lipo -create libAminoAcidLikelihoodCore.PPC.jnilib libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib -output libAminoAcidLikelihoodCore.jnilib
+all: libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib \
+	libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib
+	lipo -create libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib -output libNucleotideLikelihoodCore.jnilib
+	lipo -create libAminoAcidLikelihoodCore.i386.jnilib libAminoAcidLikelihoodCore.x86_64.jnilib -output libAminoAcidLikelihoodCore.jnilib
 
 libNucleotideLikelihoodCore.PPC.jnilib: NucleotideLikelihoodCore.PPC.o
 	${CC} -framework JavaVM -arch ppc -dynamiclib -o libNucleotideLikelihoodCore.PPC.jnilib NucleotideLikelihoodCore.PPC.o
@@ -55,4 +49,3 @@ AminoAcidLikelihoodCore.x86_64.o: AminoAcidLikelihoodCore.c
 
 clean:
 	/bin/rm -f *.jnilib *.o
-	
