@@ -20,6 +20,7 @@
 
 package beast.util;
 
+import beagle.BeagleInfo;
 import beagle.BeagleJNIWrapper;
 import beast.beagle.treelikelihood.BeagleTreeLikelihood;
 import com.esotericsoftware.kryo.Kryo;
@@ -78,11 +79,16 @@ public class Serializer<T extends Identifiable> {
             public void write(Kryo kryo, Output output, BeagleTreeLikelihood beagleTreeLikelihood) {
                 beagleTreeLikelihoodSerializer.write(kryo, output, beagleTreeLikelihood);
             }
+            private boolean beagleLoaded = false;
             @Override
             public BeagleTreeLikelihood read(Kryo kryo, Input input, Class<BeagleTreeLikelihood> aClass) {
                 final BeagleTreeLikelihood beagleTreeLikelihood =
                         beagleTreeLikelihoodSerializer.read(kryo, input, aClass);
-                if (BeagleJNIWrapper.INSTANCE == null) BeagleJNIWrapper.loadBeagleLibrary();
+                if (!beagleLoaded) {
+                    BeagleInfo.printVersionInformation();
+                    beagleLoaded = true;
+                }
+                beagleTreeLikelihood.loadBeagleInstance();
                 return beagleTreeLikelihood;
             }
         });

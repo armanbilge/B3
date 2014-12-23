@@ -152,7 +152,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             internalNodeCount = nodeCount - tipCount;
 
-            int compactPartialsCount = tipCount;
+            compactPartialsCount = tipCount;
             if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
@@ -189,9 +189,9 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
-            int[] resourceList = null;
-            long preferenceFlags = 0;
-            long requirementFlags = 0;
+            resourceList = null;
+            preferenceFlags = 0;
+            requirementFlags = 0;
 
             if (scalingOrder.size() > 0) {
                 this.rescalingScheme = PartialsRescalingScheme.parseFromString(
@@ -275,20 +275,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             instanceCount++;
 
-            beagle = BeagleFactory.loadBeagleInstance(
-                    tipCount,
-                    partialBufferHelper.getBufferCount(),
-                    compactPartialsCount,
-                    stateCount,
-                    patternCount,
-                    substitutionModelDelegate.getEigenBufferCount(),
-                    substitutionModelDelegate.getMatrixBufferCount(),
-                    categoryCount,
-                    scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
-                    resourceList,
-                    preferenceFlags,
-                    requirementFlags
-            );
+            loadBeagleInstance();
 
             InstanceDetails instanceDetails = beagle.getDetails();
             ResourceDetails resourceDetails = null;
@@ -1174,6 +1161,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private int rescalingCountInner = 0;
 //    private int storedRescalingCount;
 
+    // loadBeagleInstance() helper vars
+    private int compactPartialsCount;
+    int[] resourceList;
+    long preferenceFlags;
+    long requirementFlags;
+
     /**
      * the branch-site model for these sites
      */
@@ -1222,7 +1215,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     /**
      * the BEAGLE library instance
      */
-    protected Beagle beagle;
+    protected transient Beagle beagle;
 
     /**
      * Flag to specify that the substitution model has changed
@@ -1361,6 +1354,23 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         double[] siteLogLikelihoods = new double[patternCount];
         beagle.getSiteLogLikelihoods(siteLogLikelihoods);
         return siteLogLikelihoods;
+    }
+
+    public void loadBeagleInstance() {
+        beagle = BeagleFactory.loadBeagleInstance(
+                tipCount,
+                partialBufferHelper.getBufferCount(),
+                compactPartialsCount,
+                stateCount,
+                patternCount,
+                substitutionModelDelegate.getEigenBufferCount(),
+                substitutionModelDelegate.getMatrixBufferCount(),
+                categoryCount,
+                scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                resourceList,
+                preferenceFlags,
+                requirementFlags
+        );
     }
 
     public static final XMLObjectParser<Likelihood> PARSER = new AbstractXMLObjectParser<Likelihood>() {
