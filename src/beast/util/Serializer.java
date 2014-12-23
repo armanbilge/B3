@@ -33,6 +33,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Arman Bilge
@@ -42,6 +44,7 @@ public class Serializer<T extends Identifiable> {
     final T object;
     final File file;
     final Kryo kryo;
+    final List<BeagleTreeLikelihood> beagleTreeLikelihoods;
 
     public static class SyntheticFieldSerializer<T> extends FieldSerializer<T> {
         {
@@ -72,6 +75,8 @@ public class Serializer<T extends Identifiable> {
             });
         }
 
+
+        beagleTreeLikelihoods = new ArrayList<>();
         final com.esotericsoftware.kryo.Serializer<BeagleTreeLikelihood> beagleTreeLikelihoodSerializer =
                 kryo.getSerializer(BeagleTreeLikelihood.class);
         kryo.register(BeagleTreeLikelihood.class, new com.esotericsoftware.kryo.Serializer<BeagleTreeLikelihood>() {
@@ -79,16 +84,10 @@ public class Serializer<T extends Identifiable> {
             public void write(Kryo kryo, Output output, BeagleTreeLikelihood beagleTreeLikelihood) {
                 beagleTreeLikelihoodSerializer.write(kryo, output, beagleTreeLikelihood);
             }
-            private boolean beagleLoaded = false;
             @Override
             public BeagleTreeLikelihood read(Kryo kryo, Input input, Class<BeagleTreeLikelihood> aClass) {
-                final BeagleTreeLikelihood beagleTreeLikelihood =
-                        beagleTreeLikelihoodSerializer.read(kryo, input, aClass);
-                if (!beagleLoaded) {
-                    BeagleInfo.printVersionInformation();
-                    beagleLoaded = true;
-                }
-                beagleTreeLikelihood.reloadBeagle();
+                final BeagleTreeLikelihood beagleTreeLikelihood = beagleTreeLikelihoodSerializer.read(kryo, input, aClass);
+                beagleTreeLikelihoods.add(beagleTreeLikelihood);
                 return beagleTreeLikelihood;
             }
         });
@@ -133,9 +132,15 @@ public class Serializer<T extends Identifiable> {
     }
 
     private T deserialize(final Class<? extends T> objectClass) throws FileNotFoundException {
+        beagleTreeLikelihoods.clear();
         final Input in = new Input(new FileInputStream(file));
         final T object = kryo.readObject(in, objectClass);
         in.close();
+        if (beagleTreeLikelihoods.size() > 0) {
+            BeagleInfo.printVersionInformation();
+            for (final BeagleTreeLikelihood btl : beagleTreeLikelihoods)
+                btl.reloadBeagle();
+        }
         return object;
     }
 
