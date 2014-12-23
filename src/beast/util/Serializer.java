@@ -42,16 +42,21 @@ public class Serializer<T extends Identifiable> {
     final File file;
     final Kryo kryo;
 
+    public static class SyntheticFieldSerializer<T> extends FieldSerializer<T> {
+        {
+            setIgnoreSyntheticFields(false);
+        }
+        public SyntheticFieldSerializer(Kryo kryo, Class type) {
+            super(kryo, type);
+        }
+        public SyntheticFieldSerializer(Kryo kryo, Class type, Class[] generics) {
+            super(kryo, type, generics);
+        }
+    }
+
     {
-        kryo = new Kryo() {
-            @Override
-            public com.esotericsoftware.kryo.Serializer getDefaultSerializer(Class type) {
-                final com.esotericsoftware.kryo.Serializer s = super.getDefaultSerializer(type);
-                if (s instanceof FieldSerializer)
-                    ((FieldSerializer) s).setIgnoreSyntheticFields(false);
-                return s;
-            }
-        };
+        kryo = new Kryo();
+        kryo.setDefaultSerializer(SyntheticFieldSerializer.class);
 
         for (final Charset cs : Charset.availableCharsets().values()) {
             kryo.register(cs.getClass(), new com.esotericsoftware.kryo.Serializer<Charset>() {
