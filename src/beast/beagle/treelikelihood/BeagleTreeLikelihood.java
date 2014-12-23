@@ -317,38 +317,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 addModel(tipStatesModel);
             }
 
-            for (int i = 0; i < tipCount; i++) {
-                // Find the id of tip i in the patternList
-                String id = treeModel.getTaxonId(i);
-                int index = patternList.getTaxonIndex(id);
-
-                if (index == -1) {
-                    throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
-                            ", is not found in patternList, " + patternList.getId());
-                } else {
-                    if (tipStatesModel != null) {
-                        // using a tipPartials model.
-                        // First set the observed states:
-                        tipStatesModel.setStates(patternList, index, i, id);
-
-                        if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
-                            // Then set the tip partials as determined by the model:
-                            setPartials(beagle, tipStatesModel, i);
-                        } else {
-                            // or the tip states:
-                            tipStatesModel.getTipStates(i, tipStates);
-                            beagle.setTipStates(i, tipStates);
-                        }
-
-                    } else {
-                        if (useAmbiguities) {
-                            setPartials(beagle, patternList, index, i);
-                        } else {
-                            setStates(beagle, patternList, index, i);
-                        }
-                    }
-                }
-            }
+            initTips();
 
             if (patternList instanceof AscertainedSitePatterns) {
                 ascertainedSitePatterns = true;
@@ -1356,7 +1325,16 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return siteLogLikelihoods;
     }
 
-    public void loadBeagleInstance() {
+    public void reloadBeagle() {
+        loadBeagleInstance();
+        try {
+            initTips();
+        } catch (TaxonList.MissingTaxonException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void loadBeagleInstance() {
         beagle = BeagleFactory.loadBeagleInstance(
                 tipCount,
                 partialBufferHelper.getBufferCount(),
@@ -1371,6 +1349,41 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 preferenceFlags,
                 requirementFlags
         );
+    }
+
+    protected void initTips() throws TaxonList.MissingTaxonException {
+        for (int i = 0; i < tipCount; i++) {
+            // Find the id of tip i in the patternList
+            String id = treeModel.getTaxonId(i);
+            int index = patternList.getTaxonIndex(id);
+
+            if (index == -1) {
+                throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
+                        ", is not found in patternList, " + patternList.getId());
+            } else {
+                if (tipStatesModel != null) {
+                    // using a tipPartials model.
+                    // First set the observed states:
+                    tipStatesModel.setStates(patternList, index, i, id);
+
+                    if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
+                        // Then set the tip partials as determined by the model:
+                        setPartials(beagle, tipStatesModel, i);
+                    } else {
+                        // or the tip states:
+                        tipStatesModel.getTipStates(i, tipStates);
+                        beagle.setTipStates(i, tipStates);
+                    }
+
+                } else {
+                    if (useAmbiguities) {
+                        setPartials(beagle, patternList, index, i);
+                    } else {
+                        setStates(beagle, patternList, index, i);
+                    }
+                }
+            }
+        }
     }
 
     public static final XMLObjectParser<Likelihood> PARSER = new AbstractXMLObjectParser<Likelihood>() {

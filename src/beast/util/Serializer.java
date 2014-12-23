@@ -88,7 +88,7 @@ public class Serializer<T extends Identifiable> {
                     BeagleInfo.printVersionInformation();
                     beagleLoaded = true;
                 }
-                beagleTreeLikelihood.loadBeagleInstance();
+                beagleTreeLikelihood.reloadBeagle();
                 return beagleTreeLikelihood;
             }
         });
