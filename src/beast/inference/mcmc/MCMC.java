@@ -297,18 +297,8 @@ public class MCMC implements Identifiable, Spawnable {
                 }
             }
 
-            if (options.getStoreEvery() < 1) serializing = false;
-            if (serializing && state % options.getStoreEvery() == 0) {
-                if (serializer == null) serializer = new Serializer<>(MCMC.this);
-                try {
-                    serializer.serialize();
-                } catch (final Exception ex) {
-                    java.util.logging.Logger.getLogger("error").warning("Storing of state disabled due to following error." +
-                            " Please note that restarting this analysis will not be possible!");
-                    java.util.logging.Logger.getLogger("error").warning(ex.toString());
-                    serializing = false;
-                }
-            }
+            handleSerialization(state);
+
         }
 
         /**
@@ -330,6 +320,9 @@ public class MCMC implements Identifiable, Spawnable {
                     logger.stopLogging();
                 }
             }
+
+            handleSerialization(chainLength);
+
             // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
                 showOperatorAnalysis(System.out);
@@ -347,6 +340,21 @@ public class MCMC implements Identifiable, Spawnable {
             }
 
             // How should premature finish be flagged?
+        }
+
+        private void handleSerialization(long state) {
+            if (options.getStoreEvery() < 1) serializing = false;
+            if (serializing && state % options.getStoreEvery() == 0) {
+                if (serializer == null) serializer = new Serializer<>(MCMC.this);
+                try {
+                    serializer.serialize();
+                } catch (final Exception ex) {
+                    java.util.logging.Logger.getLogger("error").warning("Storing of state disabled due to following error." +
+                            " Please note that restarting this analysis will not be possible!");
+                    java.util.logging.Logger.getLogger("error").warning(ex.toString());
+                    serializing = false;
+                }
+            }
         }
 
     };
