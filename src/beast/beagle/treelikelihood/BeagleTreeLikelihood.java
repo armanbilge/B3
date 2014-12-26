@@ -1332,6 +1332,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         } catch (TaxonList.MissingTaxonException e) {
             throw new RuntimeException(e);
         }
+        beagle.setPatternWeights(patternWeights);
     }
 
     protected void loadBeagleInstance() {
