@@ -36,7 +36,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Arman Bilge
@@ -80,32 +82,23 @@ public class Serializer<T extends Identifiable> {
 
         loggers = new ArrayList<>();
 
-        final com.esotericsoftware.kryo.Serializer<MCLogger> mcLoggerSerializer = kryo.getSerializer(MCLogger.class);
-        kryo.register(MCLogger.class, new com.esotericsoftware.kryo.Serializer<MCLogger>() {
+        kryo.register(Logger.class, new com.esotericsoftware.kryo.Serializer<Logger>() {
+            final Map<Class<? extends Logger>, com.esotericsoftware.kryo.Serializer<Logger>> serializers =
+                    new HashMap<>();
             @Override
-            public void write(Kryo kryo, Output output, MCLogger mcLogger) {
-                mcLoggerSerializer.write(kryo, output, mcLogger);
-            }
-
-            @Override
-            public MCLogger read(Kryo kryo, Input input, Class<MCLogger> aClass) {
-                final MCLogger mcLogger = mcLoggerSerializer.read(kryo, input, aClass);
-                loggers.add(mcLogger);
-                return mcLogger;
-            }
-        });
-
-        final com.esotericsoftware.kryo.Serializer<TreeLogger> treeLoggerSerializer = kryo.getSerializer(TreeLogger.class);
-        kryo.register(TreeLogger.class, new com.esotericsoftware.kryo.Serializer<TreeLogger>() {
-            @Override
-            public void write(Kryo kryo, Output output, TreeLogger treeLogger) {
-                treeLoggerSerializer.write(kryo, output, treeLogger);
+            public void write(Kryo kryo, Output output, Logger logger) {
+                getSerializer(logger.getClass()).write(kryo, output, logger);
             }
             @Override
-            public TreeLogger read(Kryo kryo, Input input, Class<TreeLogger> aClass) {
-                final TreeLogger treeLogger = treeLoggerSerializer.read(kryo, input, aClass);
-                loggers.add(treeLogger);
-                return treeLogger;
+            public Logger read(Kryo kryo, Input input, Class<Logger> aClass) {
+                final Logger logger = getSerializer(aClass).read(kryo, input, aClass);
+                loggers.add(logger);
+                return logger;
+            }
+            com.esotericsoftware.kryo.Serializer<Logger> getSerializer(Class<? extends Logger> aClass) {
+                if (!serializers.containsKey(aClass))
+                    serializers.put(aClass, new SyntheticFieldSerializer<Logger>(kryo, aClass));
+                return serializers.get(aClass);
             }
         });
 
