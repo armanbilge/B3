@@ -36,4 +36,6 @@ public interface Logger {
 
 	void stopLogging();
 
+	void resumeLog();
+
 }

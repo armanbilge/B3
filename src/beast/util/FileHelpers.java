@@ -20,7 +20,9 @@
 
 package beast.util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
@@ -92,6 +94,30 @@ public class FileHelpers {
             }
         }
         return new File(parent, name);
+    }
+
+    public static String readLastLine(final File file) throws IOException {
+        final BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = null;
+        String nextLine = reader.readLine();
+        while (nextLine != null) {
+            line = nextLine;
+            nextLine = reader.readLine();
+        }
+        reader.close();
+        return line;
+    }
+
+    public static void deleteLastLine(final File file) throws IOException {
+        final RandomAccessFile f = new RandomAccessFile(file, "rw");
+        long length = f.length() - 1;
+        byte b;
+        do {
+            length -= 1;
+            f.seek(length);
+            b = f.readByte();
+        } while(b != '\n');
+        f.setLength(length+1);
     }
 
     public static File getFile(String fileName) {

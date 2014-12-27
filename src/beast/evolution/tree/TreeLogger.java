@@ -37,6 +37,8 @@ import beast.xml.XMLParseException;
 import beast.xml.XMLParser;
 import beast.xml.XMLSyntaxRule;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -72,19 +74,6 @@ public class TreeLogger extends MCLogger {
     boolean normaliseMeanRate = false;*/
 
     private NumberFormat format;
-    private LogUpon condition = null;
-
-    /**
-     * Interface to indicate when to log a tree
-     */
-    public interface LogUpon {
-        /**
-         *
-         * @param state
-         * @return  True if log tree of this state.
-         */
-       boolean logNow(long state);
-    }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
                       boolean sortTranslationTable, boolean mapNames) {
@@ -107,7 +96,7 @@ public class TreeLogger extends MCLogger {
 
         super(formatter, logEvery, false);
 
-        this.condition = condition;
+        addLogCondition(condition);
 
         /*this.normaliseMeanRateTo = normaliseMeanRateTo;
         if(!Double.isNaN(normaliseMeanRateTo)) {
@@ -195,57 +184,49 @@ public class TreeLogger extends MCLogger {
         return taxaId;
     }
 
-    public void log(long state) {
+    public void logState(long state) {
 
-        /*if(normaliseMeanRate) {
-            NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);
-        }*/
-
-        final boolean doIt = condition != null ? condition.logNow(state) :
-                    (logEvery < 0 || ((state % logEvery) == 0));
-
-        if ( doIt ) {
-            StringBuffer buffer = new StringBuffer("tree STATE_");
-            buffer.append(state);
-            if (treeAttributeProviders != null) {
-                boolean hasAttribute = false;
-                for (TreeAttributeProvider tap : treeAttributeProviders) {
-                    String[] attributeLabel = tap.getTreeAttributeLabel();
-                    String[] attributeValue = tap.getAttributeForTree(tree);
-                    for (int i = 0; i < attributeLabel.length; i++) {
-                        if (!hasAttribute) {
-                            buffer.append(" [&");
-                            hasAttribute = true;
-                        } else {
-                            buffer.append(",");
-                        }
-                        buffer.append(attributeLabel[i]);
-                        buffer.append("=");
-                        buffer.append(attributeValue[i]);
+        StringBuffer buffer = new StringBuffer(TREE_STATE_);
+        buffer.append(state);
+        if (treeAttributeProviders != null) {
+            boolean hasAttribute = false;
+            for (TreeAttributeProvider tap : treeAttributeProviders) {
+                String[] attributeLabel = tap.getTreeAttributeLabel();
+                String[] attributeValue = tap.getAttributeForTree(tree);
+                for (int i = 0; i < attributeLabel.length; i++) {
+                    if (!hasAttribute) {
+                        buffer.append(" [&");
+                        hasAttribute = true;
+                    } else {
+                        buffer.append(",");
                     }
-                }
-                if (hasAttribute) {
-                    buffer.append("]");
+                    buffer.append(attributeLabel[i]);
+                    buffer.append("=");
+                    buffer.append(attributeValue[i]);
                 }
             }
-
-            buffer.append(" = [&R] ");
-
-            if (substitutions) {
-                Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
-                        format, branchRates, treeTraitProviders, idMap, buffer);
-            } else {
-                Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                        format, null, treeTraitProviders, idMap, buffer);
+            if (hasAttribute) {
+                buffer.append("]");
             }
-
-            buffer.append(";");
-            logLine(buffer.toString());
         }
+
+        buffer.append(" = [&R] ");
+
+        if (substitutions) {
+            Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_SUBSTITUTIONS,
+                    format, branchRates, treeTraitProviders, idMap, buffer);
+        } else {
+            Tree.Utils.newick(tree, tree.getRoot(), !mapNames, Tree.BranchLengthType.LENGTHS_AS_TIME,
+                    format, null, treeTraitProviders, idMap, buffer);
+        }
+
+        buffer.append(";");
+        logLine(buffer.toString());
+
     }
 
     public void stopLogging() {
-        logLine("End;");
+        logLine(END);
         super.stopLogging();
     }
 
@@ -256,6 +237,23 @@ public class TreeLogger extends MCLogger {
 	public void setTree(Tree tree) {
 		this.tree = tree;
 	}
+
+    protected long getLastLoggedState(final File file) {
+        String line;
+        try {
+            line = FileHelpers.readLastLine(file);
+            if (line.contains(END)) {
+                FileHelpers.deleteLastLine(file);
+                line = FileHelpers.readLastLine(file);
+            }
+        } catch (final IOException ex) {
+            throw new RuntimeException("Problem resuming logger!", ex);
+        }
+        return Long.parseLong(line.trim().substring(TREE_STATE_.length()).split("\\s+")[0]);
+    }
+
+    private static final String END = "End;";
+    private static final String TREE_STATE_ = "tree TREE_STATE_";
 
     public static final XMLObjectParser<TreeLogger> PARSER = new AbstractXMLObjectParser<TreeLogger>() {
 
@@ -532,6 +530,8 @@ public class TreeLogger extends MCLogger {
             if (title != null) {
                 logger.setTitle(title);
             }
+
+            logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
 
             return logger;
         }

@@ -21,8 +21,10 @@
 package beast.util;
 
 import beagle.BeagleInfo;
-import beagle.BeagleJNIWrapper;
 import beast.beagle.treelikelihood.BeagleTreeLikelihood;
+import beast.evolution.tree.TreeLogger;
+import beast.inference.loggers.Logger;
+import beast.inference.loggers.MCLogger;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -44,6 +46,7 @@ public class Serializer<T extends Identifiable> {
     final T object;
     final File file;
     final Kryo kryo;
+    final List<Logger> loggers;
     final List<BeagleTreeLikelihood> beagleTreeLikelihoods;
 
     public static class SyntheticFieldSerializer<T> extends FieldSerializer<T> {
@@ -75,6 +78,36 @@ public class Serializer<T extends Identifiable> {
             });
         }
 
+        loggers = new ArrayList<>();
+
+        final com.esotericsoftware.kryo.Serializer<MCLogger> mcLoggerSerializer = kryo.getSerializer(MCLogger.class);
+        kryo.register(MCLogger.class, new com.esotericsoftware.kryo.Serializer<MCLogger>() {
+            @Override
+            public void write(Kryo kryo, Output output, MCLogger mcLogger) {
+                mcLoggerSerializer.write(kryo, output, mcLogger);
+            }
+
+            @Override
+            public MCLogger read(Kryo kryo, Input input, Class<MCLogger> aClass) {
+                final MCLogger mcLogger = mcLoggerSerializer.read(kryo, input, aClass);
+                loggers.add(mcLogger);
+                return mcLogger;
+            }
+        });
+
+        final com.esotericsoftware.kryo.Serializer<TreeLogger> treeLoggerSerializer = kryo.getSerializer(TreeLogger.class);
+        kryo.register(TreeLogger.class, new com.esotericsoftware.kryo.Serializer<TreeLogger>() {
+            @Override
+            public void write(Kryo kryo, Output output, TreeLogger treeLogger) {
+                treeLoggerSerializer.write(kryo, output, treeLogger);
+            }
+            @Override
+            public TreeLogger read(Kryo kryo, Input input, Class<TreeLogger> aClass) {
+                final TreeLogger treeLogger = treeLoggerSerializer.read(kryo, input, aClass);
+                loggers.add(treeLogger);
+                return treeLogger;
+            }
+        });
 
         beagleTreeLikelihoods = new ArrayList<>();
         final com.esotericsoftware.kryo.Serializer<BeagleTreeLikelihood> beagleTreeLikelihoodSerializer =
@@ -84,29 +117,12 @@ public class Serializer<T extends Identifiable> {
             public void write(Kryo kryo, Output output, BeagleTreeLikelihood beagleTreeLikelihood) {
                 beagleTreeLikelihoodSerializer.write(kryo, output, beagleTreeLikelihood);
             }
+
             @Override
             public BeagleTreeLikelihood read(Kryo kryo, Input input, Class<BeagleTreeLikelihood> aClass) {
                 final BeagleTreeLikelihood beagleTreeLikelihood = beagleTreeLikelihoodSerializer.read(kryo, input, aClass);
                 beagleTreeLikelihoods.add(beagleTreeLikelihood);
                 return beagleTreeLikelihood;
-            }
-        });
-
-        final com.esotericsoftware.kryo.Serializer<SerializablePrintWriter> printWriterSerializer =
-                kryo.getSerializer(SerializablePrintWriter.class);
-        kryo.register(SerializablePrintWriter.class, new com.esotericsoftware.kryo.Serializer<SerializablePrintWriter>() {
-            @Override
-            public void write(Kryo kryo, Output output, SerializablePrintWriter serializablePrintWriter) {
-                printWriterSerializer.write(kryo, output, serializablePrintWriter);
-            }
-            @Override
-            public SerializablePrintWriter read(Kryo kryo, Input input, Class<SerializablePrintWriter> aClass) {
-                final SerializablePrintWriter serializablePrintWriter = printWriterSerializer.read(kryo, input, aClass);
-                try {
-                    return new SerializablePrintWriter(serializablePrintWriter.getFile(), true);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
             }
         });
     }
@@ -136,6 +152,10 @@ public class Serializer<T extends Identifiable> {
         final Input in = new Input(new FileInputStream(file));
         final T object = kryo.readObject(in, objectClass);
         in.close();
+        if (loggers.size() > 0) {
+            for (final Logger l : loggers)
+                l.resumeLog();
+        }
         if (beagleTreeLikelihoods.size() > 0) {
             BeagleInfo.printVersionInformation();
             for (final BeagleTreeLikelihood btl : beagleTreeLikelihoods)

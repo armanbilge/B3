@@ -22,7 +22,6 @@ package beast.xml;
 
 import beast.util.FileHelpers;
 import beast.util.Identifiable;
-import beast.util.SerializablePrintWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -442,8 +441,7 @@ public class XMLParser {
             File logFile = getLogFile(xo, attributeName);
 
             try {
-//                return new PrintWriter(new FileOutputStream(logFile));
-                return new SerializablePrintWriter(logFile);
+                return new PrintWriter(new FileOutputStream(logFile));
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + logFile.getAbsolutePath() +
                         "' can not be opened for " + parserName + " element.");

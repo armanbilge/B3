@@ -36,13 +36,18 @@ import beast.xml.XMLParseException;
 import beast.xml.XMLParser;
 import beast.xml.XMLSyntaxRule;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A class for a general purpose logger.
@@ -58,6 +63,40 @@ public class MCLogger implements Logger {
      */
     private final boolean performanceReport;
     private final int performanceReportDelay;
+    private final Set<LogUpon> logConditions;
+    private int logEvery = 0;
+    private long lastLoggedState = -1;
+
+    {
+        logConditions = new HashSet<>();
+        addLogCondition(new LogUpon() {
+            @Override
+            public boolean logNow(long state) {
+                return state > lastLoggedState && logEvery > 0 && (state % logEvery == 0);
+            }
+        });
+    }
+
+    /**
+     * Interface to indicate when to log a tree
+     */
+    @FunctionalInterface
+    public interface LogUpon {
+        /**
+         *
+         * @param state
+         * @return  True if log tree of this state.
+         */
+        boolean logNow(long state);
+    }
+
+    public final void addLogCondition(final LogUpon logUpon) {
+        if (logUpon != null) logConditions.add(logUpon);
+    }
+
+    private final boolean logNow(final long state) {
+        return logConditions.stream().allMatch((logUpon) -> logUpon.logNow(state));
+    }
 
     /**
      * Constructor. Will log every logEvery.
@@ -214,7 +253,7 @@ public class MCLogger implements Logger {
         // just to prevent overriding of the old 32 bit signature
     }
 
-    public void log(long state) {
+    public final void log(final long state) {
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
             startTime = System.currentTimeMillis();
@@ -222,45 +261,47 @@ public class MCLogger implements Logger {
             formatter.setMaximumFractionDigits(2);
         }
 
-        if (logEvery > 0 && (state % logEvery == 0)) {
-
-            final int columnCount = getColumnCount();
-
-            String[] values = new String[columnCount + (performanceReport ? 2 : 1)];
-
-            values[0] = Long.toString(state);
-
-            for (int i = 0; i < columnCount; i++) {
-                values[i + 1] = getColumnFormatted(i);
-            }
-
-            if (performanceReport) {
-                if (performanceReportStarted) {
-
-                    long time = System.currentTimeMillis();
-
-                    double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
-
-                    String hpm = formatter.format(hoursPerMillionStates);
-                    if (hpm.equals("0")) {
-                        // test cases can run fast :)
-                        hpm = formatter.format(1000 * hoursPerMillionStates);
-                        values[columnCount + 1] = hpm + " hours/billion states";
-                    } else {
-                        values[columnCount + 1] = hpm + " hours/million states";
-                    }
-
-                } else {
-                    values[columnCount + 1] = "-";
-                }
-            }
-
-            logValues(values);
-        }
+        if (logNow(state)) logState(state);
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
             performanceReportStarted = true;
         }
+    }
+
+    protected void logState(long state) {
+
+        final int columnCount = getColumnCount();
+
+        String[] values = new String[columnCount + (performanceReport ? 2 : 1)];
+
+        values[0] = Long.toString(state);
+
+        for (int i = 0; i < columnCount; i++) {
+            values[i + 1] = getColumnFormatted(i);
+        }
+
+        if (performanceReport) {
+            if (performanceReportStarted) {
+
+                long time = System.currentTimeMillis();
+
+                double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
+
+                String hpm = formatter.format(hoursPerMillionStates);
+                if (hpm.equals("0")) {
+                    // test cases can run fast :)
+                    hpm = formatter.format(1000 * hoursPerMillionStates);
+                    values[columnCount + 1] = hpm + " hours/billion states";
+                } else {
+                    values[columnCount + 1] = hpm + " hours/million states";
+                }
+
+            } else {
+                values[columnCount + 1] = "-";
+            }
+        }
+
+        logValues(values);
 
     }
 
@@ -271,11 +312,43 @@ public class MCLogger implements Logger {
         }
     }
 
+    public void resumeLog() {
+
+        boolean screenLog = formatters.size() > files.size();
+        formatters.clear();
+        if (screenLog) addFormatter(new TabDelimitedFormatter(new PrintWriter(System.out)));
+        boolean firstFile = true;
+        for (final File file : files) {
+            try {
+                addFormatter(new TabDelimitedFormatter(new PrintWriter(new FileOutputStream(file, true))));
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException("Problem resuming logger!", ex);
+            }
+            final long state = getLastLoggedState(file);
+            if (firstFile) {
+                lastLoggedState = state;
+                firstFile = false;
+            } else {
+                if (lastLoggedState != state)
+                    throw new RuntimeException("Last logged states disagree between log files!");
+            }
+        }
+
+    }
+
+    protected long getLastLoggedState(final File file) {
+        final String line;
+        try {
+            line = FileHelpers.readLastLine(file);
+        } catch (final IOException ex) {
+            throw new RuntimeException("Problem resuming logger!", ex);
+        }
+        return Long.parseLong(line.trim().split("\\s+")[0]);
+    }
+
     private String title = null;
 
     private ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
-
-    protected int logEvery = 0;
 
     public List<LogFormatter> getFormatters() {
         return formatters;
@@ -286,6 +359,12 @@ public class MCLogger implements Logger {
     }
 
     protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
+
+    public void addFile(final File file) {
+        files.add(file);
+    }
+
+    protected List<File> files = new ArrayList<>();
 
     private transient boolean performanceReportStarted = false;
     private long startTime;
@@ -340,6 +419,9 @@ public class MCLogger implements Logger {
 
             // added a performance measurement delay to avoid the full evaluation period.
             final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
+
+            if (xo.hasAttribute(FILE_NAME))
+                logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
 
             String title = null;
             if (xo.hasAttribute(TITLE)) {

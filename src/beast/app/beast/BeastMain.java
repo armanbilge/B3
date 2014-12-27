@@ -290,7 +290,7 @@ public class BeastMain {
         if (chainLength > mcmc.getChainLength()) {
             final MCMCOptions options = new MCMCOptions(chainLength, mcmc.getOptions());
             mcmc.setOptions(options);
-            message += "with new chain length " + chainLength;
+            message += " with new chain length " + chainLength;
         }
         infoLogger.info(message + ".");
         mcmc.run();
