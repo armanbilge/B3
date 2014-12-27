@@ -253,7 +253,7 @@ public class TreeLogger extends MCLogger {
     }
 
     private static final String END = "End;";
-    private static final String TREE_STATE_ = "tree TREE_STATE_";
+    private static final String TREE_STATE_ = "tree STATE_";
 
     public static final XMLObjectParser<TreeLogger> PARSER = new AbstractXMLObjectParser<TreeLogger>() {
 
