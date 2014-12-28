@@ -91,7 +91,7 @@ public class MCLogger implements Logger {
     }
 
     public final void addLogCondition(final LogUpon logUpon) {
-        if (logUpon != null) logConditions.add(logUpon);
+        logConditions.add(logUpon);
     }
 
     private final boolean logNow(final long state) {

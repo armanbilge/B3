@@ -96,7 +96,7 @@ public class TreeLogger extends MCLogger {
 
         super(formatter, logEvery, false);
 
-        addLogCondition(condition);
+        if (condition != null) addLogCondition(condition);
 
         /*this.normaliseMeanRateTo = normaliseMeanRateTo;
         if(!Double.isNaN(normaliseMeanRateTo)) {
