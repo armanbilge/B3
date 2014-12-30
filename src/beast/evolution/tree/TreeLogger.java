@@ -239,17 +239,16 @@ public class TreeLogger extends MCLogger {
 	}
 
     protected long getLastLoggedState(final File file) {
-        String line;
         try {
-            line = FileHelpers.readLastLine(file);
+            String line = FileHelpers.readLastLine(file);
             if (line.contains(END)) {
                 FileHelpers.deleteLastLine(file);
                 line = FileHelpers.readLastLine(file);
             }
-        } catch (final IOException ex) {
+            return Long.parseLong(line.trim().substring(TREE_STATE_.length()).split("\\s+")[0]);
+        } catch (final IOException|NumberFormatException ex) {
             throw new RuntimeException("Problem resuming logger!", ex);
         }
-        return Long.parseLong(line.trim().substring(TREE_STATE_.length()).split("\\s+")[0]);
     }
 
     private static final String END = "End;";

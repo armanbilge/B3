@@ -337,13 +337,12 @@ public class MCLogger implements Logger {
     }
 
     protected long getLastLoggedState(final File file) {
-        final String line;
         try {
-            line = FileHelpers.readLastLine(file);
+            final String line = FileHelpers.readLastLine(file);
+            return Long.parseLong(line.trim().split("\\s+")[0]);
         } catch (final IOException ex) {
             throw new RuntimeException("Problem resuming logger!", ex);
         }
-        return Long.parseLong(line.trim().split("\\s+")[0]);
     }
 
     private String title = null;
