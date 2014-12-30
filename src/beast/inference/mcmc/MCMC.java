@@ -347,11 +347,11 @@ public class MCMC implements Identifiable, Spawnable {
         private void handleSerialization(long state) {
             if (options.getStoreEvery() < 1) serializing = false;
             if (serializing && state % options.getStoreEvery() == 0) {
-                if (serializer == null) {
-                    final File stateFile = FileHelpers.getFile((getId() != null ? getId() : "mcmc") + ".state");
-                    serializer = new Serializer<>(stateFile, MCMC.this);
-                }
                 try {
+                    if (serializer == null) {
+                        final File stateFile = FileHelpers.getFile((getId() != null ? getId() : "mcmc") + ".state");
+                        serializer = new Serializer<>(stateFile, MCMC.this);
+                    }
                     serializer.serialize();
                     MathUtils.saveState();
                 } catch (final Serializer.SerializationException ex) {

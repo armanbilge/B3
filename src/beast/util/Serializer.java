@@ -22,9 +22,7 @@ package beast.util;
 
 import beagle.BeagleInfo;
 import beast.beagle.treelikelihood.BeagleTreeLikelihood;
-import beast.evolution.tree.TreeLogger;
 import beast.inference.loggers.Logger;
-import beast.inference.loggers.MCLogger;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -34,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -48,6 +47,7 @@ public class Serializer<T extends Serializable> {
 
     final T object;
     final File file;
+    final File backup;
     final Kryo kryo;
     final List<Logger> loggers;
     final List<BeagleTreeLikelihood> beagleTreeLikelihoods;
@@ -121,17 +121,20 @@ public class Serializer<T extends Serializable> {
         });
     }
 
-    public Serializer(final File file, final T object) {
+    public Serializer(final File file, final T object) throws SerializationException {
         this.file = file;
+        backup = createBackupFile();
         this.object = object;
     }
 
     public Serializer(final File file, final Class<? extends T> objectClass) throws SerializationException {
         this.file = file;
+        backup = createBackupFile();
         object = this.deserialize(objectClass);
     }
 
     public void serialize() throws SerializationException {
+        file.renameTo(backup);
         final Output out;
         try {
             out = new Output(new FileOutputStream(file));
@@ -140,6 +143,15 @@ public class Serializer<T extends Serializable> {
         }
         kryo.writeObject(out, object);
         out.close();
+        backup.delete();
+    }
+
+    private File createBackupFile() throws SerializationException {
+        try {
+            return new File(file.getCanonicalPath() + ".bak");
+        } catch (IOException e) {
+            throw new SerializationException(e);
+        }
     }
 
     private T deserialize(final Class<? extends T> objectClass) throws SerializationException {

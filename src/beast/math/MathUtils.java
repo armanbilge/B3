@@ -71,7 +71,11 @@ public class MathUtils {
 			}
 		} else {
 			random = MersenneTwisterFast.DEFAULT_INSTANCE;
-			serializer = new Serializer<>(defaultStateFile, random);
+			try {
+				serializer = new Serializer<>(defaultStateFile, random);
+			} catch (Serializer.SerializationException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 
