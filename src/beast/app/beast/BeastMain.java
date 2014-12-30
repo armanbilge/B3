@@ -280,8 +280,8 @@ public class BeastMain {
         final Serializer<MCMC> serializer;
         try {
             serializer = new Serializer<>(file, MCMC.class);
-        } catch (FileNotFoundException ex) {
-            infoLogger.severe("File error: " + ex.getMessage());
+        } catch (Serializer.SerializationException ex) {
+            infoLogger.severe("Error resuming analysis: " + ex.getMessage());
             throw new RuntimeException("Terminate");
         }
         final MCMC mcmc = serializer.getObject();
@@ -355,6 +355,10 @@ public class BeastMain {
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
 
+                        new Arguments.Option("resume", "Resume a terminated analysis"),
+                        new Arguments.StringOption("random", "state file", "Saved state file for random number generator."),
+                        new Arguments.LongOption("length", "New chain length from resuming an analysis"),
+
                         new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
@@ -380,10 +384,8 @@ public class BeastMain {
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
-                        new Arguments.Option("help", "Print this information and stop"),
+                        new Arguments.Option("help", "Print this information and stop")
 
-                        new Arguments.Option("resume", "Resume a terminated analysis"),
-                        new Arguments.LongOption("chainlength", "New chain length from resuming an analysis")
                 });
 
         int argumentCount = 0;
@@ -421,6 +423,12 @@ public class BeastMain {
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
 //        boolean useMPI = arguments.hasOption("mpi");
+
+        final boolean resume = arguments.hasOption("resume");
+        System.setProperty("resume", Boolean.toString(resume));
+        final long chainLength = arguments.hasOption("length") ? arguments.getLongOption("length") : 0;
+        if (resume && arguments.hasOption("random"))
+            System.setProperty("resume.random", arguments.getStringOption("random"));
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
@@ -548,10 +556,6 @@ public class BeastMain {
                 System.exit(1);
             }
         }
-
-        final boolean resume = arguments.hasOption("resume");
-        final long chainLength = arguments.hasOption("chainlength") ? arguments.getLongOption("chainlength") : 0;
-
 
 //        if (useMPI) {
 //            String[] nullArgs = new String[0];

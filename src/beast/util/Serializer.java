@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,7 +44,7 @@ import java.util.Map;
 /**
  * @author Arman Bilge
  */
-public class Serializer<T extends Identifiable> {
+public class Serializer<T extends Serializable> {
 
     final T object;
     final File file;
@@ -120,29 +121,35 @@ public class Serializer<T extends Identifiable> {
         });
     }
 
-    public Serializer(final T object) {
+    public Serializer(final File file, final T object) {
+        this.file = file;
         this.object = object;
-        String fileName = object.getId();
-        if (fileName == null)
-            fileName = object.getClass().getSimpleName();
-        fileName += ".state";
-        file = FileHelpers.getFile(fileName);
     }
 
-    public Serializer(final File file, final Class<? extends T> objectClass) throws FileNotFoundException {
+    public Serializer(final File file, final Class<? extends T> objectClass) throws SerializationException {
         this.file = file;
         object = this.deserialize(objectClass);
     }
 
-    public void serialize() throws FileNotFoundException {
-        final Output out = new Output(new FileOutputStream(file));
+    public void serialize() throws SerializationException {
+        final Output out;
+        try {
+            out = new Output(new FileOutputStream(file));
+        } catch (FileNotFoundException e) {
+            throw new SerializationException(e);
+        }
         kryo.writeObject(out, object);
         out.close();
     }
 
-    private T deserialize(final Class<? extends T> objectClass) throws FileNotFoundException {
+    private T deserialize(final Class<? extends T> objectClass) throws SerializationException {
         beagleTreeLikelihoods.clear();
-        final Input in = new Input(new FileInputStream(file));
+        final Input in;
+        try {
+            in = new Input(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
+            throw new SerializationException(e);
+        }
         final T object = kryo.readObject(in, objectClass);
         in.close();
         if (loggers.size() > 0) {
@@ -159,6 +166,12 @@ public class Serializer<T extends Identifiable> {
 
     public T getObject() {
         return object;
+    }
+
+    public static class SerializationException extends Exception {
+        public SerializationException(final Exception ex) {
+            super("Problem with automatic serialization.", ex);
+        }
     }
 
 }

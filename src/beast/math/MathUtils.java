@@ -20,9 +20,13 @@
 
 package beast.math;
 
+import beast.util.FileHelpers;
 import beast.util.NumberFormatter;
+import beast.util.Serializer;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
@@ -48,7 +52,32 @@ public class MathUtils {
 	 * MersenneTwisterFast class for access to a single instance of the class, that
 	 * has synchronization.
 	 */
-	private static final MersenneTwisterFast random = MersenneTwisterFast.DEFAULT_INSTANCE;
+	private static final MersenneTwisterFast random;
+
+	private static final Serializer<MersenneTwisterFast> serializer;
+
+	private static final File defaultStateFile = FileHelpers.getFile("random.state");
+
+	static {
+		final boolean resume = Boolean.valueOf(System.getProperty("resume", "false"));
+		if (resume) {
+			try {
+				final String fileName = System.getProperty("resume.random", defaultStateFile.getCanonicalPath());
+				final File stateFile = new File(fileName);
+				serializer = new Serializer<>(stateFile, MersenneTwisterFast.class);
+				random = serializer.getObject();
+			} catch (Serializer.SerializationException|IOException e) {
+				throw new RuntimeException("Problem resuming random number generator!", e);
+			}
+		} else {
+			random = MersenneTwisterFast.DEFAULT_INSTANCE;
+			serializer = new Serializer<>(defaultStateFile, random);
+		}
+	}
+
+	public static void saveState() throws Serializer.SerializationException {
+		serializer.serialize();
+	}
 
 	// Chooses one category if a cumulative probability distribution is given
 	public static int randomChoice(double[] cf) {

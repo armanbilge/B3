@@ -35,6 +35,8 @@ import beast.inference.operators.MCMCOperator;
 import beast.inference.operators.OperatorSchedule;
 import beast.inference.operators.SimpleOperatorSchedule;
 import beast.inference.prior.Prior;
+import beast.math.MathUtils;
+import beast.util.FileHelpers;
 import beast.util.Identifiable;
 import beast.util.NumberFormatter;
 import beast.util.Serializer;
@@ -345,10 +347,14 @@ public class MCMC implements Identifiable, Spawnable {
         private void handleSerialization(long state) {
             if (options.getStoreEvery() < 1) serializing = false;
             if (serializing && state % options.getStoreEvery() == 0) {
-                if (serializer == null) serializer = new Serializer<>(MCMC.this);
+                if (serializer == null) {
+                    final File stateFile = FileHelpers.getFile((getId() != null ? getId() : "mcmc") + ".state");
+                    serializer = new Serializer<>(stateFile, MCMC.this);
+                }
                 try {
                     serializer.serialize();
-                } catch (final Exception ex) {
+                    MathUtils.saveState();
+                } catch (final Serializer.SerializationException ex) {
                     java.util.logging.Logger.getLogger("error").warning("Storing of state disabled due to following error." +
                             " Please note that restarting this analysis will not be possible!");
                     java.util.logging.Logger.getLogger("error").warning(ex.toString());
