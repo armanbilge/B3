@@ -314,9 +314,8 @@ public class MCLogger implements Logger {
 
     public void resumeLog() {
 
-        boolean screenLog = formatters.size() > files.size();
-        formatters.clear();
-        if (screenLog) addFormatter(new TabDelimitedFormatter(new PrintWriter(System.out)));
+        formatters = new ArrayList<>();
+        if (performanceReport) addFormatter(new TabDelimitedFormatter(new PrintWriter(System.out)));
         boolean firstFile = true;
         for (final File file : files) {
             try {
@@ -357,7 +356,7 @@ public class MCLogger implements Logger {
         this.formatters = formatters;
     }
 
-    protected List<LogFormatter> formatters = new ArrayList<LogFormatter>();
+    protected transient List<LogFormatter> formatters = new ArrayList<LogFormatter>();
 
     public void addFile(final File file) {
         files.add(file);
