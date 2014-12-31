@@ -312,7 +312,8 @@ public class MCLogger implements Logger {
         }
     }
 
-    public void resumeLog() {
+    @Override
+    public void resume() {
 
         formatters = new ArrayList<>();
         if (performanceReport) addFormatter(new TabDelimitedFormatter(new PrintWriter(System.out)));

@@ -238,6 +238,7 @@ public class TreeLogger extends MCLogger {
 		this.tree = tree;
 	}
 
+    @Override
     protected long getLastLoggedState(final File file) {
         try {
             String line = FileHelpers.readLastLine(file);

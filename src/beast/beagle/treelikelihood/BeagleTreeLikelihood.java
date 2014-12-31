@@ -49,6 +49,7 @@ import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.ThreadAwareLikelihood;
+import beast.util.Serializer;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
@@ -74,7 +75,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood {
+public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Serializer.Resumable {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -1325,7 +1326,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return siteLogLikelihoods;
     }
 
-    public void reloadBeagle() {
+    @Override
+    public void resume() {
+        reloadBeagle();
+    }
+
+    protected void reloadBeagle() {
         loadBeagleInstance();
         try {
             initTips();

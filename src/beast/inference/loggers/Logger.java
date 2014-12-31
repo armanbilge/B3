@@ -20,6 +20,8 @@
 
 package beast.inference.loggers;
 
+import beast.util.Serializer;
+
 /**
  * An interface for a logger.
  *
@@ -28,14 +30,12 @@ package beast.inference.loggers;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface Logger {
+public interface Logger extends Serializer.Resumable {
 
 	void startLogging();
 
 	void log(long state);
 
 	void stopLogging();
-
-	void resumeLog();
 
 }
