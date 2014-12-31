@@ -661,7 +661,7 @@ public class MCMC implements Identifiable, Spawnable {
 
                     int minOperatorCountForFullEvaluation = xo.getAttribute(MIN_OPS_EVALUATIONS, 1);
 
-                    final int storeEvery = xo.getAttribute(STORE_EVERY, 1000);
+                    final int storeEvery = xo.getAttribute(STORE_EVERY, 10000);
 
                     MCMCOptions options = new MCMCOptions(chainLength,
                             fullEvaluationCount,
