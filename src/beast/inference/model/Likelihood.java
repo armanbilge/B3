@@ -21,6 +21,8 @@
 package beast.inference.model;
 
 import beast.inference.loggers.Loggable;
+import beast.math.Differentiable;
+import beast.math.MachineAccuracy;
 import beast.util.Identifiable;
 
 import java.util.HashSet;
@@ -35,7 +37,7 @@ import java.util.Set;
  * @version $Id: Likelihood.java,v 1.16 2005/05/24 20:26:00 rambaut Exp $
  */
 
-public interface Likelihood extends Loggable, Identifiable {
+public interface Likelihood extends Loggable, Identifiable, Differentiable {
 
 	/**
 	 * Get the model.
@@ -48,6 +50,10 @@ public interface Likelihood extends Loggable, Identifiable {
 	 * @return the log likelihood.
 	 */
 	double getLogLikelihood();
+
+	default double evaluate() {
+		return getLogLikelihood();
+	}
 
 	/**
 	 * Forces a complete recalculation of the likelihood next time getLikelihood is called
