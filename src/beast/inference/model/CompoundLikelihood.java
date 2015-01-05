@@ -208,40 +208,14 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     }
 
     public double differentiate(final Variable<Double> var, final int index) {
-        final double[] computedLikelihoods = new double[likelihoods.size()];
+        double derivative = differentiateLikelihoods(earlyLikelihoods, var, index);
         if (pool == null) {
-            for (int i = 0; i < computedLikelihoods.length; ++i)
-                computedLikelihoods[i] = likelihoods.get(i).getLogLikelihood();
+            derivative += differentiateLikelihoods(lateLikelihoods, var, index);
         } else {
-            try {
-                List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
-
-                for (int i = 0; i < computedLikelihoods.length; ++i)
-                    computedLikelihoods[i] = results.get(i).get();
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-
+            // TODO reconsider use of parallelStream
+            derivative += lateLikelihoods.parallelStream().mapToDouble(l -> l.differentiate(var, index)).sum();
         }
-
-        double derivative = 0;
-
-        for (int i = 0; i < computedLikelihoods.length; ++i) {
-            double product = 1.0;
-            for (int j = 0; j < computedLikelihoods.length; ++j) {
-                if (i == j)
-                    product *= likelihoods.get(j).differentiate(var, i);
-                else
-                    product *= computedLikelihoods[j];
-            }
-            derivative += product;
-        }
-
         return derivative;
-
     }
 
     private double evaluateLikelihoods(ArrayList<Likelihood> likelihoods) {
@@ -274,6 +248,14 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         return logLikelihood;
     }
+
+    private double differentiateLikelihoods(ArrayList<Likelihood> likelihoods, final Variable<Double> var, final int index) {
+        double derivative = 0.0;
+        for (Likelihood likelihood : likelihoods)
+            derivative += likelihood.differentiate(var, index);
+        return derivative;
+    }
+
 
     public void makeDirty() {
         for( Likelihood likelihood : likelihoods ) {
