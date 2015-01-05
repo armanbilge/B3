@@ -59,7 +59,9 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         UNSCALED,     // no coefficient 
         TIMESONLY,    // n!
         ORIENTED,     // n
-        LABELED,      // 2^(n-1)/(n-1)!  (conditional on root: 2^(n-1)/n!(n-1) )
+        LABELED,      // 2^(n-1)/(n-1)!
+                      // conditional on root: 2^(n-1)/n!(n-1)
+                      // conditional on origin: 2^(n-1)/n!
     }
 
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
@@ -79,9 +81,12 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
    
     private Parameter sampleProbability;
 
+    private Parameter originHeightParameter;
+
     private TreeType type;
 
     private boolean conditionalOnRoot;
+    private boolean conditionOnOrigin;
 
     /**
      * rho *
@@ -90,16 +95,18 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
     public BirthDeathModel(Parameter birthDiffRateParameter,
                            Parameter relativeDeathRateParameter,
                            Parameter sampleProbability,
+                           Parameter originHeightParameter,
                            TreeType type,
                            Type units) {
 
-        this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, sampleProbability, type, units, false);
+        this(BIRTH_DEATH_MODEL, birthDiffRateParameter, relativeDeathRateParameter, sampleProbability, originHeightParameter, type, units, false);
     }
 
     public BirthDeathModel(String modelName,
                            Parameter birthDiffRateParameter,
                            Parameter relativeDeathRateParameter,
                            Parameter sampleProbability,
+                           Parameter originHeightParameter,
                            TreeType type,
                            Type units, boolean conditionalOnRoot) {
 
@@ -121,9 +128,13 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
             sampleProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
 
+        this.originHeightParameter = originHeightParameter;
+        conditionOnOrigin = originHeightParameter != null;
+        if (conditionOnOrigin) addVariable(originHeightParameter);
+
         this.conditionalOnRoot = conditionalOnRoot;
-        if ( conditionalOnRoot && sampleProbability != null) {
-            throw new IllegalArgumentException("Not supported: birth death prior conditional on root with sampling probability.");
+        if ( conditionalOnRoot && conditionOnOrigin) {
+            throw new IllegalArgumentException("Cannot condition on both root and origin!");
         }
 
         this.type = type;
@@ -153,6 +164,13 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         return sampleProbability != null ? sampleProbability.getParameterValue(0) : 1.0;
     }
 
+    @Override
+    public double calculateTreeLogLikelihood(Tree tree) {
+        if (conditionOnOrigin && tree.getNodeHeight(tree.getRoot()) > originHeightParameter.getValue(0))
+            return Double.NEGATIVE_INFINITY;
+        return super.calculateTreeLogLikelihood(tree);
+    }
+
     private double logCoeff(int taxonCount) {
         switch( type ) {
             case UNSCALED: break;
@@ -160,10 +178,12 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
             case ORIENTED:  return Math.log(taxonCount);
             case LABELED:   {
                 final double two2nm1 = (taxonCount - 1) * Math.log(2.0);
-                if( ! conditionalOnRoot ) {
-                    return two2nm1 - logGamma(taxonCount);
-                } else {
+                if( conditionalOnRoot ) {
                     return two2nm1 - Math.log(taxonCount-1) - logGamma(taxonCount+1);
+                } else if (conditionOnOrigin) {
+                    return two2nm1 - logGamma(taxonCount + 1);
+                } else {
+                    return two2nm1 - logGamma(taxonCount);
                 }
             }
         }
@@ -172,7 +192,10 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
 
     public double logTreeProbability(int taxonCount) {
         double c1 = logCoeff(taxonCount);
-        if( ! conditionalOnRoot ) {
+        if (conditionOnOrigin) {
+            final double height = originHeightParameter.getValue(0);
+            c1 += (taxonCount - 1) * logConditioningTerm(height);
+        } else if (!conditionalOnRoot) {
             c1 += (taxonCount - 1) * Math.log(getR() * getRho()) + taxonCount * Math.log(1 - getA());
         }
         return c1;
@@ -183,32 +206,32 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         final double r = getR();
         final double mrh = -r * height;
         final double a = getA();
+        final double rho = getRho();
 
-        if( ! conditionalOnRoot ) {
-            final double rho = getRho();
-            final double z = Math.log(rho + ((1 - rho) - a) * Math.exp(mrh));
-            double l = -2 * z + mrh;
+        if (conditionalOnRoot && tree.isRoot(node)) {
+            return (tree.getTaxonCount() - 2) * logConditioningTerm(height);
+        }
 
-            if( tree.getRoot() == node ) {
-                l += mrh - z;
-            }
-            return l;
-        } else {
-            double l;
-            if( tree.getRoot() != node ) {
-                final double z = Math.log(1 - a * Math.exp(mrh));
-                l = -2 * z + mrh;
-            } else {
-                // Root dependent coefficient from each internal node
-                final double ca = 1 - a;
-                final double emrh = Math.exp(-mrh);
-                if( emrh != 1.0 ) {
-                  l = (tree.getTaxonCount() - 2) * Math.log(r * ca * (1 + ca /(emrh - 1)));
-                } else {  // use exp(x)-1 = x for x near 0
-                  l = (tree.getTaxonCount() - 2) * Math.log(ca * (r + ca/height));
-                }
-            }
-            return l;
+        final double z = Math.log(rho + ((1 - rho) - a) * Math.exp(mrh));
+        double l = -2 * z + mrh;
+
+        if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
+            l += mrh - z;
+        }
+
+        return l;
+    }
+
+    double logConditioningTerm(double height) {
+        final double r = getR();
+        final double a = getA();
+        final double rho = getRho();
+        final double ca = 1 - a;
+        final double erh = Math.exp(r * height);
+        if (erh != 1.0) {
+            return Math.log(r * ca * (rho + ca / (erh - 1)));
+        } else {  // use exp(x)-1 = x for x near 0
+            return Math.log(ca * (r * rho + ca / height));
         }
     }
 
@@ -221,6 +244,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
         public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
         public static final String SAMPLE_PROB = "sampleProbability";
+        public static final String ORIGIN_HEIGHT = "originHeight";
         public static final String TREE_TYPE = "type";
 
         public static final String BIRTH_DEATH = "birthDeath";
@@ -241,12 +265,14 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
             final Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
             final Parameter sampleProbability = xo.hasChildNamed(SAMPLE_PROB) ?
                     (Parameter) xo.getElementFirstChild(SAMPLE_PROB) : null;
+            final Parameter originHeightParameter = xo.hasChildNamed(ORIGIN_HEIGHT) ?
+                    (Parameter) xo.getElementFirstChild(ORIGIN_HEIGHT) : null;
 
             Logger.getLogger("beast.evomodel").info(xo.hasChildNamed(SAMPLE_PROB) ? getCitationRHO() : getCitation());
 
             final String modelName = xo.getId();
 
-            return new BirthDeathModel(modelName, birthParameter, deathParameter, sampleProbability,
+            return new BirthDeathModel(modelName, birthParameter, deathParameter, sampleProbability, originHeightParameter,
                     treeType, units, conditonalOnRoot);
         }
 
@@ -280,6 +306,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
                 new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(SAMPLE_PROB, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                new ElementRule(ORIGIN_HEIGHT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
                 Units.UNITS_RULE
         };
     };
@@ -288,6 +315,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         public static final String YULE_MODEL = "yuleModel";
 
         public static final String YULE = "yule";
+        public static final String ORIGIN_HEIGHT = "originHeight";
         public static final String BIRTH_RATE = "birthRate";
 
         public String getParserName() {
@@ -302,10 +330,12 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
 
             final boolean conditonalOnRoot =  xo.getAttribute(CONDITIONAL_ON_ROOT, false);
             final Parameter brParameter = (Parameter) cxo.getChild(Parameter.class);
+            final Parameter originHeightParameter = xo.hasChildNamed(ORIGIN_HEIGHT) ?
+                    (Parameter) xo.getElementFirstChild(ORIGIN_HEIGHT) : null;
 
             Logger.getLogger("beast.evomodel").info("Using Yule prior on tree");
 
-            return new BirthDeathModel(xo.getId(), brParameter, null, null,
+            return new BirthDeathModel(xo.getId(), brParameter, null, null, originHeightParameter,
                     TreeType.UNSCALED, units, conditonalOnRoot);
         }
 
@@ -329,6 +359,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
                 AttributeRule.newBooleanRule(CONDITIONAL_ON_ROOT, true),
                 new ElementRule(BIRTH_RATE,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                new ElementRule(ORIGIN_HEIGHT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
                 Units.UNITS_RULE
         };
     };

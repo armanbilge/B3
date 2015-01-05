@@ -76,7 +76,7 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * @param tree
      * @return log-likelihood of density
      */
-    public final double calculateTreeLogLikelihood(Tree tree) {
+    public double calculateTreeLogLikelihood(Tree tree) {
         final int taxonCount = tree.getExternalNodeCount();
         double logL = logTreeProbability(taxonCount);
 
