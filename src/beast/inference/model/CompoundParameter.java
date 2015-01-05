@@ -20,6 +20,13 @@
 
 package beast.inference.model;
 
+import beast.xml.AbstractXMLObjectParser;
+import beast.xml.ElementRule;
+import beast.xml.XMLObject;
+import beast.xml.XMLObjectParser;
+import beast.xml.XMLParseException;
+import beast.xml.XMLSyntaxRule;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -320,4 +327,46 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         parameter.addParameter(param3);
         parameter.removeParameter(param2);
     }
+
+    public static final XMLObjectParser<CompoundParameter> PARSER = new AbstractXMLObjectParser<CompoundParameter>() {
+
+        public static final String COMPOUND_PARAMETER = "compoundParameter";
+
+        public String getParserName() {
+            return COMPOUND_PARAMETER;
+        }
+
+        public CompoundParameter parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            CompoundParameter compoundParameter = new CompoundParameter((String) null);
+
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                compoundParameter.addParameter((Parameter) xo.getChild(i));
+            }
+
+            return compoundParameter;
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A multidimensional parameter constructed from its component parameters.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+            };
+        }
+
+        public Class getReturnType() {
+            return CompoundParameter.class;
+        }
+    };
 }
