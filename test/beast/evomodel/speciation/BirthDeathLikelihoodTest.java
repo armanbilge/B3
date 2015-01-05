@@ -72,7 +72,7 @@ public class BirthDeathLikelihoodTest {
         Parameter b = new Parameter.Default("b", birthRate, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", deathRate, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, BirthDeathModel.TreeType.ORIENTED,
+        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, null, BirthDeathModel.TreeType.ORIENTED,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bd.like");
 

@@ -104,7 +104,7 @@ public class YuleModelTest extends TraceCorrelationAssert {
         Parameter b = new Parameter.Default("b", 2.0, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, BirthDeathModel.TreeType.TIMESONLY,
+        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, null, BirthDeathModel.TreeType.TIMESONLY,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 

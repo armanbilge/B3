@@ -65,7 +65,7 @@ public class YuleLikelihoodTest {
         Parameter b = new Parameter.Default("b", birthRate, 0.0, Double.MAX_VALUE);
         Parameter d = new Parameter.Default("d", 0.0, 0.0, Double.MAX_VALUE);
 
-        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, BirthDeathModel.TreeType.TIMESONLY,
+        SpeciationModel speciationModel = new BirthDeathModel(b, d, null, null, BirthDeathModel.TreeType.TIMESONLY,
                 Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "yule.like");
 
