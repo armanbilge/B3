@@ -22,6 +22,7 @@ package beast.inference.prior;
 
 import beast.inference.model.Likelihood;
 import beast.inference.model.Statistic;
+import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.ElementRule;
 import beast.xml.XMLObject;
@@ -79,6 +80,10 @@ public class OneOnXPrior extends Likelihood.Abstract {
         return logL;
     }
 
+    public double differentiate(final Variable<Double> var, final int index) {
+        if (dataList.contains(var)) return - 1 / var.getValue(index);
+        return 0.0;
+    }
 
     public String prettyName() {
         String s = "OneOnX" + "(";

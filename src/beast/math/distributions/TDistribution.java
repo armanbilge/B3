@@ -42,6 +42,10 @@ public class TDistribution implements Distribution {
         return logPDF(x, center, scale, df);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPDF(x, center, scale, df);
+    }
+
     public double cdf(double x) {
         throw new RuntimeException("Not yet implemented");
     }
@@ -96,6 +100,12 @@ public class TDistribution implements Distribution {
                 - (df + 1) / 2 * Math.log(1 + loc * loc / df / scale);
 
         return logPDF;
+    }
+
+    public static double differentiateLogPDF(double x, double x0, double scale, double df) {
+
+        double loc = x0 - x;
+        return (df + 1) * loc / (loc * loc + scale * df);
     }
 
     private double df;

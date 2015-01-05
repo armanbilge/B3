@@ -37,6 +37,10 @@ public class HalfTDistribution extends TDistribution {
         return x < 0.0 ? Double.NEGATIVE_INFINITY : super.logPdf(x) + Math.log(2.0);
     }
 
+    public double differentiateLogPdf(double x) {
+        return x < 0.0 ? 0 : super.differentiateLogPdf(x);
+    }
+
     public double mean() {
         throw new RuntimeException("Not yet implemented");
     }

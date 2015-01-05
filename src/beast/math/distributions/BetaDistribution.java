@@ -148,6 +148,39 @@ public class BetaDistribution implements Distribution {
     }
 
     /**
+     * the derivative of the natural log of the probability density function of the distribution
+     *
+     * @param x argument
+     * @return log pdf value
+     */
+    public double differentiateLogPdf(double x){
+        recomputeZ();
+        if (x < 0 || x > 1) {
+            return 0;
+        } else if (x == 0) {
+            if (alpha < 1) {
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
+            }
+            return 0;
+        } else if (x == 1) {
+            if (beta < 1) {
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 1 when beta = %.3g", beta);
+            }
+            return 0;
+        } else {
+            return (alpha - 1) / x + (beta - 1) / (x - 1);
+        }
+    }
+
+    /**
      * quantile (inverse cumulative density function) of the distribution
      *
      * @param y argument

@@ -173,7 +173,7 @@ public interface Parameter extends Statistic, Variable<Double> {
     /**
      * Abstract base class for parameters
      */
-    public abstract class Abstract extends Statistic.Abstract implements Parameter {
+    public abstract class  Abstract extends Statistic.Abstract implements Parameter {
 
         protected Abstract() {
         }

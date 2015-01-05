@@ -21,6 +21,7 @@
 package beast.inference.distribution;
 
 import beast.inference.model.Statistic;
+import beast.inference.model.Variable;
 import beast.math.distributions.Distribution;
 import beast.util.Attribute;
 import beast.xml.AbstractXMLObjectParser;
@@ -120,6 +121,12 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         }
         return logL;
+    }
+
+    public double differentiate(final Variable<Double> var, final int index) {
+        if (from <= index && index < to && dataList.contains(var))
+            return distribution.differentiateLogPdf(var.getValue(index) - offset);
+        return 0.0;
     }
 
     @Override

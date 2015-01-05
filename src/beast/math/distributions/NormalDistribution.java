@@ -67,6 +67,10 @@ public class NormalDistribution implements Distribution/*, RandomGenerator*/ {
         return logPdf(x, m, sd);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPdf(x, m, sd);
+    }
+
     public double cdf(double x) {
         return cdf(x, m, sd);
     }
@@ -129,6 +133,18 @@ public class NormalDistribution implements Distribution/*, RandomGenerator*/ {
         double b = -(x - m) * (x - m) / (2.0 * sd * sd);
 
         return Math.log(a) + b;
+    }
+
+    /**
+     * the natural log of the probability density function of the distribution
+     *
+     * @param x  argument
+     * @param m  mean
+     * @param sd standard deviation
+     * @return log pdf at x
+     */
+    public static double differentiateLogPdf(double x, double m, double sd) {
+        return - (x - m) / (sd * sd);
     }
 
     /**

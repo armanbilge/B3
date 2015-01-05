@@ -51,6 +51,10 @@ public class UniformDistribution implements Distribution {
         return logPdf(x, lower, upper);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPdf(x, lower, upper);
+    }
+
     public double cdf(double x) {
         return cdf(x, lower, upper);
     }
@@ -113,6 +117,11 @@ public class UniformDistribution implements Distribution {
         return - Math.log(upper - lower);
 //        return Math.log(pdf(x, lower, upper));
     }
+
+    public static double differentiateLogPdf(double x, double lower, double upper) {
+        return 0;
+    }
+
 
     /**
      * cumulative density function of the uniform distribution

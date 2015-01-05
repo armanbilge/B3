@@ -84,6 +84,10 @@ public class InverseGaussianDistribution implements Distribution {
         return logPdf(x, m, shape);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPdf(x, m, shape);
+    }
+
     public double cdf(double x) {
         return cdf(x, m, shape);
     }
@@ -146,6 +150,21 @@ public class InverseGaussianDistribution implements Distribution {
         double a = Math.sqrt(shape / (2.0 * Math.PI * x * x * x));
         double b = ((-shape) * (x - m) * (x - m)) / (2.0 * m * m * x);
         return Math.log(a) + b;
+    }
+
+    /**
+     * the natural log of the probability density function of the distribution
+     *
+     * @param x     argument
+     * @param m     mean
+     * @param shape shape parameter
+     * @return log pdf at x
+     */
+    public static double differentiateLogPdf(double x, double m, double shape) {
+        double halfShape = shape / 2;
+        double a = (halfShape - 1.5 * x) / (x * x);
+        double b = - halfShape / (m * m);
+        return a + b;
     }
 
     /**

@@ -56,6 +56,10 @@ public class ExponentialDistribution implements Distribution {
         return logPdf(x, lambda);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPdf(x, lambda);
+    }
+
     public double cdf(double x) {
         return cdf(x, lambda);
     }
@@ -116,6 +120,19 @@ public class ExponentialDistribution implements Distribution {
     	if (x < 0) return Double.NEGATIVE_INFINITY;
     	
         return Math.log(lambda) - (lambda * x);
+    }
+
+    /**
+     * the derivative of the natural log of the probability density function of the distribution
+     * (mean = 1/lambda)
+     *
+     * @param x      argument
+     * @param lambda parameter of exponential distribution
+     * @return log pdf value
+     */
+    public static double differentiateLogPdf(double x, double lambda) {
+        if (x < 0) return 0;
+        return -lambda;
     }
 
     /**

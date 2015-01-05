@@ -50,6 +50,10 @@ public class PoissonDistribution implements Distribution {
 
     }
 
+    public double differentiateLogPdf(double x) {
+        throw new RuntimeException("Can't differentiate against discrete variables!");
+    }
+
     public double cdf(double x) {
         return distribution.cumulativeProbability((int) x);
     }

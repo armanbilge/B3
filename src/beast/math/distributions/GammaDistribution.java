@@ -80,6 +80,10 @@ public class GammaDistribution implements Distribution {
         return logPdf(x, shape, scale);
     }
 
+    public double differentiateLogPdf(double x) {
+        return differentiateLogPdf(x, shape, scale);
+    }
+
     public double cdf(double x) {
         return cdf(x, shape, scale);
     }
@@ -189,6 +193,30 @@ public class GammaDistribution implements Distribution {
         return ((shape - 1.0) * (Math.log(x) - Math.log(scale)) - x / scale - GammaFunction
                 .lnGamma(shape))
                 - Math.log(scale);
+    }
+
+    public static double differentiateLogPdf(double x, double shape, double scale) {
+        // double a = Math.pow(scale,-shape) * Math.pow(x, shape-1.0);
+        // double b = x/scale + GammaFunction.lnGamma(shape);
+        // return Math.log(a) - b;
+
+        // AR - changed this to return -ve inf instead of throwing an
+        // exception... This makes things
+        // much easier when using this to calculate log likelihoods.
+        // if (x < 0) throw new IllegalArgumentException();
+        if (x < 0)
+            return 0;
+
+        if (x == 0) {
+            return 0;
+        }
+        if (shape == 1.0) {
+            return -1 / scale;
+        }
+        if (shape == 0.0)  // uninformative
+            return -1/x;
+
+        return (shape - 1) / x - 1 / scale;
     }
 
     /**

@@ -110,6 +110,10 @@ public class LaplaceDistribution implements Distribution {
         return Math.log(c) - (Math.abs(x - mu) / beta);
     }
 
+    public double differentiateLogPdf(double x) {
+        return Math.signum(x - mu) / beta;
+    }
+
     public double quantile(double y) {
         double sign = 1;
         if (y < 0.5) sign = -1;

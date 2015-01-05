@@ -49,6 +49,10 @@ public class NegativeBinomialDistribution implements Distribution {
         return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
     }
 
+    public double differentiateLogPdf(double x) {
+        throw new RuntimeException("Can't differentiate with regard to discrete variable.");
+    }
+
     public double cdf(double x) {
         double r = -1 * (mean*mean) / (mean - stdev*stdev);
         double p = mean / (stdev*stdev);
