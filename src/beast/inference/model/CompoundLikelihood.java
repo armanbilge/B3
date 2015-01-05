@@ -207,6 +207,43 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return logLikelihood;
     }
 
+    public double differentiate(final Variable<Double> var, final int index) {
+        final double[] computedLikelihoods = new double[likelihoods.size()];
+        if (pool == null) {
+            for (int i = 0; i < computedLikelihoods.length; ++i)
+                computedLikelihoods[i] = likelihoods.get(i).getLogLikelihood();
+        } else {
+            try {
+                List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
+
+                for (int i = 0; i < computedLikelihoods.length; ++i)
+                    computedLikelihoods[i] = results.get(i).get();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        double derivative = 0;
+
+        for (int i = 0; i < computedLikelihoods.length; ++i) {
+            double product = 1.0;
+            for (int j = 0; j < computedLikelihoods.length; ++j) {
+                if (i == j)
+                    product *= likelihoods.get(j).differentiate(var, i);
+                else
+                    product *= computedLikelihoods[j];
+            }
+            derivative += product;
+        }
+
+        return derivative;
+
+    }
+
     private double evaluateLikelihoods(ArrayList<Likelihood> likelihoods) {
         double logLikelihood = 0.0;
         int i = 0;
