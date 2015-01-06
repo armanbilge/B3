@@ -1186,7 +1186,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
     public boolean isHeightParameterForNode(final NodeRef node, final Parameter param, final int index) {
         if (!(param instanceof CompoundParameter)) return false;
         final CompoundParameter compoundParam = (CompoundParameter) param;
-        final Parameter heightParameter = compoundParam.getParameter(index);
+        final Parameter heightParameter = compoundParam.getMaskedParameter(index);
         return ((Node) node).heightParameter == heightParameter;
     }
 
