@@ -147,6 +147,15 @@ public class NormalDistribution implements Distribution/*, RandomGenerator*/ {
         return - (x - m) / (sd * sd);
     }
 
+    public static double differentiateLogPdfMean(double x, double m, double sd) {
+        return (x - m) / (sd * sd);
+    }
+
+    public static double differentiateLogPdfStdev(double x, double m, double sd) {
+        final double mmx = m - x;
+        return mmx * mmx / (sd * sd * sd) - 1 / sd;
+    }
+
     /**
      * cumulative density function
      *

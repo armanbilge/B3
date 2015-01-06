@@ -25,6 +25,7 @@ import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTrait;
 import beast.inference.model.AbstractModelLikelihood;
 import beast.inference.model.Model;
+import beast.inference.model.Variable;
 
 /**
  * An abstract base class for BranchRateModels to help implement some of the interfaces
@@ -76,6 +77,10 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
     }
 
     public double getLogLikelihood() {
+        return 0;
+    }
+
+    public double differentiate(Variable<Double> var, int index) {
         return 0;
     }
 

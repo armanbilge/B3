@@ -22,6 +22,7 @@ package beast.evomodel.clock;
 
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.math.MathUtils;
 import beast.math.distributions.NormalDistribution;
 import beast.xml.AbstractXMLObjectParser;
@@ -67,6 +68,64 @@ public class UCLikelihood extends RateEvolutionLikelihood {
         } else {
             return NormalDistribution.logPdf(rate, meanRate, Math.sqrt(var));
         }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double foo1, double rate, double foo2, boolean ignore) {
+        if (!ignore) {
+            double var = variance.getParameterValue(0);
+            double meanRate = rootRateParameter.getParameterValue(0);
+
+            if (isLogSpace) {
+                final double logmeanRate = Math.log(meanRate);
+                final double logRate = Math.log(rate);
+
+                return (NormalDistribution.differentiateLogPdf(logRate, logmeanRate - (var / 2.), Math.sqrt(var)) - 1) / rate;
+
+            } else {
+                return NormalDistribution.differentiateLogPdf(rate, meanRate, Math.sqrt(var));
+            }
+        } else {
+            return 0.0;
+        }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double foo1, double rate, double foo2, final Variable<Double> v, int index) {
+        double var = variance.getParameterValue(0);
+        double meanRate = rootRateParameter.getParameterValue(0);
+
+        if (v == variance) {
+
+            if (isLogSpace) {
+                final double logmeanRate = Math.log(meanRate);
+                final double logRate = Math.log(rate);
+                final double mean = logmeanRate - (var / 2.);
+                final double stdev = Math.sqrt(var);
+                return 0.5 * (NormalDistribution.differentiateLogPdfMean(logRate, mean, stdev)
+                        + NormalDistribution.differentiateLogPdfStdev(logRate, mean, stdev) / stdev);
+
+            } else {
+                return 0.5 * NormalDistribution.differentiateLogPdfStdev(rate, meanRate, Math.sqrt(var)) / Math.sqrt(var);
+            }
+
+        } else if (v == rootRateParameter) {
+
+            if (isLogSpace) {
+                final double logmeanRate = Math.log(meanRate);
+                final double logRate = Math.log(rate);
+
+                return NormalDistribution.differentiateLogPdfMean(logRate, logmeanRate - (var / 2.), Math.sqrt(var)) / meanRate;
+
+            } else {
+                return NormalDistribution.differentiateLogPdfMean(rate, meanRate, Math.sqrt(var));
+            }
+
+        } else {
+            return 0.0;
+        }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double foo1, double rate, double foo2) {
+        return 0.0;
     }
 
     double branchRateSample(double foo1, double foo2) {

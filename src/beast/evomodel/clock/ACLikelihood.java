@@ -22,6 +22,7 @@ package beast.evomodel.clock;
 
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.math.MathUtils;
 import beast.math.distributions.InverseGaussianDistribution;
 import beast.math.distributions.LogNormalDistribution;
@@ -98,6 +99,98 @@ public class ACLikelihood extends RateEvolutionLikelihood {
             case INVERSE_GAUSSIAN:
                 double shape = (parentRate * parentRate * parentRate) / var;
                 return InverseGaussianDistribution.logPdf(childRate, parentRate, shape);
+            default:
+                throw new RuntimeException("No distribution specified!");
+        }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time, boolean respectParent) {
+        double var = variance.getParameterValue(0);
+
+        if (!isEpisodic())
+            var *= time;
+
+        if (respectParent) {
+            switch (distribution) {
+                case LOG_NORMAL:
+                    return LogNormalDistribution.differentiateLogPdfMean(childRate, Math.log(parentRate) - (var / 2.), Math.sqrt(var)) / parentRate;
+                case NORMAL:
+                    return NormalDistribution.differentiateLogPdfMean(childRate, parentRate, Math.sqrt(var));
+                case INVERSE_GAUSSIAN:
+                    double shape = (parentRate * parentRate * parentRate) / var;
+                    return InverseGaussianDistribution.differentiateLogPdfMean(childRate, parentRate, shape)
+                            + 3 * parentRate * parentRate * InverseGaussianDistribution.differentiateLogPdfShape(childRate, parentRate, shape) / var;
+                default:
+                    throw new RuntimeException("No distribution specified!");
+            }
+        } else {
+            switch (distribution) {
+                case LOG_NORMAL:
+                    return LogNormalDistribution.differentiateLogPdf(childRate, Math.log(parentRate) - (var / 2.), Math.sqrt(var));
+                case NORMAL:
+                    return NormalDistribution.differentiateLogPdf(childRate, parentRate, Math.sqrt(var));
+                case INVERSE_GAUSSIAN:
+                    double shape = (parentRate * parentRate * parentRate) / var;
+                    return InverseGaussianDistribution.differentiateLogPdf(childRate, parentRate, shape);
+                default:
+                    throw new RuntimeException("No distribution specified!");
+            }
+        }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time, Variable<Double> v, int index) {
+        if (v == variance) {
+            double var = variance.getParameterValue(0);
+            double chain = 1.0;
+            if (!isEpisodic()) {
+                var *= time;
+                chain *= time;
+            }
+            switch (distribution) {
+                case LOG_NORMAL: {
+                    final double mean = Math.log(parentRate) - (var / 2.);
+                    final double stdev = Math.sqrt(var);
+                    return chain * 0.5 * (-LogNormalDistribution.differentiateLogPdfMean(childRate, mean, stdev)
+                            + LogNormalDistribution.differentiateLogPdfStdev(childRate, mean, stdev) / stdev);
+                }
+                case NORMAL: {
+                    final double stdev = Math.sqrt(var);
+                    return chain * 0.5 * NormalDistribution.differentiateLogPdfStdev(childRate, parentRate, stdev) / stdev;
+                }
+                case INVERSE_GAUSSIAN:
+                    final double parentRateCubed = parentRate * parentRate * parentRate;
+                    final double shape = parentRateCubed / var;
+                    return chain * parentRateCubed * InverseGaussianDistribution.differentiateLogPdfShape(childRate, parentRate, shape) / (var * var);
+                default:
+                    throw new RuntimeException("No distribution specified!");
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time) {
+        double var = variance.getParameterValue(0);
+        double chain = 1.0;
+        if (!isEpisodic()) {
+            var *= time;
+            chain *= var;
+        }
+        switch (distribution) {
+            case LOG_NORMAL: {
+                final double mean = Math.log(parentRate) - (var / 2.);
+                final double stdev = Math.sqrt(var);
+                return chain * 0.5 * (-LogNormalDistribution.differentiateLogPdfMean(childRate, mean, stdev)
+                        + LogNormalDistribution.differentiateLogPdfStdev(childRate, mean, stdev) / stdev);
+            }
+            case NORMAL: {
+                final double stdev = Math.sqrt(var);
+                return chain * 0.5 * NormalDistribution.differentiateLogPdfStdev(childRate, parentRate, stdev) / stdev;
+            }
+            case INVERSE_GAUSSIAN:
+                final double parentRateCubed = parentRate * parentRate * parentRate;
+                final double shape = parentRateCubed / var;
+                return chain * parentRateCubed * InverseGaussianDistribution.differentiateLogPdfShape(childRate, parentRate, shape) / (var * var);
             default:
                 throw new RuntimeException("No distribution specified!");
         }

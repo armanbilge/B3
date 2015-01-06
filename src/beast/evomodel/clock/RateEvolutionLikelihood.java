@@ -146,6 +146,14 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
         return calculateLogLikelihood(root, node1) + calculateLogLikelihood(root, node2);
     }
 
+    public double differentiate(Variable<Double> var, int index) {
+        NodeRef root = treeModel.getRoot();
+        NodeRef node1 = treeModel.getChild(root, 0);
+        NodeRef node2 = treeModel.getChild(root, 1);
+
+        return differentiateLogLikelihood(root, node1, var, index) + differentiateLogLikelihood(root, node2, var, index);
+    }
+
     /**
      * Recursively calculate the log likelihood of the rate changes in the given tree.
      *
@@ -166,6 +174,44 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
             logL += calculateLogLikelihood(node, treeModel.getChild(node, i));
         }
         return logL;
+    }
+
+    private double differentiateLogLikelihood(NodeRef parent, NodeRef node, Variable<Double> var, int index) {
+
+        double deriv = 0;
+        double length = treeModel.getBranchLength(node);
+
+        if (var == rootRateParameter) {
+
+            if (parent == treeModel.getRoot())
+                deriv += differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length, true);
+            else if (node == treeModel.getRoot())
+                deriv += differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length, false);
+
+        } else if (ratesParameter.hasVariable(var)) {
+
+            if (index == ratesParameter.getParameterIndexFromNodeNumber(parent.getNumber()))
+                deriv += differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length, true);
+            else if (index == ratesParameter.getParameterIndexFromNodeNumber(node.getNumber()))
+                deriv += differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length, false);
+
+        } else if (var instanceof Parameter) {
+            boolean respectNode = treeModel.isHeightParameterForNode(node, (Parameter) var, index);
+            boolean respectParent = treeModel.isHeightParameterForNode(parent, (Parameter) var, index);
+            if (respectNode || respectParent)
+                deriv += (respectParent ? 1 : -1) * differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length);
+        } else {
+            deriv = differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node),
+                    length, var, index);
+        }
+
+
+        //System.out.print(parent.getNumber() + " " + getBranchRate(treeModel, parent)+ " " + node.getNumber() + " " + getBranchRate(treeModel, node) + " " + treeModel.getBranchLength(node) + " " + logL + ", ");
+
+        for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            deriv += differentiateLogLikelihood(node, treeModel.getChild(node, i), var, index);
+        }
+        return deriv;
     }
 
     public String toString() {
@@ -198,6 +244,12 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
      * @return the log likelihood of the rate change from the parent to the given node.
      */
     abstract double branchRateChangeLogLikelihood(double parentRate, double childRate, double time);
+
+    abstract double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time);
+
+    abstract double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time, boolean respectParent);
+
+    abstract double differentiateBranchRateChangeLogLikelihood(double parentRate, double childRate, double time, Variable<Double> var, int index);
 
     // **************************************************************
     // Private members

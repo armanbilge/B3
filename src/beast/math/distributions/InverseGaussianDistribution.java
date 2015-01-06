@@ -167,6 +167,15 @@ public class InverseGaussianDistribution implements Distribution {
         return a + b;
     }
 
+    public static double differentiateLogPdfMean(double x, double m, double shape) {
+        return shape * (m - x) / (m * m * m);
+    }
+
+    public static double differentiateLogPdfShape(double x, double m, double shape) {
+        final double mmx = m - x;
+        return 0.5 / shape - 0.5 * mmx * mmx / (m * m * x);
+    }
+
     /**
      * cumulative density function
      *
