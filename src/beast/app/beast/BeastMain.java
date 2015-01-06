@@ -35,6 +35,7 @@ import beast.util.ErrorLogHandler;
 import beast.util.MessageLogHandler;
 import beast.util.Serializer;
 import beast.util.Version;
+import beast.xml.SimpleXMLObjectParser;
 import beast.xml.XMLObjectParser;
 import beast.xml.XMLParser;
 import org.virion.jam.console.ConsoleApplication;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -148,6 +150,8 @@ public class BeastMain {
             for (String pluginName : PluginLoader.getAvailablePlugins()) {
                 Plugin plugin = PluginLoader.loadPlugin(pluginName);
                 if (plugin != null) {
+                    for (SimpleXMLObjectParser.XMLComponentFactory f : plugin.getComponentFactories())
+                        SimpleXMLObjectParser.registerXMLComponentFactory(f);
                     Set<XMLObjectParser> parserSet = plugin.getParsers();
                     for (XMLObjectParser pluginParser : parserSet) {
                         parser.addXMLObjectParser(pluginParser);

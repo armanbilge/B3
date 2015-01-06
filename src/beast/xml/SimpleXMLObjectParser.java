@@ -36,24 +36,31 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
 
     private final String name;
     private final String description;
-    private final Class<T> parsedClass;
+    private final Class<T> parsedType;
     private final Map<Constructor<T>, XMLComponent[]> constructorsToComponents;
     private final Map<XMLSyntaxRule,Constructor<T>> rulesToConstructors;
     private final XMLSyntaxRule[] rules;
 
-    public SimpleXMLObjectParser(final Class<T> parsedClass, final String description) throws ParserCreationException {
-        this(Introspector.decapitalize(parsedClass.getSimpleName()), parsedClass, description);
+    private static String camelCase(final String s) {
+        final StringBuilder cc = new StringBuilder(s);
+        for (int i = 0; i+1 < cc.length() && Character.isUpperCase(cc.charAt(i+1)); ++i)
+            cc.setCharAt(i, Character.toLowerCase(cc.charAt(i)));
+        return Introspector.decapitalize(cc.toString());
+    }
+    
+    public SimpleXMLObjectParser(final Class<T> parsedType, final String description) throws ParserCreationException {
+        this(camelCase(parsedType.getSimpleName()), parsedType, description);
     }
 
-    public SimpleXMLObjectParser(final String name, final Class<T> parsedClass, final String description) throws ParserCreationException {
+    public SimpleXMLObjectParser(final String name, final Class<T> parsedType, final String description) throws ParserCreationException {
         this.name = name;
-        this.parsedClass = parsedClass;
+        this.parsedType = parsedType;
         this.description = description;
         constructorsToComponents = new HashMap<>();
         rulesToConstructors = new HashMap<>();
         final List<XMLSyntaxRule> rules = new ArrayList<>();
-        for (Constructor constructor : parsedClass.getConstructors()) {
-            if (constructor.isAccessible() && constructor.isAnnotationPresent(Parseable.class)) {
+        for (Constructor constructor : parsedType.getConstructors()) {
+            if (constructor.isAnnotationPresent(Parseable.class)) {
                 final XMLComponent[] components = new XMLComponent[constructor.getParameterCount()];
                 final XMLSyntaxRule[] constructorRules = new XMLSyntaxRule[components.length];
                 for (int i = 0; i < components.length; ++i) {
@@ -64,7 +71,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                         }
                     }
                     if (components[i] == null)
-                        throw new ParserCreationException(parsedClass, "Parameter missing parseable annotation.");
+                        throw new ParserCreationException(parsedType, "Parameter missing parseable annotation.");
                     constructorRules[i] = components[i].getSyntaxRule();
                 }
                 constructorsToComponents.put(constructor, components);
@@ -73,7 +80,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                 rules.add(rule);
             }
         }
-        if (constructorsToComponents.size() == 0) throw new ParserCreationException(parsedClass, "No @Parseable constructors found!");
+        if (constructorsToComponents.size() == 0) throw new ParserCreationException(parsedType, "No @Parseable constructors found!");
         this.rules = new XMLSyntaxRule[]{new XORRule(rules.toArray(new XMLSyntaxRule[rules.size()]))};
     }
 
@@ -86,19 +93,12 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
     }
 
     public Class<T> getReturnType() {
-        return parsedClass;
+        return parsedType;
     }
 
     public T parseXMLObject(final XMLObject xo) throws XMLParseException {
 
-        Constructor<T> constructor = null;
-        for (final Map.Entry<XMLSyntaxRule,Constructor<T>> e : rulesToConstructors.entrySet()) {
-            if (e.getKey().isSatisfied(xo)) {
-                constructor = e.getValue();
-                break;
-            }
-        }
-        if (constructor == null) throw new XMLParseException();
+        final Constructor<T> constructor = rulesToConstructors.entrySet().stream().filter(e -> e.getKey().isSatisfied(xo)).findFirst().get().getValue();
         final XMLComponent[] components = constructorsToComponents.get(constructor);
 
         final Object[] parameters = new Object[components.length];
@@ -119,7 +119,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
     private <X> XMLComponent<X> createXMLComponent(final Class<X> parameterType, Annotation annotation) throws ParserCreationException {
         final XMLComponentFactory factory = PARSEABLE_ANNOTATIONS.get(annotation.annotationType());
         if (!factory.validate(parameterType))
-            throw new ParserCreationException(parsedClass, factory.getAnnotationType().getSimpleName() + " annotation must be associated with " + factory.getParsedType().getSimpleName() + " parameter.");
+            throw new ParserCreationException(parsedType, factory.getAnnotationType().getSimpleName() + " annotation must be associated with " + factory.getParsedType().getSimpleName() + " parameter.");
         return factory.createXMLComponent(parameterType, annotation);
     }
 
@@ -157,7 +157,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         registerXMLComponentFactory(new XMLComponentFactory<BooleanAttribute>(BooleanAttribute.class) {
             @Override
             public Class getParsedType() {
-                return Boolean.class;
+                return boolean.class;
             }
             @Override
             public XMLComponent<Boolean> createXMLComponent(final Class parameterType, final BooleanAttribute ba) {
@@ -196,7 +196,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         registerXMLComponentFactory(new XMLComponentFactory<DoubleAttribute>(DoubleAttribute.class) {
             @Override
             public Class getParsedType() {
-                return Double.class;
+                return double.class;
             }
             @Override
             public XMLComponent<Double> createXMLComponent(final Class parameterType, final DoubleAttribute da) {
@@ -235,7 +235,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         registerXMLComponentFactory(new XMLComponentFactory<IntegerAttribute>(IntegerAttribute.class) {
             @Override
             public Class getParsedType() {
-                return Integer.class;
+                return int.class;
             }
             @Override
             public XMLComponent<Integer> createXMLComponent(final Class parameterType, final IntegerAttribute ia) {
@@ -254,7 +254,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         registerXMLComponentFactory(new XMLComponentFactory<LongAttribute>(LongAttribute.class) {
             @Override
             public Class getParsedType() {
-                return Long.class;
+                return long.class;
             }
             @Override
             public XMLComponent<Long> createXMLComponent(final Class parameterType, final LongAttribute la) {
@@ -374,8 +374,8 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
     }
 
     private static class ParserCreationException extends RuntimeException {
-        public ParserCreationException(final Class parsedClass, final String msg) {
-            super("Failed to create parser for class " + parsedClass.getSimpleName() + ": "  + msg);
+        public ParserCreationException(final Class parsedType, final String msg) {
+            super("Failed to create parser for class " + parsedType.getSimpleName() + ": "  + msg);
         }
     }
 }
