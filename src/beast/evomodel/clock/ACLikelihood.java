@@ -29,6 +29,7 @@ import beast.math.distributions.NormalDistribution;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
+import beast.xml.StringAttributeRule;
 import beast.xml.XMLObject;
 import beast.xml.XMLObjectParser;
 import beast.xml.XMLParseException;
@@ -43,15 +44,26 @@ import beast.xml.XMLSyntaxRule;
  * @author Wai Lok Sibon Li
  */
 public class ACLikelihood extends RateEvolutionLikelihood {
-    public static final String LOGNORMAL = "logNormal";
-    public static final String NORMAL = "normal";
-    public static final String INVERSEGAUSSIAN = "inverseGaussian";
+
+    public enum Distribution {
+        LOG_NORMAL("logNormal"),
+        NORMAL("normal"),
+        INVERSE_GAUSSIAN("inverseGaussian");
+        final String name;
+        Distribution(final String s) {
+            name = s;
+        }
+        public String toString() {
+            return name;
+        }
+    }
+
 
     public ACLikelihood(TreeModel tree, Parameter ratesParameter, Parameter variance, Parameter rootRate,
-                        boolean isEpisodic, String distribution) {
+                        boolean isEpisodic, Distribution distribution) {
 
         //super((isLogSpace) ? "LogNormally Distributed" : "Normally Distributed", tree, ratesParameter, rootRate, isEpisodic);
-        super(distribution, tree, ratesParameter, rootRate, isEpisodic);
+        super(distribution.toString(), tree, ratesParameter, rootRate, isEpisodic);
 
         //this.isLogSpace = isLogSpace;
         this.variance = variance;
@@ -78,18 +90,16 @@ public class ACLikelihood extends RateEvolutionLikelihood {
         //} else {
         //    return NormalDistribution.logPdf(childRate, parentRate, Math.sqrt(var));
         //}
-        if(distribution.equals(LOGNORMAL)) {
-            return LogNormalDistribution.logPdf(childRate, Math.log(parentRate) - (var / 2.), Math.sqrt(var));
-        }
-        else if(distribution.equals(NORMAL)) {
-            return NormalDistribution.logPdf(childRate, parentRate, Math.sqrt(var));
-        }
-        else if(distribution.equals(INVERSEGAUSSIAN)) { /* Inverse Gaussian */
-            double shape = (parentRate * parentRate * parentRate) / var;
-            return InverseGaussianDistribution.logPdf(childRate, parentRate, shape);
-        }
-        else {
-            throw new RuntimeException ("Parameter for distribution is not recognised");
+        switch (distribution) {
+            case LOG_NORMAL:
+                return LogNormalDistribution.logPdf(childRate, Math.log(parentRate) - (var / 2.), Math.sqrt(var));
+            case NORMAL:
+                return NormalDistribution.logPdf(childRate, parentRate, Math.sqrt(var));
+            case INVERSE_GAUSSIAN:
+                double shape = (parentRate * parentRate * parentRate) / var;
+                return InverseGaussianDistribution.logPdf(childRate, parentRate, shape);
+            default:
+                throw new RuntimeException("No distribution specified!");
         }
     }
 
@@ -108,25 +118,25 @@ public class ACLikelihood extends RateEvolutionLikelihood {
         //    return MathUtils.nextGaussian() * Math.sqrt(var) + parentRate;
         //}
 
-        if(distribution.equals(LOGNORMAL)) {
-            final double logParentRate = Math.log(parentRate);
-
-            return Math.exp(MathUtils.nextGaussian() * Math.sqrt(var) + logParentRate - (var / 2.));
-        }
-        else if(distribution.equals(NORMAL)) {
-            return MathUtils.nextGaussian() * Math.sqrt(var) + parentRate;
-        }
-        else { /* Inverse Gaussian */
-            //return Math.random()
-            //Random rand = new Random();
-            double lambda = (parentRate * parentRate * parentRate) / var;
-            return MathUtils.nextInverseGaussian(parentRate, lambda);
+        switch (distribution) {
+            case LOG_NORMAL:
+                final double logParentRate = Math.log(parentRate);
+                return Math.exp(MathUtils.nextGaussian() * Math.sqrt(var) + logParentRate - (var / 2.));
+            case NORMAL:
+                return MathUtils.nextGaussian() * Math.sqrt(var) + parentRate;
+            case INVERSE_GAUSSIAN:
+                //return Math.random()
+                //Random rand = new Random();
+                double lambda = (parentRate * parentRate * parentRate) / var;
+                return MathUtils.nextInverseGaussian(parentRate, lambda);
+            default:
+                throw new RuntimeException("No distribution specified!");
         }
     }
 
     private Parameter variance;
     //boolean isLogSpace = false;
-    String distribution;
+    Distribution distribution;
 
     public static final XMLObjectParser<ACLikelihood> PARSER = new AbstractXMLObjectParser<ACLikelihood>() {
         public static final String AC_LIKELIHOOD = "ACLikelihood";
@@ -154,7 +164,7 @@ public class ACLikelihood extends RateEvolutionLikelihood {
 
             //Distribution distributionModel = new InverseGaussianDistribution(0,1);
             //Parameter distribution = (Parameter) xo.getElementFirstChild(DISTRIBUTION);
-            String distribution = xo.getStringAttribute(DISTRIBUTION);
+            Distribution distribution = Distribution.valueOf(xo.getStringAttribute(DISTRIBUTION));
 
             //boolean isLogSpace = xo.getAttribute(LOGSPACE, false);
 
@@ -192,7 +202,7 @@ public class ACLikelihood extends RateEvolutionLikelihood {
                 new ElementRule(TreeModel.class),
                 new ElementRule(RateEvolutionLikelihood.RATES, Parameter.class, "The branch rates parameter", false),
                 AttributeRule.newBooleanRule(RateEvolutionLikelihood.EPISODIC, false, "true if model is branch length independent, false if length-dependent."),
-                AttributeRule.newStringRule(DISTRIBUTION, false, "The distribution to use"),
+                new StringAttributeRule(DISTRIBUTION, "The distribution to use", Distribution.values(), false),
                 //AttributeRule.newBooleanRule(LOGSPACE, true, "true if model considers the log of the rates."),
                 new ElementRule(RateEvolutionLikelihood.ROOTRATE, Parameter.class, "The root rate parameter"),
                 new ElementRule(VARIANCE, Parameter.class, "The standard deviation of the distribution"),
