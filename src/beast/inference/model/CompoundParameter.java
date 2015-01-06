@@ -121,6 +121,14 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         return uniqueParameters.get(index);
     }
 
+    public Parameter getMaskedParameter(int index) {
+        return parameters.get(index);
+    }
+
+    public int getMaskedIndex(int index) {
+        return pindex.get(index);
+    }
+
     public int getParameterCount() {
         return uniqueParameters.size();
     }
