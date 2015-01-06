@@ -65,7 +65,7 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
     @Parseable
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood q,
-            @ObjectArrayElement(name = "space") CompoundParameter parameter,
+            @ObjectElement(name = "space") CompoundParameter parameter,
             @DoubleAttribute(name = "epsilon", defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", defaultValue = 100) int L,
             @OperatorWeightAttribute double weight) {
