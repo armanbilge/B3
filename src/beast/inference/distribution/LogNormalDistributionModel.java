@@ -173,6 +173,11 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
     }
 
+    public double differentiateLogPdf(double x) {
+        if (x - offset <= 0.0) return 0.0;
+        return NormalDistribution.differentiateLogPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
+    }
+
     public double cdf(double x) {
         if (x - offset <= 0.0) return 0.0;
         return NormalDistribution.cdf(Math.log(x - offset), getM(), getStDev());

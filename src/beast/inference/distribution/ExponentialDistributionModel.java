@@ -79,6 +79,11 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         return ExponentialDistribution.logPdf(x - offset, 1.0 / getMean());
     }
 
+    public double differentiateLogPdf(double x) {
+        if (x < offset) return 0.0;
+        return ExponentialDistribution.differentiateLogPdf(x - offset, 1.0 / getMean());
+    }
+
     public double cdf(double x) {
         if (x < offset) return 0.0;
         return ExponentialDistribution.cdf(x - offset, 1.0 / getMean());

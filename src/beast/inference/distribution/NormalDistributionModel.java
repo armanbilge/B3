@@ -107,6 +107,11 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return NormalDistribution.logPdf(x, mean(), getStdev());
     }
 
+    public double differentiateLogPdf(double x) {
+        return NormalDistribution.differentiateLogPdf(x, mean(), getStdev());
+    }
+
+
     public double cdf(double x) {
         return NormalDistribution.cdf(x, mean(), getStdev());
     }

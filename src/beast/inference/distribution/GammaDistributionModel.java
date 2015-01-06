@@ -82,6 +82,10 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         return GammaDistribution.logPdf(x, getShape(), getScale());
     }
 
+    public double differentiateLogPdf(double x) {
+        return GammaDistribution.differentiateLogPdf(x, getShape(), getScale());
+    }
+
     public double cdf(double x) {
         return GammaDistribution.cdf(x, getShape(), getScale());
     }

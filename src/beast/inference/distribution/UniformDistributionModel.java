@@ -80,6 +80,10 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
         return UniformDistribution.logPdf(x, getLower(), getUpper());
     }
 
+    public double differentiateLogPdf(double x) {
+        return UniformDistribution.differentiateLogPdf(x, getLower(), getUpper());
+    }
+
     public double cdf(double x) {
         return UniformDistribution.cdf(x, getLower(), getUpper());
     }

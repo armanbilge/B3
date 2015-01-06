@@ -160,6 +160,11 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         return InverseGaussianDistribution.logPdf(x - offset, getM(), getShape());
     }
 
+    public double differentiateLogPdf(double x) {
+        if (x - offset <= 0.0) return 0.0;
+        return InverseGaussianDistribution.differentiateLogPdf(x - offset, getM(), getShape());
+    }
+
     public double cdf(double x) {
         if (x - offset <= 0.0) return 0.0;
         return InverseGaussianDistribution.cdf(x - offset, getM(), getShape());
