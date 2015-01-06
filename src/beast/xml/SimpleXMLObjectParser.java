@@ -373,7 +373,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         });
     }
 
-    private static class ParserCreationException extends Exception {
+    private static class ParserCreationException extends RuntimeException {
         public ParserCreationException(final Class parsedClass, final String msg) {
             super("Failed to create parser for class " + parsedClass.getSimpleName() + ": "  + msg);
         }
