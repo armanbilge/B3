@@ -23,7 +23,9 @@ package beast.evomodel.speciation;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Units;
+import beast.evomodel.tree.TreeModel;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
@@ -222,7 +224,82 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         return l;
     }
 
-    double logConditioningTerm(double height) {
+    public double differentiateLogNodeProbability(Tree tree, NodeRef node, Variable<Double> var, int index) {
+        final double height = tree.getNodeHeight(node);
+        final double r = getR();
+        final double rh = r * height;
+        final double a = getA();
+        final double rho = getRho();
+
+        if (var == birthDiffRateParameter) {
+
+            if (conditionalOnRoot && tree.isRoot(node)) {
+                return (tree.getTaxonCount() - 2) * differentiateLogConditioningTerm(height, var);
+            }
+
+            final double aprhom1 = a + rho - 1;
+            final double z = height * aprhom1 / (aprhom1 - rho * Math.exp(rh));
+            double l = -2 * z - height;
+
+            if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
+                l -= height + z;
+            }
+
+            return l;
+
+        } else if (var == relativeDeathRateParameter) {
+
+            if (conditionalOnRoot && tree.isRoot(node)) {
+                return (tree.getTaxonCount() - 2) * differentiateLogConditioningTerm(height, var);
+            }
+
+            final double z = 1 / (a - rho * Math.exp(rh) + rho - 1);
+            double l = -2 * z;
+
+            if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
+                l -= z;
+            }
+
+            return l;
+
+        } else if (var == sampleProbability) {
+
+            if (conditionalOnRoot && tree.isRoot(node)) {
+                return (tree.getTaxonCount() - 2) * differentiateLogConditioningTerm(height, var);
+            }
+
+            final double erhm1 = Math.exp(rh) - 1;
+            final double z = erhm1 / (-a + rho * erhm1 + 1);
+            double l = -2 * z;
+
+            if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
+                l -= z;
+            }
+
+            return l;
+
+        } else if (tree instanceof TreeModel && var instanceof Parameter && ((TreeModel) tree).isHeightParameterForNode(node, (Parameter) var, index)) {
+
+            if (conditionalOnRoot && tree.isRoot(node)) {
+                return (tree.getTaxonCount() - 2) * differentiateLogConditioningTerm(height);
+            }
+
+            final double aprhom1 = a + rho - 1;
+            final double z = r * aprhom1 / (aprhom1 - rho * Math.exp(rh));
+            double l = -2 * z - r;
+
+            if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
+                l -= r + z;
+            }
+
+            return l;
+
+        } else {
+            return 0;
+        }
+    }
+
+    protected double logConditioningTerm(double height) {
         final double r = getR();
         final double a = getA();
         final double rho = getRho();
@@ -232,6 +309,54 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
             return Math.log(r * ca * (rho + ca / (erh - 1)));
         } else {  // use exp(x)-1 = x for x near 0
             return Math.log(ca * (r * rho + ca / height));
+        }
+    }
+
+    protected double differentiateLogConditioningTerm(double height, Variable<Double> var) {
+        final double r = getR();
+        final double a = getA();
+        final double rho = getRho();
+        final double ca = 1 - a;
+        final double rh = r * height;
+        final double erh = Math.exp(rh);
+        final double erhm1 = erh - 1;
+        final double rhrho = rh * rho;
+        if (var == birthDiffRateParameter) {
+            if (erh != 1.0) {
+                return (ca * (ca / erhm1 + rho) - ca * ca * rh * erh / (erhm1 * erhm1)) / (ca * r * (ca / erhm1 + rho));
+            } else {  // use exp(x)-1 = x for x near 0
+                return height * rho / (ca + rhrho);
+            }
+        } else if (var == relativeDeathRateParameter) {
+            final double term;
+            if (erh != 1.0) {
+                term = rho * erh + rho;
+            } else {  // use exp(x)-1 = x for x near 0
+                term = rhrho;
+            }
+            return - (2 * a - term - 2) / (ca * (a - term - 1));
+        } else if (var == sampleProbability) {
+            if (erh != 1.0) {
+                return 1 / (ca / erhm1 + rho);
+            } else {  // use exp(x)-1 = x for x near 0
+                return rh / (ca + rhrho);
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    protected double differentiateLogConditioningTerm(double height) {
+        final double r = getR();
+        final double a = getA();
+        final double rho = getRho();
+        final double ca = 1 - a;
+        final double erh = Math.exp(r * height);
+        if (erh != 1.0) {
+            final double erhm1 = erh - 1;
+            return - ca * r * erh / (erhm1 * (ca + rho * erhm1));
+        } else {  // use exp(x)-1 = x for x near 0
+            return - ca / (height * (ca + height * rho * r));
         }
     }
 

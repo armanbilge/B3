@@ -152,6 +152,18 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         return logLikelihood;
     }
 
+    public final double differentiate(final Variable<Double> var, final int index) {
+        if (exclude != null) {
+            return speciationModel.differentiateTreeLogLikelihood(tree, exclude, var, index);
+        }
+
+        if ( calibration != null ) {
+            return speciationModel.differentiateTreeLogLikelihood(tree, calibration, var, index);
+        }
+
+        return speciationModel.differentiateTreeLogLikelihood(tree, var, index);
+    }
+
     public final void makeDirty() {
         likelihoodKnown = false;
     }

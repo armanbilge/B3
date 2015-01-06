@@ -47,7 +47,11 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree);
 
+    public abstract double differentiateTreeLogLikelihood(Tree tree, Variable<Double> var, int index);
+
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
+
+    public abstract double differentiateTreeLogLikelihood(Tree tree, Set<Taxon> exclude, Variable<Double> var, int index);
 
     // True if Yule.
     //
@@ -64,6 +68,11 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
         return Double.NEGATIVE_INFINITY;
     }
+
+    public double differentiateTreeLogLikelihood(Tree tree, CalibrationPoints calibration, Variable<Double> var, int index) {
+        return 0;
+    }
+
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // no intermediates need to be recalculated...

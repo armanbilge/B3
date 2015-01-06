@@ -24,6 +24,7 @@ import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Taxon;
 import beast.evolution.util.Units;
+import beast.inference.model.Variable;
 
 import java.util.Set;
 
@@ -56,6 +57,8 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * @return node contribution to density
      */
     public abstract double logNodeProbability(Tree tree, NodeRef node);
+
+    public abstract double differentiateLogNodeProbability(Tree tree, NodeRef node, Variable<Double> var, int index);
 
     public boolean analyticalMarginalOK() {
        return false;
@@ -94,6 +97,30 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     }
 
     /**
+     * Generic likelihood calculation
+     *
+     * @param tree
+     * @return log-likelihood of density
+     */
+    public final double differentiateTreeLogLikelihood(Tree tree, Variable<Double> var, int index) {
+
+        double derivative = 0;
+
+        for (int j = 0; j < tree.getInternalNodeCount(); j++) {
+            derivative += differentiateLogNodeProbability(tree, tree.getInternalNode(j), var, index);
+        }
+
+        final int taxonCount = tree.getTaxonCount();
+        if (includeExternalNodesInLikelihoodCalculation()) {
+            for (int j = 0; j < taxonCount; j++) {
+                derivative += differentiateLogNodeProbability(tree, tree.getExternalNode(j), var, index);
+            }
+        }
+
+        return derivative;
+    }
+
+    /**
      * Alternative likelihood calculation that uses recursion over the tree and allows
      * a list of taxa to exclude
      *
@@ -109,6 +136,14 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
         calculateNodeLogLikelihood(tree, tree.getRoot(), exclude, lnL);
 
         return lnL[0];
+    }
+
+    public double differentiateTreeLogLikelihood(Tree tree, Set<Taxon> exclude, Variable<Double> var, int index) {
+        double[] derivative = {0};
+
+        differentiateNodeLogLikelihood(tree, tree.getRoot(), exclude, derivative, var, index);
+
+        return derivative[0];
     }
 
     /**
@@ -151,6 +186,36 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
         }
     }
 
+    private int differentiateNodeLogLikelihood(Tree tree, NodeRef node, Set<Taxon> exclude, double[] derivative, Variable<Double> var, int index) {
+        if (tree.isExternal(node)) {
+            if (!exclude.contains(tree.getNodeTaxon(node))) {
+                if (includeExternalNodesInLikelihoodCalculation()) {
+                    derivative[0] += differentiateLogNodeProbability(tree, node, var, index);
+                }
+
+                // this tip is included in the subtree...
+                return 1;
+            }
+
+            // this tip is excluded from the subtree...
+            return 0;
+        } else {
+            int count = 0;
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef child = tree.getChild(node, i);
+                count += differentiateNodeLogLikelihood(tree, child, exclude, derivative, var, index);
+            }
+
+            if (count == 2) {
+                // this node is included in the subtree...
+                derivative[0] += logNodeProbability(tree, node);
+            }
+
+            // if at least one of the children has included tips then return 1 otherwise 0
+            return count > 0 ? 1 : 0;
+        }
+    }
+
     @Override
     public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
         double logL = calculateTreeLogLikelihood(tree);
@@ -158,4 +223,10 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
         logL += mar;
         return logL;
     }
+
+    @Override
+    public double differentiateTreeLogLikelihood(Tree tree, CalibrationPoints calibration, Variable<Double> var, int index) {
+        throw new UnsupportedOperationException();
+    }
+
 }

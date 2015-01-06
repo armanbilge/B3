@@ -319,7 +319,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         double b = birth();
         double p = p();
 
-        double logL;
+        double logL = 0;
         if (isSamplingOrigin()) {
 //            logL = Math.log(1.0 / q(x0()));
             logL = - q(x0());
@@ -360,8 +360,86 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         return logL;
     }
 
+    public final double differentiateTreeLogLikelihood(Tree tree, Variable<Double> var, int index) {
+        throw new UnsupportedOperationException();
+//        if (isSamplingOrigin() && x0() < tree.getNodeHeight(tree.getRoot())) {
+//            return 0;
+////            throw new RuntimeException("Orign value (" + x0() + ") cannot < tree root height (" + tree.getNodeHeight(tree.getRoot()) + ")");
+//        }
+//
+//        //System.out.println("calculating tree log likelihood");
+//        //double time = finalTimeInterval();
+//
+//        // extant leaves
+//        int n = 0;
+//        // extinct leaves
+//        int m = 0;
+//
+//        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+//            NodeRef node = tree.getExternalNode(i);
+//            if (tree.getNodeHeight(node) == 0.0) {
+//                n += 1;
+//            } else {
+//                m += 1;
+//            }
+//        }
+//
+//        if (!hasFinalSample && n < 1) {
+//            throw new RuntimeException(
+//                    "For sampling-through-time model there must be at least one tip at time zero.");
+//        }
+//
+//        double b = birth();
+//        double p = p();
+//
+//        double logL;
+//        if (isSamplingOrigin()) {
+////            logL = Math.log(1.0 / q(x0()));
+//            logL = - q(x0());
+//            //System.out.println("originLogL=" + logL + " x0");
+//        } else {
+//            throw new RuntimeException(
+//                    "The origin must be sampled, as integrating it out is not implemented!");
+//            // integrating out the time between the origin and the root of the tree
+//            //double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
+//            //logL = Math.log(1 / bottom);
+//        }
+//        if (hasFinalSample) {
+//            logL += n * Math.log(4.0 * p);
+//        }
+//        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+//            double x = tree.getNodeHeight(tree.getInternalNode(i));
+//            logL += Math.log(b) - q(x);
+//
+//            //System.out.println("internalNodeLogL=" + Math.log(b / q(x)));
+//
+//        }
+//        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+//            double y = tree.getNodeHeight(tree.getExternalNode(i));
+//
+//            if (y > 0.0) {
+//                logL += Math.log(psi()) + q(y);
+//
+//                //System.out.println("externalNodeLogL=" + Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y)));
+//
+//            } else if (!hasFinalSample) {
+//                //handle condition ending on final tip in sampling-through-time-only situation
+//                logL += Math.log(psi()) + q(y);
+////                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
+//
+//            }
+//        }
+//
+//        return logL;
+    }
+
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
+        throw new RuntimeException("Not implemented!");
+    }
+
+    public double differentiateTreeLogLikelihood(Tree tree, Set<Taxon> exclude, Variable<Double> var, int index) {
+        if (exclude.size() == 0) return differentiateTreeLogLikelihood(tree, var, index);
         throw new RuntimeException("Not implemented!");
     }
 

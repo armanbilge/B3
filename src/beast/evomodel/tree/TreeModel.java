@@ -48,10 +48,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -1179,6 +1181,13 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
             n1.rateParameter.setParameterValueQuietly(0, rate1);
             n2.rateParameter.setParameterValueQuietly(0, rate2);
         }
+    }
+
+    public boolean isHeightParameterForNode(final NodeRef node, final Parameter param, final int index) {
+        if (!(param instanceof CompoundParameter)) return false;
+        final CompoundParameter compoundParam = (CompoundParameter) param;
+        final Parameter heightParameter = compoundParam.getParameter(index);
+        return ((Node) node).heightParameter == heightParameter;
     }
 
     // **************************************************************
