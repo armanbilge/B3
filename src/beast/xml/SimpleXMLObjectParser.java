@@ -329,7 +329,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                     }
                     @Override
                     public XMLSyntaxRule getSyntaxRule() {
-                        return new ElementRule(oae.name(), parameterType.getComponentType(), oae.description(), oae.min(), oae.max());
+                        return new ElementRule(oae.name(), new XMLSyntaxRule[]{new ElementRule(parameterType.getComponentType(), oae.description(), oae.min(), oae.max())});
                     }
                 };
             }
