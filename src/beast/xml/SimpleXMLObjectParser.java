@@ -25,6 +25,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -208,6 +209,31 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
                     @Override
                     public XMLSyntaxRule getSyntaxRule() {
                         return AttributeRule.newDoubleRule(da.name(), da.optional(), da.description());
+                    }
+                };
+            }
+        });
+        registerXMLComponentFactory(new XMLComponentFactory<EnumAttribute>(EnumAttribute.class) {
+            @Override
+            public Class getParsedType() {
+                return Enum.class;
+            }
+            @Override
+            public boolean validate(Class c) {
+                return c.isEnum();
+            }
+            @Override
+            public XMLComponent<Enum> createXMLComponent(Class parameterType, EnumAttribute ea) {
+                return new XMLComponent<Enum>() {
+                    @Override
+                    public Enum parse(XMLObject xo) throws XMLParseException {
+                        if (!xo.hasAttribute(ea.name())) return null;
+                        final String sa = xo.getStringAttribute(ea.name());
+                        return Arrays.stream(((Enum[]) parameterType.getEnumConstants())).filter(e -> e.toString().equalsIgnoreCase(sa)).findFirst().get();
+                    }
+                    @Override
+                    public XMLSyntaxRule getSyntaxRule() {
+                        return new StringAttributeRule(ea.name(), ea.description(), (Enum[]) parameterType.getEnumConstants(), ea.optional());
                     }
                 };
             }
