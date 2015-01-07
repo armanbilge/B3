@@ -34,6 +34,8 @@ import beast.xml.XMLSyntaxRule;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.util.Collections;
+
 /**
  * A class that returns the log likelihood of a set of data (statistics)
  * being distributed according to the given parametric distribution.
@@ -124,8 +126,8 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     }
 
     public double differentiate(final Variable<Double> var, final int index) {
-        if (from <= index && index < to && dataList.contains(var))
-            return distribution.differentiateLogPdf(var.getValue(index) - offset);
+        if (from <= index && index < to)
+            return Collections.frequency(dataList, var) * distribution.differentiateLogPdf(var.getValue(index) - offset);
         return 0.0;
     }
 
