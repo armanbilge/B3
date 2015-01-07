@@ -20,6 +20,7 @@
 
 package beast.inference.hamilton;
 
+import beast.inference.model.Bounds;
 import beast.inference.model.CompoundParameter;
 import beast.inference.model.Likelihood;
 import beast.inference.model.Parameter;
@@ -42,8 +43,8 @@ import java.util.Arrays;
  */
 public class HamiltonUpdate extends SimpleMCMCOperator {
 
-    protected final Likelihood q;
-    protected final CompoundParameter parameter;
+    protected final Likelihood U;
+    protected final CompoundParameter q;
 
     private double epsilon;
     private int L;
@@ -54,23 +55,23 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
 
     @Parseable
     public HamiltonUpdate(
-            @ObjectElement(name = "potential") Likelihood q,
+            @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight) {
-        this(q, new CompoundParameter("hamilton", parameters), epsilon, L, weight);
+        this(U, new CompoundParameter("hamilton", parameters), epsilon, L, weight);
     }
 
     @Parseable
     public HamiltonUpdate(
-            @ObjectElement(name = "potential") Likelihood q,
-            @ObjectElement(name = "space") CompoundParameter parameter,
+            @ObjectElement(name = "potential") Likelihood U,
+            @ObjectElement(name = "space") CompoundParameter q,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight) {
+        this.U = U;
         this.q = q;
-        this.parameter = parameter;
         this.epsilon = epsilon;
         this.L = L;
         setWeight(weight);
@@ -85,7 +86,7 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
     public String getOperatorName() {
         StringBuilder sb = new StringBuilder(PARSER.getParserName());
         sb.append("(");
-        sb.append(parameter);
+        sb.append(q);
         sb.append(")");
         return sb.toString();
     }
@@ -93,13 +94,10 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
     @Override
     public double doOperation() throws OperatorFailedException {
 
-        final int count = getCount();
-        if (count > 0 && count % 100 == 0) {
-            adjustEpsilon();
-            adjustL();
-        }
+        adjustEpsilon();
+        adjustL();
 
-        final int dim = parameter.getDimension();
+        final int dim = q.getDimension();
 
         final double[] p = new double[dim];
         final double[] storedP = new double[dim];
@@ -107,32 +105,52 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
         Arrays.setAll(storedP, i -> p[i]);
 
         for (int i = 0; i < dim; ++i)
-            p[i] += epsilon/2 * q.differentiate(parameter.getMaskedParameter(i), parameter.getMaskedIndex(i));
+            p[i] += epsilon/2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
 
+        final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
-            for (int i = 0; i < dim; ++i)
-                parameter.setValue(i, parameter.getValue(i) - epsilon * p[i]);
+            for (int i = 0; i < dim; ++i) {
+                double q_ = q.getValue(i) - epsilon * p[i];
+                final double lower = bounds.getLowerLimit(i);
+                final double upper = bounds.getUpperLimit(i);
+                if (q_ < lower) {
+                    q_ = lower + (lower - q_);
+                    p[i] *= -1;
+                } else if (q_ > upper) {
+                    q_ = upper - (upper - q_);
+                    p[i] *= -1;
+                }
+                q.setValue(i, q_);
+            }
+
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i)
-                    p[i] += epsilon * q.differentiate(parameter.getMaskedParameter(i), parameter.getMaskedIndex(i));
+                    p[i] += epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
         }
 
         for (int i = 0; i < dim; ++i) {
-            p[i] += epsilon/2 * q.differentiate(parameter.getMaskedParameter(i), parameter.getMaskedIndex(i));
+            p[i] += epsilon/2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
             p[i] *= -1;
         }
 
-        final double storedK = new ArrayRealVector(storedP).getNorm() / 2;
-        final double proposedK = new ArrayRealVector(p).getNorm() / 2;
+        final double storedK = Arrays.stream(storedP).map(d -> d * d).sum() / 2;
+        final double proposedK = Arrays.stream(p).map(d -> d * d).sum() / 2;
 
         return storedK - proposedK;
     }
 
+    final private int adjustEvery = 100;
+    private int lastAccepted = 0;
     private void adjustEpsilon() {
-        if (getAcceptanceProbability() < getTargetAcceptanceProbability())
-            epsilon /= 2;
-        else
-            epsilon *= 2;
+        final int count = getCount();
+        if (count != 0 && count % adjustEvery == 0) {
+            final double alpha = (getAcceptCount() - lastAccepted) / (double) adjustEvery;
+            if (alpha < getTargetAcceptanceProbability())
+                epsilon /= 2;
+            else
+                epsilon *= 2;
+            lastAccepted = getAcceptCount();
+        }
     }
 
     private void adjustL() {
