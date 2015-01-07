@@ -26,6 +26,12 @@ import beast.xml.XMLObject;
 import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * An MCMC operator.
  *
@@ -163,25 +169,15 @@ public interface MCMCOperator {
 
     long getTotalEvaluationTime();
 
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
     public @interface OperatorWeightAttribute {}
-
-    class Utils {
-
-        public static double getAcceptanceProbability(MCMCOperator op) {
-            final int accepted = op.getAcceptCount();
-            final int rejected = op.getRejectCount();
-            return (double) accepted / (double) (accepted + rejected);
-        }
-
-        public static int getOperationCount(MCMCOperator op) {
-            return op.getAcceptCount() + op.getRejectCount();
-        }
-
-        static {
-            SimpleXMLObjectParser.registerXMLComponentFactory(new SimpleXMLObjectParser.XMLComponentFactory<OperatorWeightAttribute>(OperatorWeightAttribute.class) {
+    public static final SimpleXMLObjectParser.XMLComponentFactory<OperatorWeightAttribute> FACTORY =
+            new SimpleXMLObjectParser.XMLComponentFactory<OperatorWeightAttribute>(OperatorWeightAttribute.class) {
                 @Override
                 public Class getParsedType() {
-                    return Double.class;
+                    return double.class;
                 }
                 @Override
                 public SimpleXMLObjectParser.XMLComponent<Double> createXMLComponent(Class parameterType, OperatorWeightAttribute annotation) {
@@ -196,7 +192,19 @@ public interface MCMCOperator {
                         }
                     };
                 }
-            });
+            };
+
+    class Utils {
+
+        public static double getAcceptanceProbability(MCMCOperator op) {
+            final int accepted = op.getAcceptCount();
+            final int rejected = op.getRejectCount();
+            return (double) accepted / (double) (accepted + rejected);
         }
+
+        public static int getOperationCount(MCMCOperator op) {
+            return op.getAcceptCount() + op.getRejectCount();
+        }
+
     }
 }

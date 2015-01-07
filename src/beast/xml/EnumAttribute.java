@@ -1,8 +1,8 @@
 /*
- * Parseable.java
+ * EnumAttribute.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
- * Copyright (C) 2014 BEAST Developers
+ * Copyright (C) 2015 BEAST Developers
  *
  * BEAST is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -31,6 +31,11 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.CONSTRUCTOR)
-public @interface Parseable {
+@Target(ElementType.PARAMETER)
+public @interface EnumAttribute {
+
+    String name();
+    boolean optional() default false;
+    String description() default "";
+
 }

@@ -55,7 +55,14 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
 
         @Override
         public String toString() {
-            return super.toString();
+            return name;
+        }
+
+        public static Mode fromString(String s) {
+            for (Mode m : Mode.values())
+                if (m.toString().equalsIgnoreCase(s))
+                    return m;
+            return null;
         }
     }
 
@@ -167,7 +174,7 @@ public class RateStatistic extends Statistic.Abstract implements TreeStatistic {
                 throw new XMLParseException("At least one of internal and external must be true!");
             }
 
-            final Mode mode = Mode.valueOf(xo.getStringAttribute(MODE));
+            final Mode mode = Mode.fromString(xo.getStringAttribute(MODE));
 
             return new RateStatistic(name, tree, branchRateModel, external, internal, mode);
         }

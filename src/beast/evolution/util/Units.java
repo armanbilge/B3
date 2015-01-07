@@ -27,6 +27,11 @@ import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 
 import java.io.Serializable;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * interface holding unit constants
@@ -45,28 +50,6 @@ public interface Units extends Serializable {
         SUBSTITUTIONS, GENERATIONS, DAYS, MONTHS, YEARS;
         public String toString() {
             return super.toString().toLowerCase();
-        }
-
-        static {
-            SimpleXMLObjectParser.registerXMLComponentFactory(new SimpleXMLObjectParser.XMLComponentFactory<UnitsAttribute>(UnitsAttribute.class) {
-                @Override
-                public Class getParsedType() {
-                    return Type.class;
-                }
-                @Override
-                public SimpleXMLObjectParser.XMLComponent<Type> createXMLComponent(Class parameterType, UnitsAttribute annotation) {
-                    return new SimpleXMLObjectParser.XMLComponent<Type>() {
-                        @Override
-                        public Type parse(XMLObject xo) throws XMLParseException {
-                            return parseUnitsAttribute(xo);
-                        }
-                        @Override
-                        public XMLSyntaxRule getSyntaxRule() {
-                            return UNITS_RULE;
-                        }
-                    };
-                }
-            });
         }
     }
 
@@ -91,6 +74,29 @@ public interface Units extends Serializable {
         return units;
     }
 
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
     public @interface UnitsAttribute {}
+    public static final SimpleXMLObjectParser.XMLComponentFactory<UnitsAttribute> FACTORY =
+            new SimpleXMLObjectParser.XMLComponentFactory<UnitsAttribute>(UnitsAttribute.class) {
+                @Override
+                public Class getParsedType() {
+                    return Type.class;
+                }
+                @Override
+                public SimpleXMLObjectParser.XMLComponent<Type> createXMLComponent(Class parameterType, UnitsAttribute annotation) {
+                    return new SimpleXMLObjectParser.XMLComponent<Type>() {
+                        @Override
+                        public Type parse(XMLObject xo) throws XMLParseException {
+                            return parseUnitsAttribute(xo);
+                        }
+                        @Override
+                        public XMLSyntaxRule getSyntaxRule() {
+                            return UNITS_RULE;
+                        }
+                    };
+                }
+            };
 
 }

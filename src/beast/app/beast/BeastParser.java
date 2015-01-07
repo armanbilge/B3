@@ -26,6 +26,7 @@ import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
 import beast.util.Attribute;
 import beast.util.Property;
+import beast.xml.SimpleXMLObjectParser;
 import beast.xml.UserInput;
 import beast.xml.XMLObjectParser;
 import beast.xml.XMLParser;
@@ -49,6 +50,7 @@ public class BeastParser extends XMLParser {
 
     public static final String RELEASE ="release";
     public static final String DEV = "development";
+    public static final String FACTORY_PROPERTIES_SUFFIX ="_factories.properties";
     public static final String PARSER_PROPERTIES_SUFFIX ="_parsers.properties";
     public String parsers;
 
@@ -85,8 +87,10 @@ public class BeastParser extends XMLParser {
                 this.parserWarnings = true; // if dev, then auto turn on, otherwise default to turn off
             }
 
+
+            loadFactoryProperties(this.getClass(), RELEASE + FACTORY_PROPERTIES_SUFFIX);
             // always load release_parsers.properties !!!
-            loadProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, false);
+            loadParserProperties(this.getClass(), RELEASE + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, false);
 
             // suppose to load developement_parsers.properties
             if (parsers != null && (!parsers.equalsIgnoreCase(RELEASE))) {
@@ -95,12 +99,12 @@ public class BeastParser extends XMLParser {
                     System.out.println("\nLoading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
                             + ", which is additional set of parsers only available for development version ...");
                 }
-                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
+                loadParserProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
             }
             // load additional parsers
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, verbose, true);
+                    loadParserProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, verbose, true);
                 }
             }
         } catch (IOException e) {
@@ -113,10 +117,51 @@ public class BeastParser extends XMLParser {
 
         // Now search the package hierarchy for 'beast.properties' files.
 //        try {
-//            loadProperties(this.getClass(), verbose);
+//            loadParserProperties(this.getClass(), verbose);
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+    }
+
+    private void loadFactoryProperties(Class c, String factoriesFile) throws IOException {
+
+        final InputStream stream = c.getResourceAsStream(factoriesFile);
+        if (stream == null) {
+            throw new RuntimeException("Parsers file not found: " + factoriesFile);
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+        String line = reader.readLine();
+
+        while (line != null) {
+            if (line.trim().length() > 0 && !line.trim().startsWith("#")) {
+                try {
+                    if (line.contains("Vector")) {
+                        System.out.println("");
+                    }
+                    Class factory = Class.forName(line);
+                    boolean parserFound = false;
+                    // otherwise look for a static member which is an instance of XMLComponentFactory
+                    Field[] fields = factory.getDeclaredFields();
+                    for (Field field : fields) {
+                        if (SimpleXMLObjectParser.XMLComponentFactory.class.isAssignableFrom(field.getType())) {
+                            try {
+                                SimpleXMLObjectParser.registerXMLComponentFactory((SimpleXMLObjectParser.XMLComponentFactory) field.get(null));
+                            } catch (IllegalArgumentException iae) {
+                                System.err.println("Failed to install parser: " + iae.getMessage());
+                            }
+                            parserFound = true;
+                        }
+                    }
+                    if (!parserFound) {
+                        throw new IllegalArgumentException(factory.getName() + " doesn't contain any static members of type XMLComponentFactory");
+                    }
+                } catch (Exception e) {
+                    System.err.println("\nFailed to load factory: " + e.getMessage());
+                    System.err.println("line = " + line + "\n");
+                }
+            }
+            line = reader.readLine();
+        }
     }
 
     /**
@@ -128,7 +173,7 @@ public class BeastParser extends XMLParser {
      * @param canReplace      can this new loaded parser to replace old one with the same name
      * @throws IOException    IOException
      */
-    private void loadProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning, boolean canReplace) throws IOException {
+    private void loadParserProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning, boolean canReplace) throws IOException {
 
         if (verbose) {
             if (parsersFile.equalsIgnoreCase(RELEASE + PARSER_PROPERTIES_SUFFIX)) {

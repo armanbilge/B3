@@ -20,10 +20,16 @@
 
 package beast.app.plugin;
 
+import beast.xml.SimpleXMLObjectParser;
 import beast.xml.XMLObjectParser;
 
+import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.Set;
 
 public interface Plugin {
+    default Set<SimpleXMLObjectParser.XMLComponentFactory> getComponentFactories() {
+        return new HashSet<>(0);
+    }
     Set<XMLObjectParser> getParsers();
 }
