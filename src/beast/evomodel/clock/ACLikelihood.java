@@ -56,6 +56,14 @@ public class ACLikelihood extends RateEvolutionLikelihood {
         public String toString() {
             return name;
         }
+
+        public static Distribution fromString(String s) {
+            for (Distribution d : Distribution.values())
+                if (d.toString().equalsIgnoreCase(s))
+                    return d;
+            return null;
+        }
+
     }
 
 
@@ -164,7 +172,7 @@ public class ACLikelihood extends RateEvolutionLikelihood {
 
             //Distribution distributionModel = new InverseGaussianDistribution(0,1);
             //Parameter distribution = (Parameter) xo.getElementFirstChild(DISTRIBUTION);
-            Distribution distribution = Distribution.valueOf(xo.getStringAttribute(DISTRIBUTION));
+            Distribution distribution = Distribution.fromString(xo.getStringAttribute(DISTRIBUTION));
 
             //boolean isLogSpace = xo.getAttribute(LOGSPACE, false);
 
