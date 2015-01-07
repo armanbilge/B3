@@ -56,8 +56,8 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood q,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
-            @DoubleAttribute(name = "epsilon", defaultValue = 0.125) double epsilon,
-            @IntegerAttribute(name = "iterations", defaultValue = 100) int L,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight) {
         this(q, new CompoundParameter("hamilton", parameters), epsilon, L, weight);
     }
@@ -66,8 +66,8 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood q,
             @ObjectElement(name = "space") CompoundParameter parameter,
-            @DoubleAttribute(name = "epsilon", defaultValue = 0.125) double epsilon,
-            @IntegerAttribute(name = "iterations", defaultValue = 100) int L,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight) {
         this.q = q;
         this.parameter = parameter;
