@@ -89,7 +89,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     public String getOperatorName() {
         StringBuilder sb = new StringBuilder(PARSER.getParserName());
         sb.append("(");
-        sb.append(q);
+        sb.append(q.getId() != null ? q.getId() : q.getParameterName());
         sb.append(")");
         return sb.toString();
     }
@@ -141,7 +141,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     }
 
     private double halfSelfDot(double[] v) {
-        return Arrays.stream(v).map(d -> d * d).sum();
+        return Arrays.stream(v).map(d -> d * d).sum() / 2;
     }
 
     @Override
