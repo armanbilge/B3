@@ -34,7 +34,6 @@ import beast.xml.ObjectElement;
 import beast.xml.Parseable;
 import beast.xml.SimpleXMLObjectParser;
 import beast.xml.XMLObjectParser;
-import org.apache.commons.math3.linear.ArrayRealVector;
 
 import java.util.Arrays;
 
@@ -98,6 +97,7 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
         adjustL();
 
         final int dim = q.getDimension();
+        final double halfEpsilon = epsilon / 2;
 
         final double[] p = new double[dim];
         final double[] storedP = new double[dim];
@@ -105,7 +105,7 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
         Arrays.setAll(storedP, i -> p[i]);
 
         for (int i = 0; i < dim; ++i)
-            p[i] += epsilon/2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            p[i] += halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
 
         final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
@@ -129,14 +129,18 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
         }
 
         for (int i = 0; i < dim; ++i) {
-            p[i] += epsilon/2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            p[i] += halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
             p[i] *= -1;
         }
 
-        final double storedK = Arrays.stream(storedP).map(d -> d * d).sum() / 2;
-        final double proposedK = Arrays.stream(p).map(d -> d * d).sum() / 2;
+        final double storedK = halfSelfDot(storedP);
+        final double proposedK = halfSelfDot(p);
 
         return storedK - proposedK;
+    }
+
+    private double halfSelfDot(double[] v) {
+        return Arrays.stream(v).map(d -> d * d).sum();
     }
 
     final private int adjustEvery = 100;
