@@ -20,8 +20,17 @@
 
 package beast.inference.operators;
 
+import beast.xml.AttributeRule;
+import beast.xml.SimpleXMLObjectParser;
 import beast.xml.XMLObject;
 import beast.xml.XMLParseException;
+import beast.xml.XMLSyntaxRule;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Alexei Drummond
@@ -40,4 +49,30 @@ public enum CoercionMode {
         }
         return mode;
     }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface CoercionModeAttribute {}
+    public static final SimpleXMLObjectParser.XMLComponentFactory<CoercionModeAttribute> FACTORY =
+            new SimpleXMLObjectParser.XMLComponentFactory<CoercionModeAttribute>(CoercionModeAttribute.class) {
+                @Override
+                public Class getParsedType() {
+                    return CoercionMode.class;
+                }
+                @Override
+                public SimpleXMLObjectParser.XMLComponent<CoercionMode> createXMLComponent(Class parameterType, CoercionModeAttribute annotation) {
+                    return new SimpleXMLObjectParser.XMLComponent<CoercionMode>() {
+                        @Override
+                        public CoercionMode parse(XMLObject xo) throws XMLParseException {
+                            return parseMode(xo);
+                        }
+                        @Override
+                        public XMLSyntaxRule getSyntaxRule() {
+                            return AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true);
+                        }
+                    };
+                }
+            };
+
 }
