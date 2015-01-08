@@ -24,8 +24,9 @@ import beast.inference.model.Bounds;
 import beast.inference.model.CompoundParameter;
 import beast.inference.model.Likelihood;
 import beast.inference.model.Parameter;
+import beast.inference.operators.AbstractCoercableOperator;
+import beast.inference.operators.CoercionMode;
 import beast.inference.operators.OperatorFailedException;
-import beast.inference.operators.SimpleMCMCOperator;
 import beast.math.MathUtils;
 import beast.xml.DoubleAttribute;
 import beast.xml.IntegerAttribute;
@@ -40,7 +41,7 @@ import java.util.Arrays;
 /**
  * @author Arman Bilge
  */
-public class HamiltonUpdate extends SimpleMCMCOperator {
+public class HamiltonUpdate extends AbstractCoercableOperator {
 
     protected final Likelihood U;
     protected final CompoundParameter q;
@@ -58,8 +59,9 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
-            @OperatorWeightAttribute double weight) {
-        this(U, new CompoundParameter("hamilton", parameters), epsilon, L, weight);
+            @OperatorWeightAttribute double weight,
+            @CoercionMode.CoercionModeAttribute CoercionMode mode) {
+        this(U, new CompoundParameter("hamilton", parameters), epsilon, L, weight, mode);
     }
 
     @Parseable
@@ -68,7 +70,9 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
             @ObjectElement(name = "space") CompoundParameter q,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
-            @OperatorWeightAttribute double weight) {
+            @OperatorWeightAttribute double weight,
+            @CoercionMode.CoercionModeAttribute CoercionMode mode) {
+        super(mode);
         this.U = U;
         this.q = q;
         this.epsilon = epsilon;
@@ -92,9 +96,6 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
 
     @Override
     public double doOperation() throws OperatorFailedException {
-
-        adjustEpsilon();
-        adjustL();
 
         final int dim = q.getDimension();
         final double halfEpsilon = epsilon / 2;
@@ -143,22 +144,35 @@ public class HamiltonUpdate extends SimpleMCMCOperator {
         return Arrays.stream(v).map(d -> d * d).sum();
     }
 
-    final private int adjustEvery = 100;
-    private int lastAccepted = 0;
-    private void adjustEpsilon() {
-        final int count = getCount();
-        if (count != 0 && count % adjustEvery == 0) {
-            final double alpha = (getAcceptCount() - lastAccepted) / (double) adjustEvery;
-            if (alpha < getTargetAcceptanceProbability())
-                epsilon /= 2;
-            else
-                epsilon *= 2;
-            lastAccepted = getAcceptCount();
-        }
+    @Override
+    public double getCoercableParameter() {
+        return Math.log(epsilon);
     }
 
-    private void adjustL() {
-        // TODO
+    @Override
+    public void setCoercableParameter(double value) {
+        epsilon = Math.exp(value);
+    }
+
+    @Override
+    public double getRawParameter() {
+        return epsilon;
+    }
+
+    public double getMinimumAcceptanceLevel() {
+        return 0.3;
+    }
+
+    public double getMaximumAcceptanceLevel() {
+        return 1.00;
+    }
+
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.5;
+    }
+
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.8;
     }
 
     public static final XMLObjectParser<HamiltonUpdate> PARSER = new SimpleXMLObjectParser<>(HamiltonUpdate.class,
