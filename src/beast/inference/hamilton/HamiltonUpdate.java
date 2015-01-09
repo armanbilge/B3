@@ -106,7 +106,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         Arrays.setAll(storedP, i -> p[i]);
 
         for (int i = 0; i < dim; ++i)
-            p[i] += halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
 
         final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
@@ -127,14 +127,14 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i)
-                    p[i] += epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    p[i] -= epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
         }
 
         // Make up for quiet behaviour above
         q.fireParameterChangedEvent();
 
         for (int i = 0; i < dim; ++i) {
-            p[i] += halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
             p[i] *= -1;
         }
 
