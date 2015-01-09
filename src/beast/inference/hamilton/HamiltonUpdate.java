@@ -121,13 +121,17 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                     q_ = upper - (upper - q_);
                     p[i] *= -1;
                 }
-                q.setValue(i, q_);
+                // Quiet due to the large overhead of multiple calls
+                q.setParameterValueQuietly(i, q_);
             }
 
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i)
                     p[i] += epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
         }
+
+        // Make up for quiet behaviour above
+        q.fireParameterChangedEvent();
 
         for (int i = 0; i < dim; ++i) {
             p[i] += halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
