@@ -138,13 +138,13 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             p[i] *= -1;
         }
 
-        final double storedK = halfSelfDot(storedP);
-        final double proposedK = halfSelfDot(p);
+        final double storedK = logPDFNormal(storedP);
+        final double proposedK = logPDFNormal(p);
 
         return storedK - proposedK;
     }
 
-    private double halfSelfDot(double[] v) {
+    private double logPDFNormal(double[] v) {
         return Arrays.stream(v).map(d -> d * d).sum() / 2;
     }
 
