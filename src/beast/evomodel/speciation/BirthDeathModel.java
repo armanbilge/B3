@@ -203,6 +203,26 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         return c1;
     }
 
+    public double differentiateLogTreeProbability(int taxonCount, Variable<Double> var) {
+        if (conditionOnOrigin) {
+            final double height = originHeightParameter.getValue(0);
+            double deriv = taxonCount - 1;
+            if (var == originHeightParameter)
+                deriv *= differentiateLogConditioningTerm(height);
+            else
+                deriv *= differentiateLogConditioningTerm(height, var);
+            return deriv;
+        } else if (!conditionalOnRoot) {
+            if (var == birthDiffRateParameter)
+                return (taxonCount - 1) / getR();
+            else if (var == relativeDeathRateParameter)
+                return taxonCount / (getA() - 1);
+            else if (var == sampleProbability)
+                return (taxonCount - 1) / getRho();
+        }
+        return 0;
+    }
+
     public double logNodeProbability(Tree tree, NodeRef node) {
         final double height = tree.getNodeHeight(node);
         final double r = getR();

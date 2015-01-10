@@ -49,6 +49,8 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      */
     public abstract double logTreeProbability(int taxonCount);
 
+    public abstract double differentiateLogTreeProbability(int taxonCount, Variable<Double> var);
+
     /**
      * Per node part of likelihood.
      *
@@ -104,13 +106,13 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      */
     public final double differentiateTreeLogLikelihood(Tree tree, Variable<Double> var, int index) {
 
-        double derivative = 0;
+        final int taxonCount = tree.getTaxonCount();
+        double derivative = differentiateLogTreeProbability(taxonCount, var);
 
         for (int j = 0; j < tree.getInternalNodeCount(); j++) {
             derivative += differentiateLogNodeProbability(tree, tree.getInternalNode(j), var, index);
         }
 
-        final int taxonCount = tree.getTaxonCount();
         if (includeExternalNodesInLikelihoodCalculation()) {
             for (int j = 0; j < taxonCount; j++) {
                 derivative += differentiateLogNodeProbability(tree, tree.getExternalNode(j), var, index);
