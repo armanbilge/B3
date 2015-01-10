@@ -22,6 +22,8 @@ package beast.math;
 
 import beast.inference.model.Variable;
 
+import java.util.function.DoubleSupplier;
+
 /**
  * @author Arman Bilge
  */
@@ -32,16 +34,23 @@ public interface Differentiable {
     double evaluate();
 
     default double differentiate(Variable<Double> var, int index) {
-        if (BRUTE_FORCE) {
-            final double value = var.getValue(index);
-            var.setValue(index, value + MachineAccuracy.EPSILON);
-            final double b = evaluate();
-            var.setValue(index, value - MachineAccuracy.EPSILON);
-            final double a = evaluate();
-            var.setValue(index, value);
-            return (b - a) / (2 * MachineAccuracy.EPSILON);
-        }
+        if (BRUTE_FORCE) return differentiate(this::evaluate, var, index);
         return 0.0;
     }
+
+    static double differentiate(DoubleSupplier f, Variable<Double> var, int index) {
+        return differentiate(f, var, index, MachineAccuracy.SQRT_EPSILON);
+    }
+
+    static double differentiate(DoubleSupplier f, Variable<Double> var, int index, double epsilon) {
+        final double value = var.getValue(index);
+        var.setValue(index, value + epsilon);
+        final double b = f.getAsDouble();
+        var.setValue(index, value - epsilon);
+        final double a = f.getAsDouble();
+        var.setValue(index, value);
+        return (b - a) / (2 * epsilon);
+    }
+
 
 }
