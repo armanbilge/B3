@@ -258,7 +258,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
             }
 
             final double aprhom1 = a + rho - 1;
-            final double z = height * aprhom1 / (aprhom1 - rho * Math.exp(rh));
+            final double z = - height * aprhom1 / (aprhom1 - rho * Math.exp(rh));
             double l = -2 * z - height;
 
             if (!conditionOnOrigin && !conditionalOnRoot && tree.isRoot(node)) {
@@ -343,7 +343,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
         final double rhrho = rh * rho;
         if (var == birthDiffRateParameter) {
             if (erh != 1.0) {
-                return (ca * (ca / erhm1 + rho) - ca * ca * rh * erh / (erhm1 * erhm1)) / (ca * r * (ca / erhm1 + rho));
+                return height * (rho - ca) / (ca + rho * erhm1) - height / erhm1 + 1 / r;
             } else {  // use exp(x)-1 = x for x near 0
                 return height * rho / (ca + rhrho);
             }
