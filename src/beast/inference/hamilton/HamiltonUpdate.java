@@ -115,10 +115,10 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                 final double lower = bounds.getLowerLimit(i);
                 final double upper = bounds.getUpperLimit(i);
                 if (q_ < lower) {
-                    q_ = lower + (lower - q_);
+                    q_ = 2 * lower - q_;
                     p[i] *= -1;
                 } else if (q_ > upper) {
-                    q_ = upper - (upper - q_);
+                    q_ = 2 * upper - q_;
                     p[i] *= -1;
                 }
                 // Quiet due to the large overhead of multiple calls
