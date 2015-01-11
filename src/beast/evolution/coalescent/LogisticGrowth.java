@@ -135,6 +135,12 @@ public class LogisticGrowth extends ExponentialGrowth {
         return (r*t*z + (1 + c)*nZero*Math.log(nZero + c*nZero + z + c*ert*z))/(r*z*(nZero + c*nZero + z));
     }
 
+    public double getDifferentiatedIntensity(double t) {
+
+
+
+    }
+
     /**
      * Returns value of demographic intensity function at time t
      * (= integral 1/N(x) dx from 0 to t).

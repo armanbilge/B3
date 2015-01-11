@@ -60,11 +60,26 @@ public class ConstantPopulation extends DemographicFunction.Abstract
      */
 	public void setN0(double N0) { this.N0 = N0; }
 
-		
+	public boolean respectingN0() {
+		return respectN0;
+	}
+
+	public void setRespectingN0(boolean respect) {
+		respectN0 = respect;
+	}
+
 	// Implementation of abstract methods
 	
 	public double getDemographic(double t) { return getN0(); }
 	public double getIntensity(double t) { return t/getN0(); }
+	public double getDifferentiatedIntensity(double t) {
+		if (respectingN0()) {
+			final double N0 = getN0();
+			return t / (N0 * N0);
+		} else {
+			return 0;
+		}
+	}
 	public double getInverseIntensity(double x) { return getN0()*x; }
 
     // same as abstract
@@ -113,4 +128,5 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	//
 	
 	private double N0;
+	private boolean respectN0;
 }

@@ -24,6 +24,7 @@ import beast.evolution.coalescent.ConstantPopulation;
 import beast.evolution.coalescent.DemographicFunction;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.ElementRule;
 import beast.xml.XMLObject;
@@ -72,6 +73,13 @@ public class ConstantPopulationModel extends DemographicModel {
 
     public DemographicFunction getDemographicFunction() {
         constantPopulation.setN0(N0Parameter.getParameterValue(0));
+        return constantPopulation;
+    }
+
+    @Override
+    public DemographicFunction getDifferentiatedDemographicFunction(Variable<Double> var, int index) {
+        constantPopulation.setN0(N0Parameter.getParameterValue(0));
+        constantPopulation.setRespectingN0(var == N0Parameter);
         return constantPopulation;
     }
 

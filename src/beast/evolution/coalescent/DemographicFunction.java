@@ -53,6 +53,8 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getIntensity(double t);
 
+    double getDifferentiatedIntensity(double t);
+
 	/**
 	 * @return value of inverse demographic intensity function
 	 * (returns time, needed for simulation of coalescent intervals).
@@ -66,6 +68,8 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      * @return integral value
      */
 	double getIntegral(double start, double finish);
+
+    double getDifferentiatedIntegral(double start, double finish);
 
 	/**
 	 * @return the number of arguments for this function.
@@ -148,6 +152,10 @@ public interface DemographicFunction extends UnivariateFunction, Units {
 		{
 			return getIntensity(finish) - getIntensity(start);
 		}
+
+        public double getDifferentiatedIntegral(double start, double finish) {
+            return getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
+        }
 
         /**
          * Returns the integral of 1/N(x) between start and finish, calling either the getAnalyticalIntegral or

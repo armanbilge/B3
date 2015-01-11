@@ -52,6 +52,10 @@ public class ExponentialGrowth extends ConstantPopulation {
      */
     public void setGrowthRate(double r) { this.r = r; }
 
+    public double getDoublingTime() {
+        return Math.log(2) / getGrowthRate();
+    }
+
     /**
      * An alternative parameterization of this model. This
      * function sets growth rate for a given doubling time.
@@ -59,6 +63,23 @@ public class ExponentialGrowth extends ConstantPopulation {
      */
     public void setDoublingTime(double doublingTime) {
         setGrowthRate( Math.log(2) / doublingTime );
+    }
+
+    public final boolean respectingGrowthRate() {
+        return respectGrowthRate;
+    }
+
+    public void setRespectingGrowthRate(boolean b) {
+        respectGrowthRate = b;
+    }
+
+    public final boolean respectingDoublingTime() {
+        return respectDoublingTime;
+    }
+
+    public void setRespectingDoublingTime(boolean b) {
+        if (b) setRespectingGrowthRate(b);
+        respectDoublingTime = b;
     }
 
     // Implementation of abstract methods
@@ -86,6 +107,34 @@ public class ExponentialGrowth extends ConstantPopulation {
         }
     }
 
+    public double getDifferentiatedIntegral(double start, double finish) {
+        double r = getGrowthRate();
+        double N0 = getN0();
+        if (respectingN0()) {
+            if (r == 0.0) {
+                return (finish - start)/ (N0 * N0);
+            } else {
+                return (Math.exp(finish*r) - Math.exp(start*r))/(N0 * N0)/r;
+            }
+        } else if (respectingGrowthRate()) {
+            double deriv = 1;
+            if (respectingDoublingTime()) {
+                final double doublingTime = getDoublingTime();
+                deriv *= Math.log(2) / (doublingTime * doublingTime);
+            }
+            if (r == 0.0) {
+                deriv *= 0;
+            } else {
+                final double startr = start * r;
+                final double finishr = finish * r;
+                deriv *= (Math.exp(startr) * (1 - startr) - Math.exp(finishr) * (1 - finishr))/ (N0 * r * r);
+            }
+            return deriv;
+        } else {
+            return 0;
+        }
+    }
+
     public double getIntensity(double t)
     {
         double r = getGrowthRate();
@@ -93,6 +142,34 @@ public class ExponentialGrowth extends ConstantPopulation {
             return t/getN0();
         } else {
             return (Math.exp(t*r)-1.0)/getN0()/r;
+        }
+    }
+
+    public double getDifferentiatedIntensity(double t)
+    {
+        double r = getGrowthRate();
+        double N0 = getN0();
+        if (respectingN0()) {
+            if (r == 0.0) {
+                return t / (N0 * N0);
+            } else {
+                return (Math.exp(t*r)-1.0)/(N0 * N0)/r;
+            }
+        } else if (respectingGrowthRate()) {
+            double deriv = 1;
+            if (respectingDoublingTime()) {
+                final double doublingTime = getDoublingTime();
+                deriv *= Math.log(2) / (doublingTime * doublingTime);
+            }
+            if (r == 0.0) {
+                deriv *= 0;
+            } else {
+                final double tr = t * r;
+                deriv *= (Math.exp(tr) * (1 - tr) - 1.0)/ (N0 * r * r);
+            }
+            return deriv;
+        } else {
+            return 0;
         }
     }
 
@@ -155,4 +232,6 @@ public class ExponentialGrowth extends ConstantPopulation {
     //
 
     private double r;
+    private boolean respectGrowthRate;
+    private boolean respectDoublingTime;
 }

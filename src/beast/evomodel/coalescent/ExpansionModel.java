@@ -24,6 +24,7 @@ import beast.evolution.coalescent.DemographicFunction;
 import beast.evolution.coalescent.Expansion;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.ElementRule;
 import beast.xml.XMLObject;
@@ -104,6 +105,32 @@ public class ExpansionModel extends DemographicModel {
         expansion.setProportion(N1);
 
         return expansion;
+    }
+
+    public DemographicFunction getDifferentiatedDemographicFunction(Variable<Double> var, int index) {
+
+        double N0 = N0Parameter.getParameterValue(0);
+        double N1 = N1Parameter.getParameterValue(0);
+        double growthRate = growthRateParameter.getParameterValue(0);
+
+        if (usingGrowthRate) {
+            expansion.setGrowthRate(growthRate);
+        } else {
+            double doublingTime = growthRate;
+            growthRate = Math.log(2) / doublingTime;
+            expansion.setDoublingTime(doublingTime);
+        }
+
+        expansion.setN0(N0);
+        expansion.setProportion(N1);
+
+        expansion.setRespectingN0(var == N0Parameter);
+        expansion.setRespectingN1(var == N1Parameter);
+        expansion.setRespectingGrowthRate(var == growthRateParameter);
+        expansion.setRespectingDoublingTime(var == growthRateParameter && !usingGrowthRate);
+
+        return expansion;
+
     }
 
     //

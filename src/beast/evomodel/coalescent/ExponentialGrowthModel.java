@@ -24,6 +24,7 @@ import beast.evolution.coalescent.DemographicFunction;
 import beast.evolution.coalescent.ExponentialGrowth;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
+import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.ElementRule;
 import beast.xml.XMLObject;
@@ -96,6 +97,25 @@ public class ExponentialGrowthModel extends DemographicModel {
 
         return exponentialGrowth;
     }
+
+    public DemographicFunction getDifferentiatedDemographicFunction(Variable<Double> var, int index) {
+        exponentialGrowth.setN0(N0Parameter.getParameterValue(0));
+
+        if (usingGrowthRate) {
+            double r = growthRateParameter.getParameterValue(0);
+            exponentialGrowth.setGrowthRate(r);
+        } else {
+            double doublingTime = growthRateParameter.getParameterValue(0);
+            exponentialGrowth.setDoublingTime(doublingTime);
+        }
+
+        exponentialGrowth.setRespectingN0(var == N0Parameter);
+        exponentialGrowth.setRespectingGrowthRate(var == growthRateParameter);
+        exponentialGrowth.setRespectingDoublingTime(var == growthRateParameter && !usingGrowthRate);
+
+        return exponentialGrowth;
+    }
+
     //
     // protected stuff
     //

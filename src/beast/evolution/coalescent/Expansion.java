@@ -49,6 +49,14 @@ public class Expansion extends ExponentialGrowth {
         this.N1 = N1;
     }
 
+    public boolean respectingN1() {
+        return respectN1;
+    }
+
+    public void setRespectingN1(boolean respect) {
+        respectN1 = respect;
+    }
+
     public void setProportion(double p) {
         this.N1 = getN0() * p;
     }
@@ -79,6 +87,39 @@ public class Expansion extends ExponentialGrowth {
         return Math.log(b + N1 * Math.exp(r * t)) / (r * N1);
     }
 
+    public double getDifferentiatedIntensity(double t) {
+        double N0 = getN0();
+        double N1 = getN1();
+        double b = (N0 - N1);
+        double r = getGrowthRate();
+        double ert = Math.exp(r * t);
+        double N1ertpb = N1 * ert + b;
+
+        if (respectingN0()) {
+
+            return 1.0 / N1 * r * (N1 * (ert - 1) + N0);
+
+        } else if (respectingN1()) {
+
+            return (ert - 1) / (N1 * r * N1ertpb) - Math.log(N1ertpb) / (N1 * N1 * r);
+
+        } else if (respectingGrowthRate()) {
+            double deriv = 1;
+            if (respectingDoublingTime()) {
+                final double doublingTime = getDoublingTime();
+                deriv *= Math.log(2) / (doublingTime * doublingTime);
+            }
+
+            deriv *= t * ert / (r * N1ertpb) - Math.log(N1ertpb) / (N1 * r * r);
+
+            return deriv;
+
+        } else {
+            return 0;
+        }
+
+    }
+
     public double getInverseIntensity(double x) {
 
         /* AER - I think this is right but until someone checks it...
@@ -99,6 +140,13 @@ public class Expansion extends ExponentialGrowth {
 
     public double getIntegral(double start, double finish) {
         double v1 = getIntensity(finish) - getIntensity(start);
+        //double v1 =  getNumericalIntegral(start, finish);
+
+        return v1;
+    }
+
+    public double getDifferentiatedIntegral(double start, double finish) {
+        double v1 = getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
         //double v1 =  getNumericalIntegral(start, finish);
 
         return v1;
@@ -162,4 +210,5 @@ public class Expansion extends ExponentialGrowth {
     //
 
     private double N1 = 0.0;
+    private boolean respectN1;
 }

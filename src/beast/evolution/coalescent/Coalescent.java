@@ -117,6 +117,52 @@ public class Coalescent implements MultivariateFunction, Units {
         return logL;
     }
 
+    public static double differentiateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction, double threshold) {
+
+        double logL = 0.0;
+
+        double startTime = 0.0;
+        final int n = intervals.getIntervalCount();
+        for (int i = 0; i < n; i++) {
+
+            final double duration = intervals.getInterval(i);
+            final double finishTime = startTime + duration;
+
+            final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+            if( intervalArea == 0 && duration != 0 ) {
+                return Double.NEGATIVE_INFINITY;
+            }
+            final int lineageCount = intervals.getLineageCount(i);
+
+            final double kChoose2 = MathUtils.nChoose2(lineageCount);
+            // common part
+            logL += -kChoose2 * intervalArea;
+
+            if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
+
+                // if value at end is many orders of magnitude different than mean over interval reject the interval
+                // This is protection against cases where ridiculous infinitesimal population size at the end of a
+                // linear interval drive coalescent values to infinity.
+
+                if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
+                    //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
+                    logL -= Math.log(demographicAtCoalPoint);
+                } else {
+                    // remove this at some stage
+                    //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    return Double.NEGATIVE_INFINITY;
+                }
+
+            }
+
+            startTime = finishTime;
+        }
+
+        return logL;
+    }
+
     /**
      * Calculates the log likelihood of this set of coalescent intervals,
      * using an analytical integration over theta.

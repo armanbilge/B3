@@ -47,6 +47,8 @@ public abstract class DemographicModel extends AbstractModel implements Units {
 
     public abstract DemographicFunction getDemographicFunction();
 
+    public abstract DemographicFunction getDifferentiatedDemographicFunction(Variable<Double> var, int index);
+
     // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
