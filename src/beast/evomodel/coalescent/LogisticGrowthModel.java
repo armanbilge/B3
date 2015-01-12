@@ -119,9 +119,12 @@ public class LogisticGrowthModel extends DemographicModel {
 
         logisticGrowth.setTime50(shapeParameter.getParameterValue(0));
 
+        logisticGrowth.setRespectTime50(true);
+
         logisticGrowth.setRespectingN0(var == N0Parameter);
         logisticGrowth.setRespectingGrowthRate(var == growthRateParameter);
         logisticGrowth.setRespectingDoublingTime(var == growthRateParameter && !usingGrowthRate);
+        logisticGrowth.setRespectingShape(var == shapeParameter);
 
         return logisticGrowth;
     }

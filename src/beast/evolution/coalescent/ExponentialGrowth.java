@@ -65,6 +65,11 @@ public class ExponentialGrowth extends ConstantPopulation {
         setGrowthRate( Math.log(2) / doublingTime );
     }
 
+    protected double getDoublingTimeChainRule() {
+        final double doublingTime = getDoublingTime();
+        return Math.log(2) / (doublingTime * doublingTime);
+    }
+
     public final boolean respectingGrowthRate() {
         return respectGrowthRate;
     }
@@ -157,10 +162,7 @@ public class ExponentialGrowth extends ConstantPopulation {
             }
         } else if (respectingGrowthRate()) {
             double deriv = 1;
-            if (respectingDoublingTime()) {
-                final double doublingTime = getDoublingTime();
-                deriv *= Math.log(2) / (doublingTime * doublingTime);
-            }
+            if (respectingDoublingTime()) deriv *= getDoublingTimeChainRule();
             if (r == 0.0) {
                 deriv *= 0;
             } else {

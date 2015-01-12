@@ -105,10 +105,7 @@ public class Expansion extends ExponentialGrowth {
 
         } else if (respectingGrowthRate()) {
             double deriv = 1;
-            if (respectingDoublingTime()) {
-                final double doublingTime = getDoublingTime();
-                deriv *= Math.log(2) / (doublingTime * doublingTime);
-            }
+            if (respectingDoublingTime()) deriv *= getDoublingTimeChainRule();
 
             deriv *= t * ert / (r * N1ertpb) - Math.log(N1ertpb) / (N1 * r * r);
 

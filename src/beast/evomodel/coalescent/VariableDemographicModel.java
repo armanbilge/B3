@@ -156,6 +156,18 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         return demoFunction;
     }
 
+    public VDdemographicFunction getDifferentiatedDemographicFunction(Variable<Double> var, int index) {
+        throw new UnsupportedOperationException();
+//        if (demoFunction == null) {
+//            demoFunction = new VDdemographicFunction(trees, type,
+//                    indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(), logSpace, mid);
+//        } else {
+//            demoFunction.setup(trees, indicatorParameter.getParameterValues(), popSizeParameter.getParameterValues(),
+//                    logSpace, mid);
+//        }
+//        return demoFunction;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // tree has changed
         //System.out.println("model changed: " + model);

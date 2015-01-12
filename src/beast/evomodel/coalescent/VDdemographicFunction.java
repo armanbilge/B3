@@ -464,6 +464,10 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
         return getIntegral(0, t);
     }
 
+    public double getDifferentiatedIntensity(double t) {
+        throw new UnsupportedOperationException();
+    }
+
     public double getInverseIntensity(double x) {
         assert false;
         return 0;

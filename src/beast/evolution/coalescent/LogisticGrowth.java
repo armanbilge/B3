@@ -45,6 +45,14 @@ public class LogisticGrowth extends ExponentialGrowth {
         return c;
     }
 
+    public void setRespectingShape(boolean b) {
+        respectShape = b;
+    }
+
+    public boolean respectingShape() {
+        return respectShape;
+    }
+
     double lowLimit = 0; // 1e-6;
 
     /**
@@ -59,11 +67,38 @@ public class LogisticGrowth extends ExponentialGrowth {
         c = 1.0 / (Math.exp(getGrowthRate() * time50) - 2.0);
     }
 
+    public double getTime50() {
+        return Math.log(1/c + 2) / getGrowthRate();
+    }
+
+    public void setRespectTime50(boolean b) {
+        respectTime50 = b;
+    }
+
+    public boolean respectingTime50() {
+        return respectTime50;
+    }
+
+    protected double getTime50ChainRule(boolean respectGrowthRate) {
+
+        final double t50 = getTime50();
+        final double r = getGrowthRate();
+        final double ert50 = Math.exp(r * t50);
+        final double ert50m2 = ert50 - 2;
+        final double ert50m2Squared = ert50m2 * ert50m2;
+
+        if (!respectGrowthRate)
+            return - r * ert50 / ert50m2Squared;
+        else
+            return -t50 * ert50 / ert50m2Squared;
+
+    }
+
     public void setShapeFromTimeAtAlpha(double time, double alpha) {
 
         // New parameterization of logistic shape to be the time at which the
         // population reached some proportion alpha:
-        double ert = Math.exp(- getGrowthRate() * time);
+        double ert = Math.exp(-getGrowthRate() * time);
         c = ((1.0 - alpha) * ert) / (ert - alpha);
     }
     // Implementation of abstract methods
@@ -137,7 +172,80 @@ public class LogisticGrowth extends ExponentialGrowth {
 
     public double getDifferentiatedIntensity(double t) {
 
+        double nZero = getN0();
+        double r = getGrowthRate();
+        double c = getShape();
+        double rt = r * t;
+        double ert = Math.exp(rt);
+        double cp1 = c + 1;
 
+        if (respectingN0()) {
+
+            if( lowLimit == 0 ) {
+                // double emrt = Math.exp(-r * t);
+                return - (c * (ert - 1) + rt) / ((c + 1) * nZero * nZero * r);
+            }
+            double z = lowLimit;
+            double cnZeropzpnZero = c * nZero + z + nZero;
+            double czert = c * z * ert;
+            double cnZeropzpnZeropczert = cnZeropzpnZero + czert;
+            return cp1 * cp1 * nZero / (r * z * cnZeropzpnZero * cnZeropzpnZeropczert)
+                    - cp1 * (rt - Math.log(cnZeropzpnZeropczert)) / (r * cnZeropzpnZero * cnZeropzpnZero);
+
+        } else if (respectingGrowthRate()) {
+
+            double deriv = 0.0;
+
+            if (lowLimit == 0) {
+                deriv += c * (ert * (rt - 1) + 1) / (cp1 * nZero * r * r);
+                if (respectingTime50())
+                    deriv += -(rt - ert + 1) / (cp1 * cp1 * r * nZero) * getTime50ChainRule(true);
+            } else {
+
+                double z = lowLimit;
+                double cnZeropzpnZero = c * nZero + z + nZero;
+                double czert = c * z * ert;
+                double cnZeropzpnZeropczert = cnZeropzpnZero + czert;
+                double logcnZeropzpnZeropczert = Math.log(cnZeropzpnZeropczert);
+                double rzcnZeropzpnZero = r * z * cnZeropzpnZero;
+
+                deriv += cp1 * nZero * (rt - logcnZeropzpnZeropczert) / (r * rzcnZeropzpnZero)
+                        - cp1 * nZero * t / (r * z * cnZeropzpnZeropczert);
+
+                if (respectingTime50()) {
+                    deriv += ((cp1 * nZero * (nZero + z*ert) / cnZeropzpnZeropczert + nZero * logcnZeropzpnZeropczert) / rzcnZeropzpnZero
+                            - nZero * (cp1 * nZero * logcnZeropzpnZeropczert + rt * z) / (rzcnZeropzpnZero * cnZeropzpnZero)) * getTime50ChainRule(true);
+                }
+
+            }
+
+            if (respectingDoublingTime()) deriv *= getDoublingTimeChainRule();
+            return deriv;
+
+        } else if (respectingShape()) {
+
+            double deriv = 1.0;
+            if (respectingTime50()) deriv *= getTime50ChainRule(false);
+
+            if( lowLimit == 0 ) {
+                // double emrt = Math.exp(-r * t);
+                deriv *= - (rt - ert + 1) / (cp1 * cp1 * r * nZero);
+            } else {
+                double z = lowLimit;
+                double cnZeropzpnZero = c * nZero + z + nZero;
+                double czert = c * z * ert;
+                double cnZeropzpnZeropczert = cnZeropzpnZero + czert;
+                double logcnZeropzpnZeropczert = Math.log(cnZeropzpnZeropczert);
+                double rzcnZeropzpnZero = r * z * cnZeropzpnZero;
+                deriv *= (cp1 * nZero * (nZero + z*ert) / cnZeropzpnZeropczert + nZero * logcnZeropzpnZeropczert) / rzcnZeropzpnZero
+                        - nZero * (cp1 * nZero * logcnZeropzpnZeropczert + rt * z) / (rzcnZeropzpnZero * cnZeropzpnZero);
+            }
+
+            return deriv;
+
+        } else {
+            return 0;
+        }
 
     }
 
@@ -200,6 +308,109 @@ public class LogisticGrowth extends ExponentialGrowth {
        // double v = ( (c * (Math.exp(r*finish) - Math.exp(r*start)) / r) + (start - finish)) / term1;
 
         return term5 + term2over3;
+    }
+
+    public double getDifferentiatedIntegral(double start, double finish) {
+        if( lowLimit > 0 ) {
+            double v1 = getNumericalIntegral(start, finish);
+            final double v2 = getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
+            return v2;
+        }
+
+        double intervalLength = finish - start;
+
+        double nZero = getN0();
+        double r = getGrowthRate();
+        double c = getShape();
+        double cp1 = c + 1;
+        double expOfMinusRT = Math.exp(-r * start);
+        double expOfMinusRG = Math.exp(-r * intervalLength);
+
+        double term1 = nZero * cp1;
+        if (term1 == 0.0) {
+            return 0.0;
+        }
+
+        boolean term3Is0 = term1 * expOfMinusRT * r * expOfMinusRG == 0;
+
+        if (respectingN0()) {
+
+            if (!term3Is0) {
+                return (c * (Math.exp(r*start) - Math.exp(r * (intervalLength + start))) - intervalLength * r)
+                        / (cp1 * nZero * nZero * r);
+            } else if (expOfMinusRG < 1e-8) {
+                double rintervalLength = r * intervalLength;
+                return - cp1 * Math.exp(-rintervalLength) * (c * Math.exp(r * start) + rintervalLength * Math.exp(rintervalLength))
+                        / (nZero * nZero * r);
+            } else {
+                double rintervalLength = r * intervalLength;
+                return - cp1 * (c * (Math.exp(-rintervalLength) + 1) * Math.exp(r * start) + rintervalLength)
+                        / (nZero * nZero * r);
+            }
+
+        } else if (respectingGrowthRate()) {
+
+            double deriv = 0.0;
+
+            if (!term3Is0) {
+
+                double rintervalLength = r * intervalLength;
+                double erintervalLength = Math.exp(rintervalLength);
+                deriv += c * Math.exp(r*start) * ((erintervalLength - 1) * (r * start - 1) + rintervalLength * erintervalLength)
+                        / (cp1 * nZero * r * r);
+
+                if (respectingTime50())
+                    deriv += Math.exp(r * (intervalLength + start) - r * intervalLength - Math.exp(r * start))
+                            / (cp1 * cp1 * nZero * r) * getTime50ChainRule(true);
+
+            } else if (expOfMinusRG < 1e-8) {
+
+                double rintervalLength = r * intervalLength;
+                double rstart = r * start;
+                deriv += - c * cp1 * Math.exp(rstart - rintervalLength) * (rintervalLength - rstart + 1) / (nZero * r * r);
+                if (respectingTime50())
+                    deriv += Math.exp(-rintervalLength) * ((2*c + 1) * Math.exp(r * start) + rintervalLength * Math.exp(rintervalLength))
+                            / (nZero * r) * getTime50ChainRule(true);
+
+            } else {
+
+                double rintervalLength = r * intervalLength;
+                double rstart = r * start;
+                double term = Math.exp(rintervalLength) * (rstart - 1) - rintervalLength * rstart - 1;
+                deriv += c * Math.exp(r * (start - rintervalLength)) * (c + 1) * term / (nZero * r * r);
+                if (respectingTime50())
+                    deriv += Math.exp(-rintervalLength) * ((2*c + 1) * (Math.exp(r * (intervalLength + start)) + Math.exp(r * start)) + rintervalLength * Math.exp(rintervalLength))
+                            / (nZero * r) * getTime50ChainRule(true);
+
+            }
+
+            if (respectingDoublingTime()) deriv *= getDoublingTimeChainRule();
+            return deriv;
+
+        } else if (respectingShape()) {
+
+            double deriv = 1.0;
+            if (respectingTime50()) deriv *= getTime50ChainRule(false);
+
+            if (!term3Is0) {
+                deriv *= Math.exp(r * (intervalLength + start) - r * intervalLength - Math.exp(r * start))
+                        / (cp1 * cp1 * nZero * r);
+            } else if (expOfMinusRG < 1e-8) {
+                double rintervalLength = r * intervalLength;
+                deriv *= Math.exp(-rintervalLength) * ((2*c + 1) * Math.exp(r * start) + rintervalLength * Math.exp(rintervalLength))
+                        / (nZero * r);
+            } else {
+                double rintervalLength = r * intervalLength;
+                deriv *= Math.exp(-rintervalLength) * ((2*c + 1) * (Math.exp(r * (intervalLength + start)) + Math.exp(r * start)) + rintervalLength * Math.exp(rintervalLength))
+                        / (nZero * r);
+            }
+
+            return deriv;
+
+        } else {
+            return 0;
+        }
+        
     }
 
     public int getNumArguments() {
@@ -269,4 +480,6 @@ public class LogisticGrowth extends ExponentialGrowth {
     //
 
     private double c;
+    private boolean respectShape;
+    private boolean respectTime50;
 }
