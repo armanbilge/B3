@@ -23,11 +23,7 @@ package beast.inference.trace;
 import beast.math.DiscreteStatistics;
 import beast.util.HeapSort;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A class that stores the distribution statistics for a trace
