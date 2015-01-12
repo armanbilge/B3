@@ -39,17 +39,19 @@ public interface Differentiable {
     }
 
     static double differentiate(DoubleSupplier f, Variable<Double> var, int index) {
-        return differentiate(f, var, index, MachineAccuracy.SQRT_EPSILON);
+        return differentiate(f, var, index, MachineAccuracy.SQRT_EPSILON * Math.max(var.getValue(index), 1));
     }
 
     static double differentiate(DoubleSupplier f, Variable<Double> var, int index, double epsilon) {
         final double value = var.getValue(index);
-        var.setValue(index, value + epsilon);
+        final double vpe = value + epsilon;
+        var.setValue(index, vpe);
         final double b = f.getAsDouble();
-        var.setValue(index, value - epsilon);
+        final double vme = value - epsilon;
+        var.setValue(index, vme);
         final double a = f.getAsDouble();
         var.setValue(index, value);
-        return (b - a) / (2 * epsilon);
+        return (b - a) / (vpe - vme);
     }
 
 
