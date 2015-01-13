@@ -271,7 +271,7 @@ public class AttributeRule implements XMLSyntaxRule {
 	/**
 	 * @return a pretty name for a class.
 	 */
-	private String getTypeName() {
+	public String getTypeName() {
 
 		if (c == null) return "Object";
 		final String name = c.getName();

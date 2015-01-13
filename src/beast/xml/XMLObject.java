@@ -21,6 +21,7 @@
 package beast.xml;
 
 import beast.util.XHTMLable;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
@@ -52,6 +53,10 @@ public class XMLObject {
        this(obj.element);
        nativeObject = ((List)obj.getNativeObject()).get(index);
    }
+
+    public XMLObject(Document doc, String tagName) {
+        this.element = doc.createElement(tagName);
+    }
 
     /**
      * @return the number of children this XMLObject has.
@@ -252,6 +257,10 @@ public class XMLObject {
         return getAndTest(name);
     }
 
+    public void setAttribute(String name, Object value) {
+        element.setAttribute(name, value.toString());
+    }
+
     /**
      * @return the named attribute as a boolean.
      */
@@ -412,7 +421,7 @@ public class XMLObject {
     /**
      * Adds a child.
      */
-    void addChild(Object child) {
+    public void addChild(Object child) {
         if (child instanceof XMLObject ||
                 child instanceof Reference ||
                 child instanceof String) {

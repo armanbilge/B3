@@ -296,7 +296,7 @@ public class XMLParser {
 
                         // don't parse elements that may be legal here with global parsers
                         final boolean parseIt = parser == null || !parser.isAllowed(tag);
-                        Object xoc = convert(element, target, run, parseIt);
+                        T xoc = convert(element, target, run, parseIt);
                         xo.addChild(xoc);
 
                         if (target != null && xoc instanceof XMLObject) {
@@ -519,6 +519,10 @@ public class XMLParser {
                 // DO NOTHING
             }
         }
+    }
+
+    public ObjectStore getObjectStore() {
+        return objectStore;
     }
 
     //anonymous object store class
