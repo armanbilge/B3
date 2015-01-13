@@ -45,6 +45,10 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getDemographic(double t);
 
+    default double differentiateDemographic(double t) {
+        throw new UnsupportedOperationException();
+    };
+
     double getLogDemographic(double t);
 
     /**
@@ -53,7 +57,9 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getIntensity(double t);
 
-    double getDifferentiatedIntensity(double t);
+    default double getDifferentiatedIntensity(double t) {
+        throw new UnsupportedOperationException();
+    };
 
 	/**
 	 * @return value of inverse demographic intensity function
@@ -69,7 +75,9 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getIntegral(double start, double finish);
 
-    double getDifferentiatedIntegral(double start, double finish);
+    default double getDifferentiatedIntegral(double start, double finish) {
+        throw new UnsupportedOperationException();
+    };
 
 	/**
 	 * @return the number of arguments for this function.
