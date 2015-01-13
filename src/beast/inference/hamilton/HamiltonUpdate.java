@@ -114,13 +114,19 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                 double q_ = q.getValue(i) - epsilon * p[i];
                 final double lower = bounds.getLowerLimit(i);
                 final double upper = bounds.getUpperLimit(i);
-                if (q_ < lower) {
-                    q_ = 2 * lower - q_;
-                    p[i] *= -1;
-                } else if (q_ > upper) {
-                    q_ = 2 * upper - q_;
-                    p[i] *= -1;
-                }
+                boolean qllower = q_ < lower;
+                boolean qgupper = q_ > upper;
+                do {
+                    if (q_ < lower) {
+                        q_ = 2 * lower - q_;
+                        p[i] *= -1;
+                    } else if (q_ > upper) {
+                        q_ = 2 * upper - q_;
+                        p[i] *= -1;
+                    }
+                    qllower = q_ < lower;
+                    qgupper = q_ > upper;
+                } while (qllower || qgupper);
                 // Quiet due to the large overhead of multiple calls
                 q.setParameterValueQuietly(i, q_);
             }
