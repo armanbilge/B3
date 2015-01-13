@@ -117,10 +117,10 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                 boolean qllower = q_ < lower;
                 boolean qgupper = q_ > upper;
                 do {
-                    if (q_ < lower) {
+                    if (qllower) {
                         q_ = 2 * lower - q_;
                         p[i] *= -1;
-                    } else if (q_ > upper) {
+                    } else if (qgupper) {
                         q_ = 2 * upper - q_;
                         p[i] *= -1;
                     }
