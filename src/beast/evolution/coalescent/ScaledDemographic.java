@@ -46,6 +46,10 @@ public class ScaledDemographic extends DemographicFunction.Abstract {
         return demo.getIntensity(t) / scale;
     }
 
+    public double getDifferentiatedIntensity(double t) {
+        return demo.getDifferentiatedIntensity(t) / scale;
+    }
+
     public double getIntegral(double start, double finish) {
         return (demo.getIntensity(finish) - demo.getIntensity(start)) / scale;
     }
