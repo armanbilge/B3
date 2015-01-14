@@ -22,18 +22,22 @@ package beast.app.beauti;
 
 import beast.xml.AndRule;
 import beast.xml.AttributeRule;
+import beast.xml.ContentRule;
 import beast.xml.ElementRule;
 import beast.xml.OrRule;
 import beast.xml.Reference;
 import beast.xml.XMLObject;
 import beast.xml.XMLObjectParser;
+import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 import beast.xml.XORRule;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -45,14 +49,16 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -62,24 +68,42 @@ import java.util.Set;
 /**
 * @author Arman Bilge
 */
-class ObjectFrame<T> extends JFrame {
+class ObjectFrame<T> extends JFrame implements DocumentListener {
 
     protected final Beauti beauti;
     protected final XMLObjectParser<T> parser;
     protected final XMLObject xo;
     protected final Set<XMLAction> actions;
 
-    @FunctionalInterface
-    protected interface XMLAction {
-        void act(XMLObject xo);
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        changedUpdate(e);
     }
 
-    public ObjectFrame(final Beauti beauti, final XMLObjectParser<T> parser) {
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        changedUpdate(e);
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        actions.forEach(XMLAction::validate);
+    }
+
+    protected interface XMLAction {
+        boolean read();
+        void write();
+        void validate();
+    }
+
+    public ObjectFrame(final XMLObject xo, final Beauti beauti, final XMLObjectParser<T> parser) {
         super(parser.getParserName());
+        this.xo = xo;
         this.beauti = beauti;
         this.parser = parser;
-        this.xo = new XMLObject(beauti.getDocument(), parser.getParserName());
-        this.actions = new HashSet<>();
+        if (xo.getName() != parser.getParserName())
+            throw new IllegalArgumentException();
+        actions = new HashSet<>();
 
         final Container pane = getContentPane();
         setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
@@ -89,36 +113,105 @@ class ObjectFrame<T> extends JFrame {
         pane.add(descriptionPanel);
 
         final JTextField idField = new JTextField(16);
+        idField.setText(parser.getParserName() + "_" + Integer.toString(beauti.getInstanceCount(parser)));
+        idField.getDocument().addDocumentListener(this);
         final JLabel idLabel = new JLabel("id: ", JLabel.LEADING);
         idLabel.setLabelFor(idField);
-        actions.add(xo -> xo.setAttribute("id", idField.getText()));
+        final JLabel idWarning = createWarningIcon();
+        actions.add(new XMLAction() {
+            @Override
+            public boolean read() {
+                try {
+                    idField.setText(xo.getStringAttribute("id"));
+                } catch (XMLParseException e) {
+                    e.printStackTrace();
+                }
+                return xo.hasAttribute("id");
+            }
+            @Override
+            public void write() {
+                xo.setAttribute("id", idField.getText());
+            }
+            @Override
+            public void validate() {
+                final String s = idField.getText();
+                if (s.isEmpty() || s.contains("\""))
+                    idWarning.setVisible(true);
+                else
+                    idWarning.setVisible(false);
+            }
+        });
         final Panel idPanel = new Panel(new FlowLayout());
         idPanel.add(idLabel);
         idPanel.add(idField);
+        idPanel.add(idWarning);
         pane.add(idPanel);
 
         final XMLSyntaxRule[] rules = parser.getSyntaxRules();
         for (final XMLSyntaxRule rule : rules)
-            pane.add(createPanelForRule(rule, actions));
+            pane.add(createPanelForRule(xo, rule, actions));
+        changedUpdate(null);
+
+        final JPanel buttonPanel = new JPanel(new FlowLayout());
+        final JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setVisible(false);
+            }
+        });
+        final JButton doneButton = new JButton("Done");
+        doneButton.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getXMLObject();
+                beauti.store(idField.getText(), xo);
+                setVisible(false);
+            }
+        });
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(doneButton);
+        add(buttonPanel);
+
         pack();
         setVisible(true);
     }
 
-    protected Panel createPanelForRule(final XMLSyntaxRule rule, final Set<XMLAction> actions) {
-        final Panel panel = new Panel();
+    protected Panel createPanelForRule(final XMLObject xo, final XMLSyntaxRule rule, final Set<XMLAction> actions) {
+        final Panel panel = new Panel() {
+            @Override
+            public void setEnabled(boolean b) {
+                super.setEnabled(b);
+                Arrays.stream(getComponents()).forEach(c -> c.setEnabled(b));
+            }
+        };
         if (rule instanceof AndRule) {
             panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
             final Set<XMLAction> andActions = new HashSet<>();
             for (final XMLSyntaxRule r : ((AndRule) rule).getRules())
-                panel.add(createPanelForRule(r, andActions));
-            actions.add(xo -> andActions.forEach(a -> a.act(xo)));
+                panel.add(createPanelForRule(xo, r, andActions));
+            actions.add(new XMLAction() {
+                @Override
+                public boolean read() {
+                    andActions.forEach(XMLAction::read);
+                    return true;
+                }
+                @Override
+                public void write() {
+                    andActions.forEach(XMLAction::write);
+                }
+                @Override
+                public void validate() {
+                    andActions.forEach(XMLAction::validate);
+                }
+            });
         } else if (rule instanceof OrRule) {
             panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
             final List<JCheckBox> checkBoxes = new ArrayList();
             final Set<XMLAction> orActions = new LinkedHashSet<>();
             for (final XMLSyntaxRule r : ((OrRule) rule).getRules()) {
                 final Panel p = new Panel(new FlowLayout());
-                final Panel rp = createPanelForRule(r, orActions);
+                final Panel rp = createPanelForRule(xo, r, orActions);
                 rp.setEnabled(false);
                 final JCheckBox cb = new JCheckBox();
                 cb.addActionListener(new AbstractAction() {
@@ -132,48 +225,98 @@ class ObjectFrame<T> extends JFrame {
                 p.add(rp);
                 panel.add(p);
             }
-            actions.add(xo -> {
-                final Iterator<JCheckBox> cbit = checkBoxes.iterator();
-                final Iterator<XMLAction> oait = orActions.iterator();
-                while (cbit.hasNext() && oait.hasNext())
-                    if (cbit.next().isSelected()) oait.next().act(xo);
+            actions.add(new XMLAction() {
+                @Override
+                public boolean read() {
+                    final Iterator<JCheckBox> cbit = checkBoxes.iterator();
+                    final Iterator<XMLAction> oait = orActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        cbit.next().setSelected(oait.next().read());
+                    return true;
+                }
+                @Override
+                public void write() {
+                    final Iterator<JCheckBox> cbit = checkBoxes.iterator();
+                    final Iterator<XMLAction> oait = orActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        if (cbit.next().isSelected()) oait.next().write();
+                }
+                @Override
+                public void validate() {
+                    final Iterator<JCheckBox> cbit = checkBoxes.iterator();
+                    final Iterator<XMLAction> oait = orActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        if (cbit.next().isSelected()) oait.next().validate();
+                }
             });
         } else if (rule instanceof XORRule) {
             panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
             final ButtonGroup buttonGroup = new ButtonGroup();
             final List<JRadioButton> radioButtons = new ArrayList();
             final Set<XMLAction> xorActions = new LinkedHashSet<>();
+            final Set<Action> radioActions = new HashSet<>();
+            final Action radioAction = new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    radioActions.forEach(a -> a.actionPerformed(e));
+                }
+            };
             for (final XMLSyntaxRule r : ((XORRule) rule).getRules()) {
                 final Panel p = new Panel(new FlowLayout());
-                final Panel rp = createPanelForRule(r, xorActions);
+                final Panel rp = createPanelForRule(xo, r, xorActions);
                 rp.setEnabled(false);
                 final JRadioButton rb = new JRadioButton();
-                rb.addActionListener(new AbstractAction() {
+                radioActions.add(new AbstractAction() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         rp.setEnabled(rb.isSelected());
                     }
                 });
+                rb.addActionListener(radioAction);
                 p.add(rb);
                 radioButtons.add(rb);
                 buttonGroup.add(rb);
                 p.add(rp);
                 panel.add(p);
             }
-            actions.add(xo -> {
-                final Iterator<JRadioButton> cbit = radioButtons.iterator();
-                final Iterator<XMLAction> oait = xorActions.iterator();
-                while (cbit.hasNext() && oait.hasNext())
-                    if (cbit.next().isSelected()) {
-                        oait.next().act(xo);
-                        break;
-                    }
+            actions.add(new XMLAction() {
+                @Override
+                public boolean read() {
+                    final Iterator<JRadioButton> cbit = radioButtons.iterator();
+                    final Iterator<XMLAction> oait = xorActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        if (oait.next().read()) {
+                            cbit.next().setSelected(true);
+                            break;
+                        };
+                    return true;
+                }
+                @Override
+                public void write() {
+                    final Iterator<JRadioButton> cbit = radioButtons.iterator();
+                    final Iterator<XMLAction> oait = xorActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        if (cbit.next().isSelected()) {
+                            oait.next().write();
+                            break;
+                        }
+                }
+                @Override
+                public void validate() {
+                    final Iterator<JRadioButton> cbit = radioButtons.iterator();
+                    final Iterator<XMLAction> oait = xorActions.iterator();
+                    while (cbit.hasNext() && oait.hasNext())
+                        if (cbit.next().isSelected()) {
+                            oait.next().validate();
+                            break;
+                        }
+                }
             });
         } else if (rule instanceof AttributeRule) {
             final AttributeRule ar = (AttributeRule) rule;
-            panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-            final Panel p = new Panel(new FlowLayout());
+            panel.setLayout(new FlowLayout());
             final JTextField tf = new JTextField(16);
+            tf.getDocument().addDocumentListener(this);
             final JCheckBox cb;
             if (ar.getOptional()) {
                 tf.setEnabled(false);
@@ -182,33 +325,104 @@ class ObjectFrame<T> extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         tf.setEnabled(cb.isSelected());
+                        changedUpdate(null);
                     }
                 });
-                p.add(cb);
+                panel.add(cb);
             } else {
                 cb = null;
             }
             final JLabel l = new JLabel(ar.getName() + " (" + ar.getTypeName() + "):");
             l.setLabelFor(tf);
-            p.add(l);
-            p.add(tf);
-            actions.add(xo -> {
-                if (cb != null || cb.isSelected())
-                    xo.setAttribute(ar.getName(), tf.getText());
+            final JLabel w = createWarningIcon();
+            panel.add(l);
+            panel.add(tf);
+            panel.add(w);
+            actions.add(new XMLAction() {
+                @Override
+                public boolean read() {
+                    final boolean b = xo.hasAttribute(ar.getName());
+                    if (cb != null) cb.setSelected(b);
+                    if (b) try {
+                        tf.setText(xo.getAttribute(ar.getName()).toString());
+                    } catch (XMLParseException e) {
+                        e.printStackTrace();
+                    }
+                    return b;
+                }
+                @Override
+                public void write() {
+                    if (cb == null || cb.isSelected())
+                        xo.setAttribute(ar.getName(), tf.getText());
+                }
+                @Override
+                public void validate() {
+                    write();
+                    if (cb == null || cb.isSelected())
+                        w.setVisible(!ar.isSatisfied(xo));
+                    else
+                        w.setVisible(false);
+                }
             });
-            panel.add(p);
-            panel.add(new JLabel(ar.getDescription()));
+            tf.setToolTipText(ar.getDescription());
         } else if (rule instanceof ElementRule) {
             final ElementRule er = (ElementRule) rule;
             panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
             if (er.getName() != null) {
-                panel.add(new JLabel(er.getName()));
+                final JPanel rp = new JPanel();
+                rp.setLayout(new BoxLayout(rp, BoxLayout.PAGE_AXIS));
+                final JPanel p = new JPanel(new FlowLayout());
+                final JCheckBox cb;
+                if (er.getMin() == 0) {
+                    rp.setEnabled(false);
+                    cb = new JCheckBox();
+                    cb.addActionListener(new AbstractAction() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            rp.setEnabled(cb.isSelected());
+                        }
+                    });
+                    p.add(cb);
+                } else {
+                    cb = null;
+                }
+                p.add(new JLabel(er.getName()));
+                panel.add(p);
+                panel.add(rp);
                 final Set<XMLAction> erActions = new HashSet<>();
+                if (!xo.hasChildNamed(er.getName()))
+                    xo.addChild(new XMLObject(beauti.getDocument(), er.getName()));
                 for (final XMLSyntaxRule r : er.getRules())
-                    panel.add(createPanelForRule(r, erActions));
-                actions.add(xo -> erActions.forEach(a -> a.act(xo)));
+                    rp.add(createPanelForRule(xo.getChild(er.getName()), r, erActions));
+                actions.add(new XMLAction() {
+                    @Override
+                    public boolean read() {
+                        final boolean b = xo.hasChildNamed(er.getName());
+                        if (cb != null) cb.setSelected(b);
+                        if (b) erActions.forEach(XMLAction::read);
+                        return b;
+                    }
+                    @Override
+                    public void write() {
+                        if (cb == null || cb.isSelected())
+                            erActions.forEach(XMLAction::write);
+
+                    }
+                    @Override
+                    public void validate() {
+                        if (cb == null || cb.isSelected())
+                            erActions.forEach(XMLAction::validate);
+                    }
+                });
             } else {
-                panel.add(new JLabel(er.getElementClass().getSimpleName() + " (min: " + er.getMin() + (er.getMax() != Integer.MAX_VALUE ? ", max: " + er.getMax() : "") + ")"));
+                final int min = er.getMin();
+                final int max = er.getMax();
+                final String count;
+                if (min == max)
+                    count = "count: " + min;
+                else
+                    count = "min: " + min + (max != Integer.MAX_VALUE ? ", max: " + max : "");
+                panel.add(new JLabel(er.getElementClass().getSimpleName() + " (" + count + ")"));
                 final DefaultListModel lm = new DefaultListModel<>();
                 final JList<Object> l = new JList<>(lm);
                 panel.add(l);
@@ -218,40 +432,81 @@ class ObjectFrame<T> extends JFrame {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final JDialog d = new JDialog(ObjectFrame.this, er.getElementClass().getSimpleName());
+                        d.setLayout(new BoxLayout(d.getContentPane(), BoxLayout.PAGE_AXIS));
                         final ButtonGroup bg = new ButtonGroup();
                         final JPanel rp = new JPanel(new FlowLayout());
-                        rp.setVisible(true);
                         final JComboBox<Reference> rc = new JComboBox<>(new DefaultComboBoxModel<>());
                         for (final Reference r : beauti.getReferences(er.getElementClass()))
                             rc.addItem(r);
                         rc.setEnabled(false);
                         final JRadioButton rb = new JRadioButton();
                         bg.add(rb);
-                        rb.addActionListener(new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                rc.setEnabled(rb.isSelected());
-                            }
-                        });
                         rp.add(rb);
                         rp.add(rc);
-                        d.getContentPane().add(rp);
                         final JPanel cp = new JPanel(new FlowLayout());
-                        final JComboBox<XMLObjectParser<?>> cc = new JComboBox<>(new DefaultComboBoxModel<>());
+                        final JComboBox<XMLObjectParser> cc = new JComboBox<>(new DefaultComboBoxModel<>());
+                        cc.setRenderer(new DefaultListCellRenderer() {
+                            @Override
+                            public Component getListCellRendererComponent(JList l, Object o, int i, boolean s, boolean f) {
+                                final Component c = super.getListCellRendererComponent(l, o, i, s, f);
+                                if (o != null) {
+                                    final XMLObjectParser p = (XMLObjectParser) o;
+                                    setText(p.getParserName());
+                                    setToolTipText(p.getParserDescription());
+                                }
+                                return c;
+                            }
+                        });
                         for (final XMLObjectParser p : beauti.getParsers(er.getElementClass()))
                             cc.addItem(p);
                         cc.setEnabled(false);
                         final JRadioButton cb = new JRadioButton();
                         bg.add(cb);
-                        cb.addActionListener(new AbstractAction() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                cc.setEnabled(cb.isSelected());
-                            }
-                        });
                         cp.add(cb);
                         cp.add(cc);
-                        d.getContentPane().add(cp);
+                        final JButton pb = new JButton("[No action selected]");
+                        Action a = new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                rc.setEnabled(rb.isSelected());
+                                cc.setEnabled(cb.isSelected());
+                                if (rb.isSelected())
+                                    pb.setText("Reference");
+                                else
+                                    pb.setText("Create");
+                            }
+                        };
+                        rb.addActionListener(a);
+                        cb.addActionListener(a);
+                        d.add(new JLabel("Select idref:"));
+                        d.add(rp);
+                        d.add(new JLabel("Create new object using parser:"));
+                        d.add(cp);
+                        final JPanel bp = new JPanel();
+                        final JButton xb = new JButton("Cancel");
+                        pb.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if (rb.isSelected()) {
+                                    lm.addElement(rc.getSelectedItem());
+                                }
+                                else {
+                                    final XMLObjectParser p = (XMLObjectParser) cc.getSelectedItem();
+                                    final XMLObject xo = new XMLObject(beauti.getDocument(), p.getParserName());
+                                    new ObjectFrame(xo, beauti, p);
+                                }
+                                d.setVisible(false);
+                            }
+                        });
+                        xb.addActionListener(new AbstractAction() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                d.setVisible(false);
+                            }
+                        });
+                        bp.add(xb);
+                        bp.add(pb);
+                        d.add(bp);
                         d.pack();
                         d.setVisible(true);
                     }
@@ -268,28 +523,51 @@ class ObjectFrame<T> extends JFrame {
                 });
                 bp.add(rb);
                 panel.add(bp);
-                l.addVetoableChangeListener(new VetoableChangeListener() {
+                l.addVetoableChangeListener(evt -> {
+                    ab.setEnabled(lm.size() >= Integer.MAX_VALUE);
+                    rb.setEnabled(lm.size() < 0);
+                });
+                actions.add(new XMLAction() {
                     @Override
-                    public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
-                        ab.setEnabled(lm.size() >= Integer.MAX_VALUE);
-                        rb.setEnabled(lm.size() < 0);
+                    public boolean read() {
+                        return false;
+                    }
+                    @Override
+                    public void write() {
+                        for (int i = 0; i < lm.getSize(); ++i)
+                            xo.addChild(lm.getElementAt(i));
+                    }
+                    @Override
+                    public void validate() {
+
                     }
                 });
-                actions.add(xo -> {
-                    for (int i = 0; i < lm.getSize(); ++i)
-                        xo.addChild(lm.getElementAt(i));
-                });
+//                actions.add(() -> {
+//                    for (int i = 0; i < lm.getSize(); ++i)
+//                        xo.addChild(lm.getElementAt(i));
+//                });
             }
             panel.add(new JLabel(er.getDescription()));
+        } else if (rule instanceof ContentRule) {
+            panel.setLayout(new FlowLayout());
+            panel.add(new JLabel("Content rule is not supported yet!"));
         } else {
             panel.setLayout(new FlowLayout());
-            panel.add(new JLabel("Unknown XMLSyntaxRule!"));
+            panel.add(new JLabel("Unknown/unsupported XMLSyntaxRule!"));
         }
         return panel;
     }
 
+    private static JLabel createWarningIcon() {
+        return new JLabel(UIManager.getIcon("OptionPane.errorIcon"));
+    }
+
     public XMLObject getXMLObject() {
+        xo.clear();
+        actions.forEach(XMLAction::write);
         return xo;
     }
+
+
 
 }

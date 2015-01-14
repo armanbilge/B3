@@ -24,6 +24,7 @@ import beast.util.XHTMLable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -593,6 +594,19 @@ public class XMLObject {
             return element.getAttribute(name);
         }
         throw new XMLParseException("'" + name + "' attribute was not found in " + element.getTagName() + " element.");
+    }
+
+    public void clear() {
+        final NamedNodeMap al = element.getAttributes();
+        for (int i = 0; i < al.getLength(); ++i)
+            element.removeAttribute(al.item(i).getNodeName());
+        final NodeList cl = element.getChildNodes();
+        for (int i = 0; i < cl.getLength(); ++i)
+            element.removeChild(cl.item(i));
+    }
+
+    public Element getWrappedElement() {
+        return element;
     }
 
     //*********************************************************************

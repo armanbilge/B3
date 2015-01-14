@@ -30,6 +30,10 @@ import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +49,7 @@ public final class Beauti {
     private final XMLParser parser;
     private final Document document;
     private final Map<Class<?>, XMLObjectParser<?>> class2Parser;
+    private final Map<XMLObjectParser<?>,Integer> instanceCounts;
 
     {
         try {
@@ -53,6 +58,7 @@ public final class Beauti {
             throw new RuntimeException(e);
         }
         class2Parser = new HashMap<>();
+        instanceCounts = new HashMap<>();
     }
 
     public Beauti() {
@@ -61,7 +67,14 @@ public final class Beauti {
             final XMLObjectParser<?> parser = iter.next();
             class2Parser.put(parser.getReturnType(), parser);
         }
-        new ObjectFrame<MCMC>(this, MCMC.PARSER);
+        final ObjectFrame frame = new ObjectFrame<>(new XMLObject(document, MCMC.PARSER.getParserName()), this, MCMC.PARSER);
+        final XMLObject xo = frame.getXMLObject();
+        document.appendChild(xo.getWrappedElement());
+        try {
+            TransformerFactory.newInstance().newTransformer().transform(new DOMSource(document), new StreamResult(System.out));
+        } catch (TransformerException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Beauti(final XMLParser parser) {
@@ -87,6 +100,19 @@ public final class Beauti {
                 references.add(new Reference(xo));
         }
         return references;
+    }
+
+    public void store(String id, Object o) {
+        if (!parser.getObjectStore().getObjects().contains(o))
+            parser.storeObject(id, o);
+    }
+
+    public int getInstanceCount(XMLObjectParser<?> p) {
+        if (!instanceCounts.containsKey(p))
+            instanceCounts.put(p, 0);
+        final int c = instanceCounts.get(p);
+        instanceCounts.put(p, c+1);
+        return c;
     }
 
     public static void main(final String[] args) {
