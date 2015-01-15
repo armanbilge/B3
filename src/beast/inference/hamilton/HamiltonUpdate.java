@@ -29,6 +29,7 @@ import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
 import beast.math.MathUtils;
+import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
 import beast.xml.IntegerAttribute;
 import beast.xml.ObjectArrayElement;
@@ -47,6 +48,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     protected final Likelihood U;
     protected final CompoundParameter q;
 
+    private final double[] mass;
     private double epsilon;
     private int L;
 
@@ -58,17 +60,19 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
+            @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), epsilon, L, weight, mode);
+        this(U, new CompoundParameter("q", parameters), mass, epsilon, L, weight, mode);
     }
 
     @Parseable
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectElement(name = "space") CompoundParameter q,
+            @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight,
@@ -76,6 +80,17 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         super(mode);
         this.U = U;
         this.q = q;
+        if (mass != null) {
+            if (mass.length != q.getDimension())
+                throw new IllegalArgumentException("mass.length != q.getDimension()");
+            else if (!Arrays.stream(mass).allMatch(d -> d > 0))
+                throw new IllegalArgumentException("All masses must be m_i > 0.");
+            else
+                this.mass = mass;
+        } else {
+            this.mass = new double[q.getDimension()];
+            Arrays.fill(this.mass, 1);
+        }
         this.epsilon = epsilon;
         this.L = L;
         setWeight(weight);
@@ -103,7 +118,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
         final double[] p = new double[dim];
         final double[] storedP = new double[dim];
-        Arrays.setAll(p, i -> MathUtils.nextGaussian());
+        Arrays.setAll(p, i -> MathUtils.nextGaussian() * mass[i]);
         Arrays.setAll(storedP, i -> p[i]);
 
         for (int i = 0; i < dim; ++i)
