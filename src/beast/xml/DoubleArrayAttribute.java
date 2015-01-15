@@ -36,7 +36,6 @@ public @interface DoubleArrayAttribute {
 
     String name();
     boolean optional() default false;
-    double defaultValue() default 0.0;
     String description() default "";
 
 }
