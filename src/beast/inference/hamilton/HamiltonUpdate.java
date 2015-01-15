@@ -26,6 +26,7 @@ import beast.inference.model.Likelihood;
 import beast.inference.model.Parameter;
 import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
+import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
 import beast.math.MathUtils;
 import beast.xml.DoubleAttribute;
@@ -60,8 +61,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight,
-            @CoercionMode.CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("hamilton", parameters), epsilon, L, weight, mode);
+            @CoercionModeAttribute CoercionMode mode) {
+        this(U, new CompoundParameter("q", parameters), epsilon, L, weight, mode);
     }
 
     @Parseable
@@ -71,7 +72,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
             @OperatorWeightAttribute double weight,
-            @CoercionMode.CoercionModeAttribute CoercionMode mode) {
+            @CoercionModeAttribute CoercionMode mode) {
         super(mode);
         this.U = U;
         this.q = q;

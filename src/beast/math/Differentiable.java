@@ -20,6 +20,7 @@
 
 package beast.math;
 
+import beast.inference.model.Bounds;
 import beast.inference.model.Variable;
 
 import java.util.function.DoubleSupplier;
@@ -29,7 +30,7 @@ import java.util.function.DoubleSupplier;
  */
 public interface Differentiable {
 
-    final boolean BRUTE_FORCE = false;
+    final boolean BRUTE_FORCE = true;
 
     double evaluate();
 
@@ -43,15 +44,20 @@ public interface Differentiable {
     }
 
     static double differentiate(DoubleSupplier f, Variable<Double> var, int index, double epsilon) {
+        final Bounds<Double> bounds = var.getBounds();
+        final double upper = bounds.getUpperLimit(index);
+        final double lower = bounds.getLowerLimit(index);
         final double value = var.getValue(index);
         final double vpe = value + epsilon;
-        var.setValue(index, vpe);
-        final double b = f.getAsDouble();
+        final double b = vpe <= upper ? vpe : value;
+        var.setValue(index, b);
+        final double fb = f.getAsDouble();
         final double vme = value - epsilon;
-        var.setValue(index, vme);
-        final double a = f.getAsDouble();
+        final double a = vme >= lower ? vme : value;
+        var.setValue(index, a);
+        final double fa = f.getAsDouble();
         var.setValue(index, value);
-        return (b - a) / (vpe - vme);
+        return (fb - fa) / (b - a);
     }
 
 
