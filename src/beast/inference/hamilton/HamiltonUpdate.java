@@ -166,8 +166,11 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         return storedK - proposedK;
     }
 
-    private double logPDFNormal(double[] v) {
-        return Arrays.stream(v).map(d -> d * d).sum() / 2;
+    private double logPDFNormal(double[] p) {
+        double logPDF = 0;
+        for (int i = 0; i < p.length; ++i)
+            logPDF += p[i] * p[i] / mass[i];
+        return logPDF / 2;
     }
 
     @Override
