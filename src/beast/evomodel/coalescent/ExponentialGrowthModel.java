@@ -20,8 +20,6 @@
 
 package beast.evomodel.coalescent;
 
-import beast.evolution.coalescent.DemographicFunction;
-import beast.evolution.coalescent.ExponentialGrowth;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
 import beast.xml.AbstractXMLObjectParser;
@@ -65,8 +63,6 @@ public class ExponentialGrowthModel extends DemographicModel {
 
         super(name);
 
-        exponentialGrowth = new ExponentialGrowth(units);
-
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
@@ -83,26 +79,121 @@ public class ExponentialGrowthModel extends DemographicModel {
 
     // general functions
 
-    public DemographicFunction getDemographicFunction() {
-        exponentialGrowth.setN0(N0Parameter.getParameterValue(0));
-
-        if (usingGrowthRate) {
-            double r = growthRateParameter.getParameterValue(0);
-            exponentialGrowth.setGrowthRate(r);
-        } else {
-            double doublingTime = growthRateParameter.getParameterValue(0);
-            exponentialGrowth.setDoublingTime(doublingTime);
-        }
-
-        return exponentialGrowth;
+    public double getN0() {
+        return N0Parameter.getParameterValue(0);
     }
+
+    public void setN0(double N0) {
+        N0Parameter.setParameterValue(0, N0);
+    }
+
+    /**
+     * @return growth rate.
+     */
+    public final double getGrowthRate() { return growthRateParameter.getParameterValue(0); }
+
+    /**
+     * sets growth rate to r.
+     * @param r
+     */
+    public void setGrowthRate(double r) { growthRateParameter.setParameterValue(0, r); }
+
+    /**
+     * An alternative parameterization of this model. This
+     * function sets growth rate for a given doubling time.
+     * @param doublingTime
+     */
+    public void setDoublingTime(double doublingTime) {
+        setGrowthRate( Math.log(2) / doublingTime );
+    }
+
+    // Implementation of abstract methods
+
+    public double getDemographic(double t) {
+
+        double r = getGrowthRate();
+        if (r == 0) {
+            return getN0();
+        } else {
+            return getN0() * Math.exp(-t * r);
+        }
+    }
+
+    /**
+     * Calculates the integral 1/N(x) dx between start and finish.
+     */
+    @Override
+    public double getIntegral(double start, double finish) {
+        double r = getGrowthRate();
+        if (r == 0.0) {
+            return (finish - start)/getN0();
+        } else {
+            return (Math.exp(finish*r) - Math.exp(start*r))/getN0()/r;
+        }
+    }
+
+    public double getIntensity(double t)
+    {
+        double r = getGrowthRate();
+        if (r == 0.0) {
+            return t/getN0();
+        } else {
+            return (Math.exp(t*r)-1.0)/getN0()/r;
+        }
+    }
+
+    public double getInverseIntensity(double x) {
+
+        double r = getGrowthRate();
+        if (r == 0.0) {
+            return getN0()*x;
+        } else {
+            return Math.log(1.0+getN0()*x*r)/r;
+        }
+    }
+
+    public int getNumArguments() {
+        return 2;
+    }
+
+    public String getArgumentName(int n) {
+        if (n == 0) {
+            return "N0";
+        } else {
+            return "r";
+        }
+    }
+
+    public double getArgument(int n) {
+        if (n == 0) {
+            return getN0();
+        } else {
+            return getGrowthRate();
+        }
+    }
+
+    public void setArgument(int n, double value) {
+        if (n == 0) {
+            setN0(value);
+        } else {
+            setGrowthRate(value);
+        }
+    }
+
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
+
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
+    }
+
     //
     // protected stuff
     //
 
     Parameter N0Parameter = null;
     Parameter growthRateParameter = null;
-    ExponentialGrowth exponentialGrowth = null;
     boolean usingGrowthRate = true;
 
     public static final XMLObjectParser<ExponentialGrowthModel> PARSER = new AbstractXMLObjectParser<ExponentialGrowthModel>() {

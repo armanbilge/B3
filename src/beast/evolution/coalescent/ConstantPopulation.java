@@ -20,6 +20,9 @@
 
 package beast.evolution.coalescent;
 
+import beast.evomodel.coalescent.ConstantPopulationModel;
+import beast.inference.model.Parameter;
+
 /**
  * This class models coalescent intervals for a constant population
  * (parameter: N0=present-day population size). <BR>
@@ -34,7 +37,8 @@ package beast.evolution.coalescent;
  * @version $Id: ConstantPopulation.java,v 1.9 2005/05/24 20:25:55 rambaut Exp $
  *
  */
-public class ConstantPopulation extends DemographicFunction.Abstract
+@Deprecated
+public class ConstantPopulation extends ConstantPopulationModel
 {
 	//
 	// Public stuff
@@ -45,72 +49,6 @@ public class ConstantPopulation extends DemographicFunction.Abstract
      * @param units
      */
 	public ConstantPopulation(Type units) {
-
-		super(units);
+		super(new Parameter.Default(1), units);
 	}
-
-	/**
-	 * @return initial population size.
-	 */
-	public double getN0() { return N0; }
-
-	/**
-	 * sets initial population size.
-     * @param N0 new size
-     */
-	public void setN0(double N0) { this.N0 = N0; }
-
-		
-	// Implementation of abstract methods
-	
-	public double getDemographic(double t) { return getN0(); }
-	public double getIntensity(double t) { return t/getN0(); }
-	public double getInverseIntensity(double x) { return getN0()*x; }
-
-    // same as abstract
-//	/**
-//	 * Calculates the integral 1/N(x) dx between start and finish. The
-//	 * inherited function in DemographicFunction.Abstract calls a
-//	 * numerical integrater which is unecessary.
-//	 */
-//	public double getIntegral(double start, double finish) {
-//		return getIntensity(finish) - getIntensity(start);
-//	}
-//
-	public int getNumArguments() {
-		return 1;
-	}
-	
-	public String getArgumentName(int n) {
-		return "N0";
-	}
-	
-	public double getArgument(int n) {
-		return getN0();
-	}
-	
-	public void setArgument(int n, double value) {
-		setN0(value);
-	}
-
-	public double getLowerBound(int n) {
-		return 0.0;
-	}
-	
-	public double getUpperBound(int n) {
-		return Double.POSITIVE_INFINITY;
-	}
-
-	public DemographicFunction getCopy() {
-		ConstantPopulation df = new ConstantPopulation(getUnits());
-		df.N0 = N0;
-		
-		return df;
-	}
-
-	//
-	// private stuff
-	//
-	
-	private double N0;
 }

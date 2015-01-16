@@ -21,7 +21,6 @@
 package beast.evomodel.coalescent;
 
 import beast.evolution.coalescent.DemographicFunction;
-import beast.evolution.util.Units;
 import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
@@ -37,7 +36,7 @@ import beast.inference.model.Variable;
  * @author Korbinian Strimmer
  * @version $Id: DemographicModel.java,v 1.28 2005/09/26 14:27:38 rambaut Exp $
  */
-public abstract class DemographicModel extends AbstractModel implements Units {
+public abstract class DemographicModel extends AbstractModel implements DemographicFunction {
 
     public DemographicModel(String name) {
         super(name);
@@ -45,7 +44,9 @@ public abstract class DemographicModel extends AbstractModel implements Units {
 
     // general functions
 
-    public abstract DemographicFunction getDemographicFunction();
+    public final DemographicFunction getDemographicFunction() {
+        return this;
+    }
 
     // **************************************************************
     // Model IMPLEMENTATION

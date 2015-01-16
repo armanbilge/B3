@@ -20,8 +20,6 @@
 
 package beast.evomodel.coalescent;
 
-import beast.evolution.coalescent.ConstantPopulation;
-import beast.evolution.coalescent.DemographicFunction;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
 import beast.xml.AbstractXMLObjectParser;
@@ -60,19 +58,46 @@ public class ConstantPopulationModel extends DemographicModel {
 
         super(name);
 
-        constantPopulation = new ConstantPopulation(units);
-
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         setUnits(units);
     }
 
-    // general functions
+    public double getN0() {
+        return N0Parameter.getParameterValue(0);
+    }
 
-    public DemographicFunction getDemographicFunction() {
-        constantPopulation.setN0(N0Parameter.getParameterValue(0));
-        return constantPopulation;
+    public void setN0(double N0) {
+        N0Parameter.setParameterValue(0, N0);
+    }
+
+    public double getDemographic(double t) { return getN0(); }
+    public double getIntensity(double t) { return t/getN0(); }
+    public double getInverseIntensity(double x) { return getN0()*x; }
+
+    public int getNumArguments() {
+        return 1;
+    }
+
+    public String getArgumentName(int n) {
+        return "N0";
+    }
+
+    public double getArgument(int n) {
+        return getN0();
+    }
+
+    public void setArgument(int n, double value) {
+        setN0(value);
+    }
+
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
+
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
     }
 
     //
@@ -80,7 +105,6 @@ public class ConstantPopulationModel extends DemographicModel {
     //
 
     private Parameter N0Parameter;
-    private ConstantPopulation constantPopulation = null;
 
     public static final XMLObjectParser<ConstantPopulationModel> PARSER = new AbstractXMLObjectParser<ConstantPopulationModel>() {
 

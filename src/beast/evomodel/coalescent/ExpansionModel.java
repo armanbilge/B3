@@ -20,8 +20,6 @@
 
 package beast.evomodel.coalescent;
 
-import beast.evolution.coalescent.DemographicFunction;
-import beast.evolution.coalescent.Expansion;
 import beast.evolution.util.Units;
 import beast.inference.model.Parameter;
 import beast.xml.AbstractXMLObjectParser;
@@ -64,8 +62,6 @@ public class ExpansionModel extends DemographicModel {
 
         super(name);
 
-        expansion = new Expansion(units);
-
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
@@ -86,24 +82,139 @@ public class ExpansionModel extends DemographicModel {
 
     // general functions
 
-    public DemographicFunction getDemographicFunction() {
+    public double getN0() {
+        return N0Parameter.getParameterValue(0);
+    }
 
-        double N0 = N0Parameter.getParameterValue(0);
-        double N1 = N1Parameter.getParameterValue(0);
-        double growthRate = growthRateParameter.getParameterValue(0);
+    public void setN0(double N0) {
+        N0Parameter.setParameterValue(0, N0);
+    }
 
-        if (usingGrowthRate) {
-            expansion.setGrowthRate(growthRate);
-        } else {
-            double doublingTime = growthRate;
-            growthRate = Math.log(2) / doublingTime;
-            expansion.setDoublingTime(doublingTime);
+    /**
+     * @return growth rate.
+     */
+    public final double getGrowthRate() { return growthRateParameter.getParameterValue(0); }
+
+    /**
+     * sets growth rate to r.
+     * @param r
+     */
+    public void setGrowthRate(double r) { growthRateParameter.setParameterValue(0, r); }
+
+    public double getN1() {
+        return N1Parameter.getParameterValue(0);
+    }
+
+    public void setN1(double N1) {
+        N1Parameter.setParameterValue(0, N1);
+    }
+
+    public void setProportion(double p) {
+        setN1(getN0() * p);
+    }
+
+    // Implementation of abstract methods
+
+    public double getDemographic(double t) {
+
+        double N0 = getN0();
+        double N1 = getN1();
+        double r = getGrowthRate();
+
+        if (N1 > N0) throw new IllegalArgumentException("N0 must be greater than N1!");
+
+        return N1 + ((N0 - N1) * Math.exp(-r * t));
+    }
+
+    /**
+     * Returns value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+    public double getIntensity(double t) {
+        double N0 = getN0();
+        double N1 = getN1();
+        double b = (N0 - N1);
+        double r = getGrowthRate();
+
+        return Math.log(b + N1 * Math.exp(r * t)) / (r * N1);
+    }
+
+    public double getInverseIntensity(double x) {
+
+        /* AER - I think this is right but until someone checks it...
+          double nZero = getN0();
+          double nOne = getN1();
+          double r = getGrowthRate();
+
+          if (r == 0) {
+              return nZero*x;
+          } else if (alpha == 0) {
+              return Math.log(1.0+nZero*x*r)/r;
+          } else {
+              return Math.log(-(nOne/nZero) + Math.exp(nOne*x*r))/r;
+          }
+          */
+        throw new RuntimeException("Not implemented!");
+    }
+
+    public double getIntegral(double start, double finish) {
+        double v1 = getIntensity(finish) - getIntensity(start);
+        //double v1 =  getNumericalIntegral(start, finish);
+
+        return v1;
+    }
+
+    public int getNumArguments() {
+        return 3;
+    }
+
+    public String getArgumentName(int n) {
+        switch (n) {
+            case 0:
+                return "N0";
+            case 1:
+                return "r";
+            case 2:
+                return "N1";
         }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
 
-        expansion.setN0(N0);
-        expansion.setProportion(N1);
+    public double getArgument(int n) {
+        switch (n) {
+            case 0:
+                return getN0();
+            case 1:
+                return getGrowthRate();
+            case 2:
+                return getN1();
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
 
-        return expansion;
+    public void setArgument(int n, double value) {
+        switch (n) {
+            case 0:
+                setN0(value);
+                break;
+            case 1:
+                setGrowthRate(value);
+                break;
+            case 2:
+                setN1(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Argument " + n + " does not exist");
+
+        }
+    }
+
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
+
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
     }
 
     //
@@ -113,7 +224,6 @@ public class ExpansionModel extends DemographicModel {
     Parameter N0Parameter = null;
     Parameter N1Parameter = null;
     Parameter growthRateParameter = null;
-    Expansion expansion = null;
     boolean usingGrowthRate = true;
 
     public static final XMLObjectParser<ExpansionModel> PARSER = new AbstractXMLObjectParser<ExpansionModel>() {
