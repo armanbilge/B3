@@ -20,33 +20,23 @@
 
 package beast.app.beauti;
 
-import beast.xml.AndRule;
 import beast.xml.XMLObject;
-import beast.xml.XMLSyntaxRule;
-
-import javax.swing.BoxLayout;
+import beast.xml.XMLObjectParser;
 
 /**
  * @author Arman Bilge
  */
-final class AndRulePanelFactory extends RulePanelFactory<AndRule> {
+final class DefaultParserFrame<P extends XMLObjectParser<?>> extends ParserFrame<P> {
 
-    @Override
-    protected Class<AndRule> getRuleType() {
-        return AndRule.class;
+    public final Class<P> parserType;
+
+    protected DefaultParserFrame(final P parser, final XMLObject xo) {
+        super(xo);
+        parserType = (Class<P>) parser.getClass();
     }
 
     @Override
-    protected RulePanel createPanel(final XMLObject xo, final AndRule rule) {
-        return new AndRulePanel(xo, rule);
-    }
-
-    private static final class AndRulePanel extends RulePanel<AndRule> {
-        protected AndRulePanel(final XMLObject xo, final AndRule rule) {
-            super(xo, rule);
-            setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-            for (final XMLSyntaxRule r : rule.getRules())
-                add(createRulePanel(xo, r));
-        }
+    protected Class<P> getParserType() {
+        return parserType;
     }
 }
