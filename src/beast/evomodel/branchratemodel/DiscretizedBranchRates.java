@@ -209,6 +209,10 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
     }
 
+    public final boolean isVariableForNode(final Tree tree, final NodeRef node, final Variable<Double> var, final int index) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Calculates the actual rates corresponding to the category indices.
      */

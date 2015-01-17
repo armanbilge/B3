@@ -21,9 +21,12 @@
 package beast.evomodel.branchratemodel;
 
 import beast.evolution.tree.BranchRates;
+import beast.evolution.tree.NodeRef;
+import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTrait;
 import beast.evolution.tree.TreeTraitProvider;
 import beast.inference.model.Model;
+import beast.inference.model.Variable;
 
 /**
  * Date: Dec 13, 2004
@@ -38,4 +41,5 @@ public interface BranchRateModel extends Model, BranchRates, TreeTraitProvider, 
 
     // This is inherited from BranchRates:
     // double getBranchRate(Tree tree, NodeRef node);
+    boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index);
 }

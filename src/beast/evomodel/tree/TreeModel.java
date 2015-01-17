@@ -48,12 +48,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -994,9 +992,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
                 }
             }
         }
-        throw new RuntimeException("Parameter not found in any nodes:" + parameter.getId() + " " + parameter.hashCode());
-        // assume it is a trait parameter and return null
-//		return null;
+		return null;
     }
 
     /**
@@ -1188,6 +1184,20 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
         final CompoundParameter compoundParam = (CompoundParameter) param;
         final Parameter heightParameter = compoundParam.getMaskedParameter(index);
         return ((Node) node).heightParameter == heightParameter;
+    }
+
+    public boolean isRateParameterForNode(final NodeRef node, final Parameter param, final int index) {
+        if (!(param instanceof CompoundParameter)) return false;
+        final CompoundParameter compoundParam = (CompoundParameter) param;
+        final Parameter rateParameter = compoundParam.getMaskedParameter(index);
+        return ((Node) node).rateParameter == rateParameter;
+    }
+
+    public boolean isAttributeParameterForNode(final NodeRef node, final String attribute, final Parameter param, final int index) {
+        if (!(param instanceof CompoundParameter)) return false;
+        final CompoundParameter compoundParam = (CompoundParameter) param;
+        final Parameter attributeParameter = compoundParam.getMaskedParameter(index);
+        return ((Node) node).traitParameters.get(attribute) == attributeParameter;
     }
 
     // **************************************************************

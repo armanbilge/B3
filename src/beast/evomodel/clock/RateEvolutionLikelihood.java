@@ -236,6 +236,15 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
         return ratesParameter.getNodeValue(tree, node);
     }
 
+    public boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index) {
+        if (tree.isRoot(node))
+            return var == rootRateParameter;
+        else if (var instanceof Parameter)
+            return ratesParameter.isParameterForNode(tree, node, (Parameter) var, index);
+        else
+            return false;
+    }
+
     public boolean isEpisodic() {
         return isEpisodic;
     }

@@ -74,6 +74,11 @@ public class AttributeBranchRateModel extends AbstractBranchRateModel {
     }
 
     @Override
+    public boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index) {
+        return (var instanceof Parameter) && ((TreeModel) tree).isAttributeParameterForNode(node, rateAttributeName, (Parameter) var, index);
+    }
+
+    @Override
     public String getTraitName() {
         return rateAttributeName;
     }

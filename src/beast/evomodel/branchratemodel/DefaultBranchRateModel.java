@@ -36,6 +36,10 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         return 1.0;
     }
 
+    public boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index) {
+        return false;
+    }
+
     public void addModelListener(ModelListener listener) {
         // nothing to do
     }

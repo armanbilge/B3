@@ -78,6 +78,10 @@ public class StrictClockBranchRates extends AbstractBranchRateModel {
         return rateParameter.getParameterValue(0);
     }
 
+    public boolean isVariableForNode(final Tree tree, final NodeRef node, final Variable<Double> var, final int index) {
+        return var == rateParameter;
+    }
+
     public static final XMLObjectParser<StrictClockBranchRates> PARSER = new AbstractXMLObjectParser<StrictClockBranchRates>() {
         public static final String RATE = "rate";
 
