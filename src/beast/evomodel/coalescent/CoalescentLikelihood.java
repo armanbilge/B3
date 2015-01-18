@@ -91,21 +91,6 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		return lnL;
 	}
 
-	public double differentiate(Variable<Double> var, int index) {
-
-		DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
-
-		//double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
-		double lnL =  Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
-
-		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood is " + Double.toString(lnL));
-		}
-
-		return lnL;
-
-	}
-
 	// **************************************************************
 	// Units IMPLEMENTATION
 	// **************************************************************

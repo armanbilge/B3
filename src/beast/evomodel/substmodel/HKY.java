@@ -388,6 +388,13 @@ public class HKY extends AbstractNucleotideModel {
             return NucleotideModelType.HKY.getXMLName();
         }
 
+        public String[] getParserNames() {
+            return new String[]{
+                    getParserName(),
+                    "beast_" + getParserName()
+            };
+        }
+
         public HKY parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Variable kappaParam = (Variable) xo.getElementFirstChild(KAPPA);
