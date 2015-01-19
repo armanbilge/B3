@@ -52,6 +52,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     private double epsilon;
     private int L;
 
+    private double distance;
+
     {
         setTargetAcceptanceProbability(0.65);
     }
@@ -113,6 +115,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     @Override
     public double doOperation() throws OperatorFailedException {
 
+        final double[] start = q.getParameterValues();
+
         final int dim = q.getDimension();
         final double halfEpsilon = epsilon / 2;
 
@@ -163,6 +167,9 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         final double storedK = logPDFNormal(storedP);
         final double proposedK = logPDFNormal(p);
 
+        final double[] finish = q.getParameterValues();
+        distance = calculateDistance(start, finish);
+
         return storedK - proposedK;
     }
 
@@ -171,6 +178,17 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         for (int i = 0; i < p.length; ++i)
             logPDF += p[i] * p[i] / mass[i];
         return logPDF / 2;
+    }
+
+    private double calculateDistance(double[] a, double[] b) {
+        double d = 0.0;
+        for (int i = 0; i < a.length; ++i)
+            d += (a[i] - b[i]) * (a[i] - b[i]);
+        return Math.sqrt(d);
+    }
+
+    public double getDistance() {
+        return distance;
     }
 
     @Override
