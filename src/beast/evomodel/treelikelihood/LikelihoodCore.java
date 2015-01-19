@@ -72,6 +72,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix);
 
+    default void getNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Specify that the partials for the given node are about to be updated
      *

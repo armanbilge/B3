@@ -404,70 +404,37 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     public double differentiate(Variable<Double> var, int varIndex) {
 
-        if (!(var instanceof CompoundParameter) || treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(varIndex)) == null)
-            return 0;
+        if (var instanceof CompoundParameter) {
+            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(varIndex));
+            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, varIndex)) {
 
-        if (patternLogLikelihoods == null) {
-            patternLogLikelihoods = new double[patternCount];
-        }
+                double deriv = 0.0;
 
-        if (!integrateAcrossCategories) {
-            if (siteCategories == null) {
-                siteCategories = new int[patternCount];
-            }
-            for (int i = 0; i < patternCount; i++) {
-                siteCategories[i] = siteModel.getCategoryOfSite(i);
-            }
-        }
+                int nodeNum = node.getNumber();
+                likelihoodCore.setNodeMatrixForUpdate(nodeNum);
 
-        if (tipStatesModel != null) {
-            int extNodeCount = treeModel.getExternalNodeCount();
-            for (int index = 0; index < extNodeCount; index++) {
-                if (updateNode[index]) {
-                    likelihoodCore.setNodePartialsForUpdate(index);
-                    tipStatesModel.getTipPartials(index, tipPartials);
-                    likelihoodCore.setCurrentNodePartials(index, tipPartials);
+                for (int i = 0; i < categoryCount; i++) {
+                    likelihoodCore.getNodeMatrix(nodeNum, i, probabilities);
+                    final double[] rates = siteModel.getSubstitutionModel().getRelativeRates();
+                    likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                 }
+
             }
         }
 
+        return 0;
+    }
 
-        final NodeRef root = treeModel.getRoot();
-        traverseDifferentiate(treeModel, root, var, varIndex);
+    protected void multiplyProbabilitiesByRates(final double[] rates) {
+    }
 
-        double logL = 0.0;
-        double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
-        for (int i = 0; i < patternCount; i++) {
-            logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
+    protected double[] createRateMatrix(final double[] rates) {
+        final double[] rateMatrix = new double[stateCount * stateCount];
+        final double[] freqs = siteModel.getFrequencyModel().getFrequencies();
+        for (int i = 0; i < rates.length; ++i) {
+            
         }
-
-        if (logL == Double.NEGATIVE_INFINITY) {
-            Logger.getLogger("beast.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial likelihood scaling to avoid precision loss");
-
-            // We probably had an underflow... turn on scaling
-            likelihoodCore.setUseScaling(true);
-
-            // and try again...
-            updateAllNodes();
-            updateAllPatterns();
-            traverseDifferentiate(treeModel, root, var, varIndex);
-
-            logL = 0.0;
-            ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
-            for (int i = 0; i < patternCount; i++) {
-                logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
-            }
-        }
-
-        //********************************************************************
-        // after traverse all nodes and patterns have been updated --
-        //so change flags to reflect this.
-        for (int i = 0; i < nodeCount; i++) {
-            updateNode[i] = false;
-        }
-        //********************************************************************
-
-        return logL;
+        return rateMatrix;
     }
 
     public double[] getPatternLogLikelihoods() {
