@@ -338,5 +338,17 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 		}
 	}
 
+	public void calculateDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] outDifferentiatedLogLikelihoods)
+	{
+		int v = 0;
+		for (int k = 0; k < patternCount; k++) {
+			double sum = frequencies[0] * partials[v];	v++;
+			sum += frequencies[1] * partials[v];	v++;
+			sum += frequencies[2] * partials[v];	v++;
+			sum += frequencies[3] * partials[v];	v++;
+			outDifferentiatedLogLikelihoods[k] = Math.log(sum);
+		}
+	}
+
 }
 

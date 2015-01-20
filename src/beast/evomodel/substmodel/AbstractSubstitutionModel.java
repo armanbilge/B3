@@ -50,10 +50,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
     protected FrequencyModel freqModel;
     protected double[] relativeRates;
 
-    public double[] getRelativeRates() {
-        return relativeRates;
-    }
-
     protected double[] storedRelativeRates;
 
     protected int stateCount;
@@ -102,6 +98,16 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         for (int i = 0; i < rateCount; i++) {
             relativeRates[i] = 1.0;
         }
+    }
+
+    public double[] getRelativeRates() {
+        setupRelativeRates();
+        return relativeRates;
+    }
+
+    public double[][] getRateMatrix() {
+        if (updateMatrix) setupMatrix();
+        return amat;
     }
 
     // *****************************************************************

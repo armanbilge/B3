@@ -135,6 +135,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
 
+    default void calculatedDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods) {
+        throw new UnsupportedOperationException();
+    }
+
     void setUseScaling(boolean useScaling);
 
     double getLogScalingFactor(int pattern);
