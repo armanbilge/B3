@@ -408,6 +408,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(varIndex));
             if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, varIndex)) {
 
+                getLogLikelihood();
+
                 double deriv = 0.0;
 
                 int nodeNum;
@@ -470,7 +472,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         double logL = 0.0;
         double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
         for (int i = 0; i < patternCount; i++) {
-            logL += (differentiatedPatternLogLikelihoods[i] / patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
+            logL += (differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) - ascertainmentCorrection) * patternWeights[i];
         }
 
 //        if (logL == Double.NEGATIVE_INFINITY) {
@@ -509,7 +511,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 final int n = i * stateCount + j;
                 probabilities[n] = 0;
                 for (int k = 0; k < stateCount; ++k) {
-                    probabilities[n] += a[i][k] * b[i * stateCount + k];
+                    probabilities[n] += a[i][k] * b[k * stateCount + j];
                 }
             }
         }
@@ -672,10 +674,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverseDifferentiate(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverseDifferentiate(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -702,7 +704,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
                     double[] partials = getRootPartials();
 
-                    likelihoodCore.calculateLogLikelihoods(partials, frequencies, differentiatedPatternLogLikelihoods);
+                    likelihoodCore.calculateDifferentiatedLogLikelihoods(partials, frequencies, differentiatedPatternLogLikelihoods);
                 }
 
                 update = true;

@@ -346,7 +346,7 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 			sum += frequencies[1] * partials[v];	v++;
 			sum += frequencies[2] * partials[v];	v++;
 			sum += frequencies[3] * partials[v];	v++;
-			outDifferentiatedLogLikelihoods[k] = Math.log(sum);
+			outDifferentiatedLogLikelihoods[k] = sum;
 		}
 	}
 

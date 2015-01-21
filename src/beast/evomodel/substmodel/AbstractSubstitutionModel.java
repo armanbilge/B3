@@ -107,7 +107,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
 
     public double[][] getRateMatrix() {
         if (updateMatrix) setupMatrix();
-        return amat;
+        return q;
     }
 
     // *****************************************************************
