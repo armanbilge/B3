@@ -454,6 +454,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                         likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
                 }
 
+                traverse(treeModel, treeModel.getRoot(), false);
                 return deriv;
             }
         }
@@ -469,10 +470,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         final NodeRef root = treeModel.getRoot();
         traverseDifferentiate(treeModel, root);
 
-        double logL = 0.0;
+        double deriv = 0.0;
         double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
         for (int i = 0; i < patternCount; i++) {
-            logL += (differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) - ascertainmentCorrection) * patternWeights[i];
+            deriv += (differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) - ascertainmentCorrection) * patternWeights[i];
         }
 
 //        if (logL == Double.NEGATIVE_INFINITY) {
@@ -496,14 +497,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
-        for (int i = 0; i < nodeCount; i++) {
-            updateNode[i] = false;
-        }
+//        for (int i = 0; i < nodeCount; i++) {
+//            updateNode[i] = false;
+//        }
         //********************************************************************
 
-        return logL;
+        return deriv;
     }
-
 
     protected void multiply(final double[][] a, final double[] b) {
         for (int i = 0; i < stateCount; ++i) {
@@ -568,12 +568,22 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     }
 
 
+
     /**
      * Traverse the tree calculating partial likelihoods.
      *
      * @return whether the partials for this node were recalculated.
      */
     protected boolean traverse(Tree tree, NodeRef node) {
+        return traverse(tree, node, true);
+    }
+
+        /**
+         * Traverse the tree calculating partial likelihoods.
+         *
+         * @return whether the partials for this node were recalculated.
+         */
+    protected boolean traverse(Tree tree, NodeRef node, boolean updateMatrices) {
 
         boolean update = false;
 
@@ -582,7 +592,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         NodeRef parent = tree.getParent(node);
 
         // First update the transition probability matrix(ices) for this branch
-        if (parent != null && updateNode[nodeNum]) {
+        if (updateMatrices && parent != null && updateNode[nodeNum]) {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
@@ -603,6 +613,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
 
             update = true;
+        } else {
+            update = updateNode[nodeNum];
         }
 
         // If the node is internal, update the partial likelihoods.
@@ -610,10 +622,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traverse(tree, child1, updateMatrices);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traverse(tree, child2, updateMatrices);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {

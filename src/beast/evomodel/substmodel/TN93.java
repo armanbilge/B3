@@ -275,6 +275,27 @@ public class TN93 extends AbstractNucleotideModel {
     }
 
     protected void setupRelativeRates() {
+        final double kappa1 = getKappa1();
+        final double kappa2 = getKappa2();
+        relativeRates[0] = kappa1;
+        relativeRates[1] = 1.0;
+        relativeRates[2] = kappa1;
+        relativeRates[3] = kappa1;
+        relativeRates[4] = kappa2;
+        relativeRates[5] = kappa1;
+    }
+
+    final double[][] Q = new double[stateCount][stateCount];
+    public double[][] getRateMatrix() {
+        setupRelativeRates();
+        for (int i = 0, k = 0; i < stateCount; i++) {
+            for (int j = i + 1; j < stateCount; j++) {
+                Q[i][j] = relativeRates[k] * freqModel.getFrequency(j);
+                Q[j][i] = relativeRates[k] * freqModel.getFrequency(i);
+                k += 1;
+            }
+        }
+        return Q;
     }
 
     // untested
