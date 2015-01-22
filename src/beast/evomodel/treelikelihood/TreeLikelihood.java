@@ -156,6 +156,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             probabilities = new double[stateCount * stateCount];
 
+            storedMatrices = new double[categoryCount][stateCount * stateCount];
+
             likelihoodCore.initialize(nodeCount, patternCount, categoryCount, integrateAcrossCategories);
 
             int extNodeCount = treeModel.getExternalNodeCount();
@@ -413,12 +415,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 double deriv = 0.0;
 
                 int nodeNum;
-                double[][] storedMatrices = new double[categoryCount][stateCount * stateCount];
+                final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
                 if (!treeModel.isRoot(node)) {
                     nodeNum = node.getNumber();
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
                         multiply(rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
@@ -432,7 +433,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     nodeNum = treeModel.getChild(node, 0).getNumber();
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
                         multiply(rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
@@ -444,7 +444,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     nodeNum = treeModel.getChild(node, 1).getNumber();
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
                         multiply(rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
@@ -454,7 +453,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                         likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
                 }
 
-                traverse(treeModel, treeModel.getRoot(), false);
+                // Flag everything for update
+                updateNode[node.getNumber()] = !treeModel.isRoot(node);
+                if (!treeModel.isExternal(node)) {
+                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
+                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
+                }
+
                 return deriv;
             }
         }
@@ -497,9 +502,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
-//        for (int i = 0; i < nodeCount; i++) {
-//            updateNode[i] = false;
-//        }
+        for (int i = 0; i < nodeCount; i++) {
+            updateNode[i] = false;
+        }
         //********************************************************************
 
         return deriv;
@@ -575,15 +580,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * @return whether the partials for this node were recalculated.
      */
     protected boolean traverse(Tree tree, NodeRef node) {
-        return traverse(tree, node, true);
-    }
-
-        /**
-         * Traverse the tree calculating partial likelihoods.
-         *
-         * @return whether the partials for this node were recalculated.
-         */
-    protected boolean traverse(Tree tree, NodeRef node, boolean updateMatrices) {
 
         boolean update = false;
 
@@ -592,7 +588,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         NodeRef parent = tree.getParent(node);
 
         // First update the transition probability matrix(ices) for this branch
-        if (updateMatrices && parent != null && updateNode[nodeNum]) {
+        if (parent != null && updateNode[nodeNum]) {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
@@ -613,8 +609,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
 
             update = true;
-        } else {
-            update = updateNode[nodeNum];
         }
 
         // If the node is internal, update the partial likelihoods.
@@ -622,10 +616,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1, updateMatrices);
+            final boolean update1 = traverse(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2, updateMatrices);
+            final boolean update2 = traverse(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -837,6 +831,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      */
     protected double[] probabilities;
 
+    protected double[][] storedMatrices;
 
     /**
      * an array used to transfer tip partials
