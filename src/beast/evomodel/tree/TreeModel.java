@@ -1029,6 +1029,27 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
         return parameter;
     }
 
+    /**
+     * @return the relevant node height parameter, ordered according to the pre-order traversal at time of creation.
+     */
+    public Parameter createPreOrderNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+
+        if (!rootNode && !internalNodes && !leafNodes) {
+            throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
+        }
+
+        final CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")");
+
+        Node node = (Node) getRoot();
+        do {
+            if (isRoot(node) ? rootNode : isExternal(node) ? leafNodes : internalNodes)
+                parameter.addParameter(node.heightParameter);
+            node = (Node) Tree.Utils.preorderSuccessor(this, node);
+        } while (!isRoot(node));
+
+        return parameter;
+    }
+
     public Parameter getLeafHeightParameter(NodeRef node) {
 
         if (!isExternal(node)) {

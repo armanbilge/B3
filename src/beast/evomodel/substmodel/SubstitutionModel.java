@@ -41,6 +41,10 @@ public interface SubstitutionModel extends Model {
      */
     void getTransitionProbabilities(double distance, double[] matrix);
 
+    double[] getRelativeRates();
+
+    double[][] getRateMatrix();
+
     /**
      * This function returns the Eigen vectors.
      * @return the array

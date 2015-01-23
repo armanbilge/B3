@@ -50,10 +50,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
     protected FrequencyModel freqModel;
     protected double[] relativeRates;
 
-    public double[] getRelativeRates() {
-        return relativeRates;
-    }
-
     protected double[] storedRelativeRates;
 
     protected int stateCount;
@@ -102,6 +98,17 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         for (int i = 0; i < rateCount; i++) {
             relativeRates[i] = 1.0;
         }
+        q = new double[stateCount][stateCount];
+    }
+
+    public double[] getRelativeRates() {
+        setupRelativeRates();
+        return relativeRates;
+    }
+
+    public double[][] getRateMatrix() {
+        createRateMatrix();
+        return q;
     }
 
     // *****************************************************************
@@ -268,6 +275,20 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         return Eval;
     }
 
+    protected void createRateMatrix() {
+        int i, j, k = 0;
+        // Set the instantaneous rate matrix
+        for (i = 0; i < stateCount; i++) {
+            for (j = i + 1; j < stateCount; j++) {
+                q[i][j] = relativeRates[k] * freqModel.getFrequency(j);
+                q[j][i] = relativeRates[k] * freqModel.getFrequency(i);
+                k += 1;
+            }
+        }
+        makeValid(q, stateCount);
+        normalize(q, freqModel.getFrequencies());
+    }
+
     /**
      * setup substitution matrix
      */
@@ -277,22 +298,11 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         if (!eigenInitialised)
             initialiseEigen();
 
-        int i, j, k = 0;
+        createRateMatrix();
 
-        // Set the instantaneous rate matrix
-        for (i = 0; i < stateCount; i++) {
-            for (j = i + 1; j < stateCount; j++) {
-                amat[i][j] = relativeRates[k] * freqModel.getFrequency(j);
-                amat[j][i] = relativeRates[k] * freqModel.getFrequency(i);
-                k += 1;
-            }
-        }
-        makeValid(amat, stateCount);
-        normalize(amat, freqModel.getFrequencies());
-
-        // copy q matrix for unit testing
-        for (i = 0; i < amat.length; i++) {
-            System.arraycopy(amat[i], 0, q[i], 0, amat[i].length);
+        // copy q matrix for eigen
+        for (int i = 0; i < stateCount; i++) {
+            System.arraycopy(q[i], 0, amat[i], 0, stateCount);
         }
 
         // compute eigenvalues and eigenvectors
@@ -388,7 +398,6 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         storedIevc = new double[stateCount][stateCount];
 
         amat = new double[stateCount][stateCount];
-        q = new double[stateCount][stateCount];
 
         ordr = new int[stateCount];
         evali = new double[stateCount];

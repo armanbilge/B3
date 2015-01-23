@@ -72,6 +72,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void setNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix);
 
+    default void getNodeMatrix(int nodeIndex, int matrixIndex, double[] matrix) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Specify that the partials for the given node are about to be updated
      *
@@ -130,6 +134,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      * @param outLogLikelihoods an array into which the log likelihoods will go
      */
     void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
+
+    default void calculateDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] outDifferentiatedLogLikelihoods) {
+        throw new UnsupportedOperationException();
+    }
 
     void setUseScaling(boolean useScaling);
 

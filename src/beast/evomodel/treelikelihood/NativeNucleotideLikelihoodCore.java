@@ -147,6 +147,19 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 		}
     }
 
+	public void calculateDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] differentiatedLogLikelihoods)
+	{
+		int v = 0;
+		for (int k = 0; k < patternCount; k++) {
+
+			double sum = frequencies[0] * partials[v];	v++;
+			sum += frequencies[1] * partials[v];	v++;
+			sum += frequencies[2] * partials[v];	v++;
+			sum += frequencies[3] * partials[v];	v++;
+			differentiatedLogLikelihoods[k] = sum;
+		}
+	}
+
 	public static boolean isAvailable() { return isNativeAvailable; }
 
 	private static boolean isNativeAvailable = false;

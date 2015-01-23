@@ -275,6 +275,14 @@ public class TN93 extends AbstractNucleotideModel {
     }
 
     protected void setupRelativeRates() {
+        final double kappa1 = getKappa1();
+        final double kappa2 = getKappa2();
+        relativeRates[0] = kappa1;
+        relativeRates[1] = 1.0;
+        relativeRates[2] = kappa1;
+        relativeRates[3] = kappa1;
+        relativeRates[4] = kappa2;
+        relativeRates[5] = kappa1;
     }
 
     // untested
