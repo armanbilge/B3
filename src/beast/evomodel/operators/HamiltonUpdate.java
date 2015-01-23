@@ -21,9 +21,9 @@
 package beast.evomodel.operators;
 
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.CompoundParameter;
 import beast.inference.model.Likelihood;
 import beast.inference.model.Parameter;
+import beast.inference.model.Parameter.Default;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
@@ -56,23 +56,18 @@ public class HamiltonUpdate extends beast.inference.hamilton.HamiltonUpdate {
                           @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
                           @OperatorWeightAttribute double weight,
                           @CoercionModeAttribute CoercionMode mode) {
-        super(U, parameters, mass, epsilon, L, weight, mode);
+        super(U, fixParameters(parameters, trees), mass, epsilon, L, weight, mode);
         if (parameters.length == 0 && trees.length == 0)
             throw new IllegalArgumentException("Must have at least one parameter or tree!");
         this.trees = trees;
+        q.removeParameter(q.getParameter(parameters.length));
     }
 
-    @Parseable
-    public HamiltonUpdate(@ObjectElement(name = "potential") Likelihood U,
-                          @ObjectElement(name = "space") CompoundParameter q,
-                          @ObjectArrayElement(name = "trees", min = 0) TreeModel[] trees,
-                          @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
-                          @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
-                          @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
-                          @OperatorWeightAttribute double weight,
-                          @CoercionModeAttribute CoercionMode mode) {
-        super(U, q, mass, epsilon, L, weight, mode);
-        this.trees = trees;
+    protected static Parameter[] fixParameters(final Parameter[] parameters, final TreeModel[] trees) {
+        final int treeDim = Arrays.stream(trees).mapToInt(TreeModel::getInternalNodeCount).sum();
+        final Parameter[] fixedParameters = new Parameter[parameters.length + 1];
+        Arrays.setAll(fixedParameters, i -> i < parameters.length ? parameters[i] : new Default(treeDim));
+        return fixedParameters;
     }
 
     @Override
