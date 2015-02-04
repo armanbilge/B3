@@ -419,8 +419,15 @@ public class MCLogger implements Logger {
             // added a performance measurement delay to avoid the full evaluation period.
             final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
 
-            if (xo.hasAttribute(FILE_NAME))
-                logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
+            if (xo.hasAttribute(FILE_NAME)) {
+                try {
+                    logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
+                } catch (XMLParseException xpe) {
+                    // File already exists
+                    if (!xpe.getMessage().contains("overwrite"))
+                        throw xpe;
+                }
+            }
 
             String title = null;
             if (xo.hasAttribute(TITLE)) {
