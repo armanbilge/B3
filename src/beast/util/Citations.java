@@ -1,8 +1,8 @@
 /*
- * Author.java
+ * Citations.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
- * Copyright (C) 2014 BEAST Developers
+ * Copyright (C) 2015 BEAST Developers
  *
  * BEAST is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -20,28 +20,18 @@
 
 package beast.util;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- * Container class of author infomation in a citation
- *
- * @author Alexei Drummond
- * @author Marc A. Suchard
+ * @author Arman Bilge
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Citations {
 
-public class Author {
+    Citation[] value();
 
-    String surname;
-    String firstnames;
-
-    public Author(String firstnames, String surname) {
-        this.surname = surname;
-        this.firstnames = firstnames;
-    }
-
-    public String getInitials() { // TODO Determine initials from first names
-        return firstnames;
-    }
-
-    public String toString() {
-        return surname + " " + getInitials();
-    }
 }

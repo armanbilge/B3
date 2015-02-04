@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,14 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "DT", surname = "Jones"), @Author(initials = "WR", surname = "Taylor"), @Author(initials = "JM", surname = "Thornton")},
+		title = "The rapid generation of mutation data matrices from protein sequences",
+		year = 1992,
+		journal = "CABIOS",
+		volume = 8,
+		startpage = 275,
+		endpage = 282,
+		status = Status.PUBLISHED)
 public class JTT extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final JTT INSTANCE = new JTT();
@@ -183,22 +192,4 @@ public class JTT extends EmpiricalRateMatrix.AbstractAminoAcid {
 		f[16] = 0.059; f[17] = 0.014; f[18] = 0.032; f[19] = 0.066;
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
-
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("DT", "Jones"),
-                    new Author("WR", "Taylor"),
-                    new Author("JM", "Thornton")
-            },
-            "The rapid generation of mutation data matrices from protein sequences",
-            1992,
-            "CABIOS",
-            8,
-            275, 282,
-            Citation.Status.PUBLISHED
-    );
 }
