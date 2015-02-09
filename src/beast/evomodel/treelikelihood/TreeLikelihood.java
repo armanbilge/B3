@@ -76,6 +76,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         super(TREE_LIKELIHOOD, patternList, treeModel);
 
+        this.useAmbiguities = useAmbiguities;
         this.storePartials = storePartials;
 
         try {
@@ -405,6 +406,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * @return the log likelihood.
      */
     public double differentiate(Variable<Double> var, int varIndex) {
+
+        if (!useAmbiguities)
+            throw new UnsupportedOperationException("Differentiation unsupported when not considering ambiguities!");
 
         if (var instanceof CompoundParameter) {
             final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(varIndex));
@@ -803,6 +807,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * the tip partials model
      */
     private final TipStatesModel tipStatesModel;
+
+    private final boolean useAmbiguities;
 
     private final boolean storePartials;
 
