@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,12 @@ import java.util.List;
  * @author Marc A. Suchard
  * @author Yu-Nong Gong
  */
-
+@Citation(authors = {@Author(initials = "CC", surname = "Dang"), @Author(initials = "QS", surname = "Le"), @Author(initials = "O", surname = "Gascuel"), @Author(initials = "VS", surname = "Le")},
+        title = "FLU, an amino acid substitution model for influenza proteins",
+        year = 2010,
+        journal = "BMC Evolutionary Biology",
+        volume = 10, startpage = 99,
+        status = Status.PUBLISHED)
 public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
 
     public static final FLU INSTANCE = new FLU();
@@ -192,22 +198,4 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
         setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
     }
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("CC", "Dang"),
-                    new Author("QS", "Le"),
-                    new Author("O", "Gascuel"),
-                    new Author("VS", "Le")
-            },
-            "FLU, an amino acid substitution model for influenza proteins",
-            2010,
-            "BMC Evolutionary Biology",
-            10,
-            99, -1,
-            Citation.Status.PUBLISHED
-    );
 }

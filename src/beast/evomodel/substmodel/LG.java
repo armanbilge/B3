@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +34,12 @@ import java.util.List;
  *
  * @author Guy Baele 
  */
+@Citation(authors = {@Author(initials = "S. Q.", surname = "Le"), @Author(initials = "O.", surname = "Gascuel")},
+		title = "An Improved General Amino Acid Replacement Matrix",
+		year = 2008,
+		journal = "Mol. Biol. Evol.",
+		volume = 25, startpage = 1307, endpage = 1320,
+		status = Status.PUBLISHED)
 public class LG extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final LG INSTANCE = new LG();
@@ -305,20 +312,4 @@ public class LG extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("S. Q.", "Le"),
-                    new Author("O.", "Gascuel")
-            },
-            "An Improved General Amino Acid Replacement Matrix",
-            2008,
-            "Mol. Biol. Evol.",
-            25,
-            1307, 1320,
-            Citation.Status.PUBLISHED
-    );
 }

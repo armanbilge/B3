@@ -74,42 +74,63 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
 	 */
 	public Object getTaxonAttribute(int taxonIndex, String name);
 
+	default boolean hasAttribute(int index, String name) {
+		return getTaxonAttribute(index, name) != null;
+	}
+
+	default Set<String> getTaxonListIdSet() {
+		Set<String> taxaSet = new HashSet<String>();
+		for (int i =0; i < getTaxonCount(); i++) {
+			taxaSet.add(getTaxonId(i));
+		}
+		return taxaSet;
+	}
+
+	default int findDuplicateTaxon() {
+		Set<String> taxaSet = new HashSet<String>();
+		for (int i = 0; i < getTaxonCount(); i++) {
+			Taxon taxon = getTaxon(i);
+			if (taxaSet.contains(taxon.getId())) {
+				return i;
+			}
+			taxaSet.add(taxon.getId());
+		}
+		return -1;
+	}
+
+	default boolean equals(TaxonList taxa2) {
+		if (getTaxonCount() != taxa2.getTaxonCount()) {
+			return false;
+		}
+		for (int i =0; i < getTaxonCount(); i++) {
+			if (taxa2.getTaxonIndex(getTaxon(i)) == -1) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Deprecated
 	class Utils {
 
+		@Deprecated
 		public static boolean hasAttribute(TaxonList taxa, int index, String name) {
-			return taxa.getTaxonAttribute(index, name) != null;
+			return taxa.hasAttribute(index, name);
 		}
 
+		@Deprecated
 		public static Set<String> getTaxonListIdSet(TaxonList taxa) {
-			Set<String> taxaSet = new HashSet<String>();
-			for (int i =0; i < taxa.getTaxonCount(); i++) {
-				taxaSet.add(taxa.getTaxonId(i));
-			}
-			return taxaSet;
+			return taxa.getTaxonListIdSet();
 		}
 
+		@Deprecated
         public static int findDuplicateTaxon(TaxonList taxonList) {
-            Set<String> taxaSet = new HashSet<String>();
-                        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = taxonList.getTaxon(i);
-                if (taxaSet.contains(taxon.getId())) {
-                    return i;
-                }
-                taxaSet.add(taxon.getId());
-            }
-            return -1;
+            return taxonList.findDuplicateTaxon();
         }
 
+		@Deprecated
         public static boolean areTaxaIdentical(TaxonList taxa1, TaxonList taxa2) {
-            if (taxa1.getTaxonCount() != taxa2.getTaxonCount()) {
-                return false;
-            }
-            for (int i =0; i < taxa1.getTaxonCount(); i++) {
-                if (taxa2.getTaxonIndex(taxa1.getTaxon(i)) == -1) {
-                    return false;
-                }
-            }
-            return true;
+            return taxa1.equals(taxa2);
         }
 
 
