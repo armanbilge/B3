@@ -45,10 +45,12 @@ import beast.evomodel.tree.TreeModel;
 import beast.evomodel.treelikelihood.TipStatesModel;
 import beast.evomodel.treelikelihood.TreeLikelihood;
 import beast.inference.model.CompoundLikelihood;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.ThreadAwareLikelihood;
+import beast.inference.model.Variable;
 import beast.util.Serializer;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
@@ -902,6 +904,105 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return logL;
     }
 
+    public double differentiate(Variable<Double> var, int index) {
+
+        if (var instanceof CompoundParameter) {
+            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
+            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
+
+                final double logL = getLogLikelihood();
+
+                double deriv = 0.0;
+
+                int nodeNum;
+                if (!treeModel.isRoot(node))
+                    deriv -= calculateDifferentiatedLogLikelihood(logL, node);
+
+                if (!treeModel.isExternal(node)) {
+                    deriv += calculateDifferentiatedLogLikelihood(logL, treeModel.getChild(node, 0));
+                    deriv += calculateDifferentiatedLogLikelihood(logL, treeModel.getChild(node, 1));
+                }
+
+                // Flag everything for update
+                updateNode[node.getNumber()] = !treeModel.isRoot(node);
+                if (!treeModel.isExternal(node)) {
+                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
+                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
+                }
+
+                return deriv;
+
+            }
+        }
+
+        return super.differentiate(var, index);
+    }
+
+    protected double calculateDifferentiatedLogLikelihood(double logL, NodeRef respectedNode) {
+
+        operationListCount = 0;
+
+        if (hasRestrictedPartials) {
+            for (int i = 0; i <= numRestrictedPartials; i++) {
+                operationCount[i] = 0;
+            }
+        } else {
+            operationCount[0] = 0;
+        }
+
+        final NodeRef root = treeModel.getRoot();
+        traverseDifferentiate(treeModel, root, respectedNode);
+
+        if (hasRestrictedPartials) {
+            for (int i = 0; i <= numRestrictedPartials; i++) {
+                beagle.updatePartials(operations[i], operationCount[i], Beagle.NONE);
+                if (i < numRestrictedPartials) {
+//                        restrictNodePartials(restrictedIndices[i]);
+                }
+            }
+        } else {
+            beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
+        }
+
+        if (hasRestrictedPartials) {
+            for (int i = 0; i <= numRestrictedPartials; i++) {
+                beagle.updatePartials(operations[i], operationCount[i], Beagle.NONE);
+                if (i < numRestrictedPartials) {
+//                        restrictNodePartials(restrictedIndices[i]);
+                }
+            }
+        } else {
+            beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
+        }
+
+        int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
+
+        int cumulateScaleBufferIndex = Beagle.NONE;
+        if (useScaleFactors) {
+            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+        } else if (useAutoScaling) {
+            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
+        }
+
+        double[] sumLogLikelihoods = new double[1];
+
+        beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+
+        final double deriv = sumLogLikelihoods[0] / Math.exp(logL);
+
+        //********************************************************************
+        // after traverse all nodes and patterns have been updated --
+        //so change flags to reflect this.
+        for (int i = 0; i < nodeCount; i++) {
+            updateNode[i] = false;
+        }
+
+        //********************************************************************
+
+        return deriv;
+    }
+
     public void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
         /* No need to rescale partials */
@@ -1066,6 +1167,91 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
                 operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
                 operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
+
+                operationCount[operationListCount]++;
+
+                update = true;
+
+                if (hasRestrictedPartials) {
+                    // Test if this set of partials should be restricted
+                    if (updateRestrictedNodePartials) {
+                        // Recompute map
+                        computeNodeToRestrictionMap();
+                        updateRestrictedNodePartials = false;
+                    }
+                    if (partialsMap[nodeNum] != null) {
+
+                    }
+                }
+
+            }
+        }
+
+        return update;
+
+    }
+
+    private boolean traverseDifferentiate(Tree tree, NodeRef node, NodeRef respectedNode) {
+
+        if (node == respectedNode) return true;
+
+        boolean update = false;
+
+        int nodeNum = node.getNumber();
+
+        NodeRef parent = tree.getParent(node);
+
+        // If the node is internal, update the partial likelihoods.
+        if (!tree.isExternal(node)) {
+
+            // Traverse down the two child nodes
+            NodeRef child1 = tree.getChild(node, 0);
+            final boolean update1 = traverseDifferentiate(tree, child1, respectedNode);
+
+            NodeRef child2 = tree.getChild(node, 1);
+            final boolean update2 = traverseDifferentiate(tree, child2, respectedNode);
+
+            // If either child node was updated then update this node too
+            if (update1 || update2) {
+
+                int x = operationCount[operationListCount] * Beagle.OPERATION_TUPLE_SIZE;
+
+                final int[] operations = this.operations[operationListCount];
+
+                operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
+
+                if (useScaleFactors) {
+                    // get the index of this scaling buffer
+                    int n = nodeNum - tipCount;
+
+                    if (recomputeScaleFactors) {
+                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
+                        scaleBufferHelper.flipOffset(n);
+
+                        // store the index
+                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+
+                        operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+                        operations[x + 2] = Beagle.NONE;
+
+                    } else {
+                        operations[x + 1] = Beagle.NONE;
+                        operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
+                    }
+
+                } else {
+
+                    if (useAutoScaling) {
+                        scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                    }
+                    operations[x + 1] = Beagle.NONE; // Not using scaleFactors
+                    operations[x + 2] = Beagle.NONE;
+                }
+
+                operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
+                operations[x + 4] = child1 == respectedNode ? substitutionModelDelegate.getDerivativeMatrixIndex(child1.getNumber()) : substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
+                operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
+                operations[x + 6] = child2 == respectedNode ? substitutionModelDelegate.getDerivativeMatrixIndex(child2.getNumber()) : substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
 
                 operationCount[operationListCount]++;
 
