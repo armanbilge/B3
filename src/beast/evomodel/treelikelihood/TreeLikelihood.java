@@ -400,19 +400,16 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
 
-    /**
-     * Calculate the log likelihood of the current state.
-     *
-     * @return the log likelihood.
-     */
-    public double differentiate(Variable<Double> var, int varIndex) {
+    public double differentiate(Variable<Double> var, int index) {
 
         if (!useAmbiguities)
-            throw new UnsupportedOperationException("Differentiation unsupported when not considering ambiguities!");
+            throw new UnsupportedOperationException("Differentiation unsupported when not using ambiguities!");
+        if (categoryCount > 1)
+            throw new UnsupportedOperationException("Differentiation unsupported when categoryCount > 1!");
 
         if (var instanceof CompoundParameter) {
-            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(varIndex));
-            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, varIndex)) {
+            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
+            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
 
                 getLogLikelihood();
 
@@ -468,7 +465,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
-        return 0;
+        return super.differentiate(var, index);
     }
 
     protected double calculateDifferentiatedLogLikelihood() {
@@ -480,9 +477,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         traverseDifferentiate(treeModel, root);
 
         double deriv = 0.0;
-        double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
         for (int i = 0; i < patternCount; i++) {
-            deriv += (differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) - ascertainmentCorrection) * patternWeights[i];
+            deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
         }
 
 //        if (logL == Double.NEGATIVE_INFINITY) {
