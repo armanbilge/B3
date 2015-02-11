@@ -914,7 +914,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                 double deriv = 0.0;
 
-                int nodeNum;
                 if (!treeModel.isRoot(node))
                     deriv -= calculateDifferentiatedLogLikelihood(logL, node);
 
@@ -940,6 +939,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     protected double calculateDifferentiatedLogLikelihood(double logL, NodeRef respectedNode) {
 
+        if (differentiatedPatternLogLikelihoods == null) {
+            differentiatedPatternLogLikelihoods = new double[patternCount];
+        }
+
         operationListCount = 0;
 
         if (hasRestrictedPartials) {
@@ -964,17 +967,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
         }
 
-        if (hasRestrictedPartials) {
-            for (int i = 0; i <= numRestrictedPartials; i++) {
-                beagle.updatePartials(operations[i], operationCount[i], Beagle.NONE);
-                if (i < numRestrictedPartials) {
-//                        restrictNodePartials(restrictedIndices[i]);
-                }
-            }
-        } else {
-            beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
-        }
-
         int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
 
         int cumulateScaleBufferIndex = Beagle.NONE;
@@ -984,12 +976,21 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
         }
 
-        double[] sumLogLikelihoods = new double[1];
+        double[] sumDifferentiatedLogLikelihoods = new double[1];
 
         beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+                new int[]{cumulateScaleBufferIndex}, 1, sumDifferentiatedLogLikelihoods);
 
-        final double deriv = sumLogLikelihoods[0] / Math.exp(logL);
+        double deriv = sumDifferentiatedLogLikelihoods[0] / Math.exp(logL);
+
+        beagle.getSiteLogLikelihoods(differentiatedPatternLogLikelihoods);
+
+        if (ascertainedSitePatterns) {
+            beagle.getSiteLogLikelihoods(differentiatedPatternLogLikelihoods);
+            deriv = 0;
+            for (int i = 0; i < patternCount; ++i)
+                deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
+        }
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -1352,6 +1353,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      * the pattern likelihoods
      */
     protected double[] patternLogLikelihoods = null;
+
+    protected double[] differentiatedPatternLogLikelihoods = null;
 
     /**
      * the number of rate categories
