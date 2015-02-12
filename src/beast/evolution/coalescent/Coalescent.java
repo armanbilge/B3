@@ -119,7 +119,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
     public static double differentiateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction, double threshold) {
 
-        double logL = 0.0;
+        double deriv = 0.0;
 
         double startTime = 0.0;
         final int n = intervals.getIntervalCount();
@@ -129,14 +129,16 @@ public class Coalescent implements MultivariateFunction, Units {
             final double finishTime = startTime + duration;
 
             final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+            final double differentiatedIntervalArea = demographicFunction.getDifferentiatedIntegral(startTime, finishTime);
+
             if( intervalArea == 0 && duration != 0 ) {
-                return Double.NEGATIVE_INFINITY;
+                return 0.0;
             }
             final int lineageCount = intervals.getLineageCount(i);
 
             final double kChoose2 = MathUtils.nChoose2(lineageCount);
             // common part
-            logL += -kChoose2 * intervalArea;
+            deriv += -kChoose2 * differentiatedIntervalArea;
 
             if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
@@ -148,11 +150,11 @@ public class Coalescent implements MultivariateFunction, Units {
 
                 if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
                     //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
-                    logL -= Math.log(demographicAtCoalPoint);
+                    deriv -= demographicFunction.getDifferentiatedDemographic(finishTime) / demographicAtCoalPoint;
                 } else {
                     // remove this at some stage
                     //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-                    return Double.NEGATIVE_INFINITY;
+                    return 0.0;
                 }
 
             }
@@ -160,7 +162,7 @@ public class Coalescent implements MultivariateFunction, Units {
             startTime = finishTime;
         }
 
-        return logL;
+        return deriv;
     }
 
     /**

@@ -45,6 +45,10 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getDemographic(double t);
 
+    default double getDifferentiatedDemographic(double t) {
+        throw new UnsupportedOperationException();
+    }
+
     default double getLogDemographic(double t) {
         return Math.log(getDemographic(t));
     }
@@ -76,7 +80,7 @@ public interface DemographicFunction extends UnivariateFunction, Units {
     }
 
     default double getDifferentiatedIntegral(double start, double finish) {
-        throw new UnsupportedOperationException();
+        return getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
     };
 
 	/**

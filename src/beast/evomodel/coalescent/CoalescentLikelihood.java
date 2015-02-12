@@ -22,11 +22,13 @@ package beast.evomodel.coalescent;
 
 import beast.evolution.coalescent.Coalescent;
 import beast.evolution.coalescent.DemographicFunction;
+import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Taxa;
 import beast.evolution.util.TaxonList;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
@@ -93,16 +95,25 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 	public double differentiate(Variable<Double> var, int index) {
 
+		getLogLikelihood();
+
 		DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
 
-		//double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction);
-		double lnL =  Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
+		if (getTree() instanceof TreeModel && var instanceof CompoundParameter) {
+			final TreeModel tree = (TreeModel) getTree();
+			final NodeRef node = tree.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
+			if (node != null && tree.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
 
-		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood is " + Double.toString(lnL));
+			}
 		}
 
-		return lnL;
+		double deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
+
+		if (Double.isNaN(deriv) || Double.isInfinite(deriv)) {
+			Logger.getLogger("warning").severe("Derivative of CoalescentLikelihood is " + Double.toString(deriv));
+		}
+
+		return deriv;
 
 	}
 

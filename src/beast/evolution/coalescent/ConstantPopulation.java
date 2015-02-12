@@ -71,11 +71,14 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	// Implementation of abstract methods
 	
 	public double getDemographic(double t) { return getN0(); }
+	public double getDifferentiatedDemographic(double t) {
+		return respectingN0() ? 1 : 0;
+	}
 	public double getIntensity(double t) { return t/getN0(); }
 	public double getDifferentiatedIntensity(double t) {
 		if (respectingN0()) {
 			final double N0 = getN0();
-			return t / (N0 * N0);
+			return - t / (N0 * N0);
 		} else {
 			return 0;
 		}

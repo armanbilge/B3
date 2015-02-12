@@ -23,6 +23,7 @@ package beast.evolution.coalescent;
 import beast.evolution.util.Units;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * A concrete class for a set of coalescent intervals.
