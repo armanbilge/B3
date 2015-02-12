@@ -646,6 +646,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      */
     protected void storeState() {
         partialBufferHelper.storeState();
+        flipPartials = true;
         substitutionModelDelegate.storeState();
 
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
@@ -761,7 +762,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root, null, true);
+        traverse(treeModel, root, null, flipPartials);
+        flipPartials = false;
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             substitutionModelDelegate.updateSubstitutionModels(beagle);
@@ -840,9 +842,9 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             logL = sumLogLikelihoods[0];
 
+            beagle.getSiteLogLikelihoods(patternLogLikelihoods);
             if (ascertainedSitePatterns) {
                 // Need to correct for ascertainedSitePatterns
-                beagle.getSiteLogLikelihoods(patternLogLikelihoods);
                 logL = getAscertainmentCorrectedLogLikelihood((AscertainedSitePatterns) patternList,
                         patternLogLikelihoods, patternWeights);
             }
@@ -967,30 +969,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
         }
 
-        int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
+        getDifferentiatedSiteLogLikelihoods();
 
-        int cumulateScaleBufferIndex = Beagle.NONE;
-        if (useScaleFactors) {
-            cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-        } else if (useAutoScaling) {
-            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
-        }
-
-        double[] sumDifferentiatedLogLikelihoods = new double[1];
-
-        beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                new int[]{cumulateScaleBufferIndex}, 1, sumDifferentiatedLogLikelihoods);
-
-        double deriv = sumDifferentiatedLogLikelihoods[0] / Math.exp(logL);
-
-        beagle.getSiteLogLikelihoods(differentiatedPatternLogLikelihoods);
-
-        if (ascertainedSitePatterns) {
-            beagle.getSiteLogLikelihoods(differentiatedPatternLogLikelihoods);
-            deriv = 0;
-            for (int i = 0; i < patternCount; ++i)
-                deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
-        }
+        double deriv = 0;
+        for (int i = 0; i < patternCount; ++i)
+            deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
 
         //********************************************************************
         // after traverse all nodes and patterns have been updated --
@@ -1002,6 +985,30 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         //********************************************************************
 
         return deriv;
+    }
+
+    // TODO Would be great to have this implemented in Beagle
+    protected void getDifferentiatedSiteLogLikelihoods() {
+
+        if (partials == null)
+            partials = new double[stateCount * patternCount * categoryCount];
+
+        getPartials(treeModel.getRoot().getNumber(), partials);
+
+        final double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+        final double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
+
+        Arrays.fill(differentiatedPatternLogLikelihoods, 0.0);
+
+        int u = 0;
+        for (int i = 0; i < categoryCount; ++i) {
+            for (int j = 0; j < patternCount; ++j) {
+                double sum = 0.0;
+                for (int k = 0; k < stateCount; ++k)
+                     sum += partials[u++] * frequencies[k];
+                differentiatedPatternLogLikelihoods[j] += sum * categoryWeights[i];
+            }
+        }
     }
 
     public void getPartials(int number, double[] partials) {
@@ -1297,7 +1304,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private final int numRestrictedPartials;
     private final Map<Set<String>, Parameter> partialsRestrictions;
     private Parameter[] partialsMap;
-    private double[] partials;
+    private double[] partials = null;
     private boolean updateRestrictedNodePartials;
 //    private int[] restrictedIndices;
 
@@ -1403,6 +1410,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      * Flag to specify if ambiguity codes are in use
      */
     protected final boolean useAmbiguities;
+
+    /**
+     * Flag to specify if to flip partials buffers
+     */
+    protected boolean flipPartials = false;
 
 //    public static void main(String[] args) {
 //
