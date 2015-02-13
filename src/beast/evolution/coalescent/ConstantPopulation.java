@@ -74,6 +74,9 @@ public class ConstantPopulation extends DemographicFunction.Abstract
 	public double getDifferentiatedDemographic(double t) {
 		return respectingN0() ? 1 : 0;
 	}
+    public double getDifferentiatedDemographicRespectingT(double t) {
+        return 0.0;
+    }
 	public double getIntensity(double t) { return t/getN0(); }
 	public double getDifferentiatedIntensity(double t) {
 		if (respectingN0()) {

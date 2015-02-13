@@ -97,21 +97,27 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		getLogLikelihood();
 
-		DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
+        double deriv = 0.0;
 
 		if (getTree() instanceof TreeModel && var instanceof CompoundParameter) {
 			final TreeModel tree = (TreeModel) getTree();
 			final NodeRef node = tree.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
 			if (node != null && tree.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
+                if (tree.isExternal(node)) throw new UnsupportedOperationException("Differentiation not working for leaf nodes!");
+                DemographicFunction demoFunction = demoModel.getDemographicFunction();
+                final int i = getNodeInterval(node);
+                deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold(), i);
+            }
+		} else {
+            DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
 
-			}
-		}
+            deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
 
-		double deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
+        }
 
-		if (Double.isNaN(deriv) || Double.isInfinite(deriv)) {
-			Logger.getLogger("warning").severe("Derivative of CoalescentLikelihood is " + Double.toString(deriv));
-		}
+        if (Double.isNaN(deriv) || Double.isInfinite(deriv)) {
+            Logger.getLogger("warning").severe("Derivative of CoalescentLikelihood is " + Double.toString(deriv));
+        }
 
 		return deriv;
 

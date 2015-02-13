@@ -1,8 +1,8 @@
 /*
- * Intervals.java
+ * NodeIntervals.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
- * Copyright (C) 2014 BEAST Developers
+ * Copyright (C) 2015 BEAST Developers
  *
  * BEAST is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -20,20 +20,19 @@
 
 package beast.evolution.coalescent;
 
+import beast.evolution.tree.NodeRef;
 import beast.evolution.util.Units;
 
 import java.util.Arrays;
 
 /**
- * A concrete class for a set of coalescent intervals.
+ * A concrete class for a set of coalescent intervals associated with NodeRefs.
  *
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: Intervals.java,v 1.19 2005/09/21 18:47:58 gerton Exp $
+ * @author Arman Bilge
  */
-public class Intervals implements IntervalList {
+public class NodeIntervals implements IntervalList {
 
-    public Intervals(int maxEventCount) {
+    public NodeIntervals(int maxEventCount) {
         events = new Event[maxEventCount];
         for (int i = 0; i < maxEventCount; i++) {
             events[i] = new Event();
@@ -45,20 +44,22 @@ public class Intervals implements IntervalList {
         intervalTypes = new IntervalType[maxEventCount - 1];
         lineageCounts = new int[maxEventCount - 1];
 
+        nodeIntervals = new int[maxEventCount];
+
         intervalsKnown = false;
     }
 
-    public void copyIntervals(Intervals source) {
+    public void copyIntervals(NodeIntervals source) {
         intervalsKnown = source.intervalsKnown;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
 
         //don't copy the actual events..
-        /*
-          for (int i = 0; i < events.length; i++) {
-              events[i].time = source.events[i].time;
-              events[i].type = source.events[i].type;
-          }*/
+    /*
+      for (int i = 0; i < events.length; i++) {
+          events[i].time = source.events[i].time;
+          events[i].type = source.events[i].type;
+      }*/
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);
@@ -73,32 +74,36 @@ public class Intervals implements IntervalList {
         sampleCount = 0;
     }
 
-    public void addSampleEvent(double time) {
+    public void addSampleEvent(double time, NodeRef node) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.SAMPLE;
+        events[eventCount].node = node;
         eventCount++;
         sampleCount++;
         intervalsKnown = false;
     }
 
-    public void addCoalescentEvent(double time) {
+    public void addCoalescentEvent(double time, NodeRef node) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.COALESCENT;
+        events[eventCount].node = node;
         eventCount++;
         intervalsKnown = false;
     }
 
-    public void addMigrationEvent(double time, int destination) {
+    public void addMigrationEvent(double time, int destination, NodeRef node) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.MIGRATION;
         events[eventCount].info = destination;
+        events[eventCount].node = node;
         eventCount++;
         intervalsKnown = false;
     }
 
-    public void addNothingEvent(double time) {
+    public void addNothingEvent(double time, NodeRef node) {
         events[eventCount].time = time;
         events[eventCount].type = IntervalType.NOTHING;
+        events[eventCount].node = node;
         eventCount++;
         intervalsKnown = false;
     }
@@ -142,6 +147,10 @@ public class Intervals implements IntervalList {
         return events[eventCount - 1].time;
     }
 
+    public int getNodeInterval(NodeRef node) {
+        return nodeIntervals[node.getNumber()];
+    }
+
     public boolean isBinaryCoalescent() {
         return true;
     }
@@ -165,6 +174,7 @@ public class Intervals implements IntervalList {
         intervalCount = eventCount - 1;
 
         double lastTime = events[0].time;
+        nodeIntervals[events[0].node.getNumber()] = -1;
 
         int lineages = 1;
         for (int i = 1; i < eventCount; i++) {
@@ -178,6 +188,7 @@ public class Intervals implements IntervalList {
                 lineages--;
             }
             lastTime = events[i].time;
+            nodeIntervals[events[i].node.getNumber()] = i-1;
         }
         intervalsKnown = true;
     }
@@ -192,17 +203,17 @@ public class Intervals implements IntervalList {
         this.units = units;
     }
 
-    private class Event implements Comparable {
+    private class Event implements Comparable<Event> {
 
-        public int compareTo(Object o) {
-            double t = ((Event) o).time;
+        public int compareTo(Event e) {
+            double t = e.time;
             if (t < time) {
                 return 1;
             } else if (t > time) {
                 return -1;
             } else {
                 // events are at exact same time so sort by type
-                return type.compareTo(((Event) o).type);
+                return type.compareTo(e.type);
             }
         }
 
@@ -221,6 +232,10 @@ public class Intervals implements IntervalList {
          */
         int info;
 
+        /**
+         * The node associated with the event
+         */
+        NodeRef node;
     }
 
     private Event[] events;
@@ -233,4 +248,6 @@ public class Intervals implements IntervalList {
     private IntervalType[] intervalTypes;
     //private int[] destinations;
     private int intervalCount = 0;
+
+    private int[] nodeIntervals;
 }

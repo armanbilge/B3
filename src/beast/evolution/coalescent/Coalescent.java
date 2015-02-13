@@ -165,6 +165,51 @@ public class Coalescent implements MultivariateFunction, Units {
         return deriv;
     }
 
+    public static double differentiateLogLikelihood(IntervalList intervals, DemographicFunction demographicFunction, double threshold, int n) {
+
+        double t = 0.0;
+        for (int i = 0; i <= n; ++i)
+            t += intervals.getInterval(i);
+
+        double deriv = - ((n >= 0 ? MathUtils.nChoose2(intervals.getLineageCount(n)) : 0)
+                - (n+1 < intervals.getIntervalCount() ? MathUtils.nChoose2(intervals.getLineageCount(n+1)) : 0))
+                / demographicFunction.getDemographic(t);
+
+        if (n >= 0) {
+            final double duration = intervals.getInterval(n);
+            final double finishTime = t;
+            final double startTime = finishTime - duration;
+
+            final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+            if( intervalArea == 0 && duration != 0 ) {
+                return 0.0;
+            }
+
+            if (n+1 < intervals.getIntervalCount() && intervals.getIntervalType(n+1) == IntervalType.COALESCENT) {
+
+                final double demographicAtCoalPoint = demographicFunction.getDemographic(t);
+
+                // if value at end is many orders of magnitude different than mean over interval reject the interval
+                // This is protection against cases where ridiculous infinitesimal population size at the end of a
+                // linear interval drive coalescent values to infinity.
+
+                if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
+                    //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
+                    deriv -= demographicFunction.getDifferentiatedDemographicRespectingT(t) / demographicAtCoalPoint;
+                } else {
+                    // remove this at some stage
+                    //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    return 0.0;
+                }
+
+            }
+        }
+
+
+
+        return deriv;
+    }
+
     /**
      * Calculates the log likelihood of this set of coalescent intervals,
      * using an analytical integration over theta.

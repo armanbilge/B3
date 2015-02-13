@@ -22,7 +22,7 @@ package beast.evomodel.coalescent;
 
 import beast.evolution.coalescent.IntervalList;
 import beast.evolution.coalescent.IntervalType;
-import beast.evolution.coalescent.Intervals;
+import beast.evolution.coalescent.NodeIntervals;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.TaxonList;
@@ -79,8 +79,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
             addModel((TreeModel) tree);
         }
 
-        intervals = new Intervals(tree.getNodeCount());
-        storedIntervals = new Intervals(tree.getNodeCount());
+        intervals = new NodeIntervals(tree.getNodeCount());
+        storedIntervals = new NodeIntervals(tree.getNodeCount());
         eventsKnown = false;
 
         addStatistic(new DeltaStatistic());
@@ -129,7 +129,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      */
     protected final void restoreState() {
         // swap the intervals back
-        Intervals tmp = storedIntervals;
+        NodeIntervals tmp = storedIntervals;
         storedIntervals = intervals;
         intervals = tmp;
 
@@ -229,9 +229,9 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
      * @param node      the node to start from
      * @param intervals the intervals object to store the events
      */
-    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, Intervals intervals) {
+    private void collectTimes(Tree tree, NodeRef node, Set<NodeRef> excludeNodesBelow, NodeIntervals intervals) {
 
-        intervals.addCoalescentEvent(tree.getNodeHeight(node));
+        intervals.addCoalescentEvent(tree.getNodeHeight(node), node);
 
         for (int i = 0; i < tree.getChildCount(node); i++) {
             NodeRef child = tree.getChild(node, i);
@@ -244,7 +244,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
             }
 
             if (!include || tree.isExternal(child)) {
-                intervals.addSampleEvent(tree.getNodeHeight(child));
+                intervals.addSampleEvent(tree.getNodeHeight(child), child);
             } else {
                 collectTimes(tree, child, excludeNodesBelow, intervals);
             }
@@ -285,6 +285,10 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     }
 
+    public int getNodeInterval(NodeRef node) {
+        return intervals.getNodeInterval(node);
+    }
+
     // ****************************************************************
     // Inner classes
     // ****************************************************************
@@ -320,12 +324,12 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     /**
      * The intervals.
      */
-    private Intervals intervals = null;
+    private NodeIntervals intervals = null;
 
     /**
      * The stored values for intervals.
      */
-    private Intervals storedIntervals = null;
+    private NodeIntervals storedIntervals = null;
 
     private boolean eventsKnown = false;
     private boolean storedEventsKnown = false;

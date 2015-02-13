@@ -49,6 +49,10 @@ public interface DemographicFunction extends UnivariateFunction, Units {
         throw new UnsupportedOperationException();
     }
 
+    default double getDifferentiatedDemographicRespectingT(double t) {
+        throw new UnsupportedOperationException();
+    }
+
     default double getLogDemographic(double t) {
         return Math.log(getDemographic(t));
     }
