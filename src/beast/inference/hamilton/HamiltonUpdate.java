@@ -48,6 +48,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     protected final Likelihood U;
     protected final CompoundParameter q;
 
+    private final int dim;
     private final double[] mass;
     private double epsilon;
     private int L;
@@ -61,8 +62,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
             @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
-            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
-            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
         this(U, new CompoundParameter("q", parameters), mass, epsilon, L, weight, mode);
@@ -73,27 +74,75 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectElement(name = "space") CompoundParameter q,
             @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
-            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
-            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
+
         super(mode);
+
         this.U = U;
         this.q = q;
+        dim = q.getDimension();
+
         if (mass != null) {
-            if (mass.length != q.getDimension())
+            if (mass.length != dim)
                 throw new IllegalArgumentException("mass.length != q.getDimension()");
-            else if (!Arrays.stream(mass).allMatch(d -> d > 0))
+            else if (!Arrays.stream(mass).allMatch(m -> m > 0))
                 throw new IllegalArgumentException("All masses must be m_i > 0.");
             else
                 this.mass = mass;
         } else {
-            this.mass = new double[q.getDimension()];
-            Arrays.fill(this.mass, 1);
+            this.mass = new double[dim];
+            setDefaultMass();
         }
-        this.epsilon = epsilon;
+
+        if (epsilon > 0)
+            this.epsilon = epsilon;
+        else
+            setDefaultEpsilon();
+
+        if (L > 0)
+            this.L = L;
+        else
+            setDefaultL();
+
         this.L = L;
         setWeight(weight);
+    }
+
+    protected void setDefaultMass() {
+        Arrays.fill(this.mass, 1);
+    }
+
+    private static final double EPSILON_CONSTANT = 0.0625;
+    protected void setDefaultEpsilon() {
+        epsilon = EPSILON_CONSTANT * Math.pow(dim, -0.25);
+    }
+
+    private static final int L_CONSTANT = 16;
+    protected void setDefaultL() {
+        L = (int) Math.round(L_CONSTANT * Math.pow(dim, 0.25));
+    }
+
+    protected double getEpsilon() {
+        return epsilon;
+    }
+
+    protected void setEpsilon(double e) {
+        epsilon = e;
+    }
+
+    protected int getL() {
+        return L;
+    }
+
+    protected void setL(int l) {
+        L = l;
+    }
+
+    protected int getDimension() {
+        return dim;
     }
 
     @Override
@@ -113,7 +162,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     @Override
     public double doOperation() throws OperatorFailedException {
 
-        final int dim = q.getDimension();
         final double halfEpsilon = epsilon / 2;
 
         final double[] p = new double[dim];

@@ -52,8 +52,8 @@ public class HamiltonUpdate extends beast.inference.hamilton.HamiltonUpdate {
                           @ObjectArrayElement(name = "dimensions", min = 0) Parameter[] parameters,
                           @ObjectArrayElement(name = "trees", min = 0) TreeModel[] trees,
                           @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
-                          @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.125) double epsilon,
-                          @IntegerAttribute(name = "iterations", optional = true, defaultValue = 100) int L,
+                          @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0) double epsilon,
+                          @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
                           @OperatorWeightAttribute double weight,
                           @CoercionModeAttribute CoercionMode mode) {
         super(U, fixParameters(parameters, trees), mass, epsilon, L, weight, mode);
