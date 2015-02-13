@@ -109,7 +109,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         else
             setDefaultL();
 
-        this.L = L;
         setWeight(weight);
     }
 
@@ -117,12 +116,12 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         Arrays.fill(this.mass, 1);
     }
 
-    private static final double EPSILON_CONSTANT = 0.0625;
+    private static final double EPSILON_CONSTANT = 0.000244140625;
     protected void setDefaultEpsilon() {
         epsilon = EPSILON_CONSTANT * Math.pow(dim, -0.25);
     }
 
-    private static final int L_CONSTANT = 16;
+    private static final int L_CONSTANT = 8;
     protected void setDefaultL() {
         L = (int) Math.round(L_CONSTANT * Math.pow(dim, 0.25));
     }
@@ -200,8 +199,13 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             }
 
             if (l < L - 1)
-                for (int i = 0; i < dim; ++i)
-                    p[i] -= epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                for (int i = 0; i < dim; ++i) {
+                    double d = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    double x =d;// Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    if (MathUtils.nextInt(8) == 0 && Math.abs(d - x) > 0.1)
+                        throw new RuntimeException(d + " " + x + " " + q.getMaskedParameter(i) + q.getMaskedIndex(i));
+                    p[i] -= epsilon * d;
+                }
         }
 
         // Make up for quiet behaviour above
