@@ -22,11 +22,13 @@ package beast.evomodel.coalescent;
 
 import beast.evolution.coalescent.Coalescent;
 import beast.evolution.coalescent.DemographicFunction;
+import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Taxa;
 import beast.evolution.util.TaxonList;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
@@ -89,6 +91,36 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 		}
 
 		return lnL;
+	}
+
+	public double differentiate(Variable<Double> var, int index) {
+
+		getLogLikelihood();
+
+        double deriv = 0.0;
+
+		if (getTree() instanceof TreeModel && var instanceof CompoundParameter) {
+			final TreeModel tree = (TreeModel) getTree();
+			final NodeRef node = tree.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
+			if (node != null && tree.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
+                if (tree.isExternal(node)) throw new UnsupportedOperationException("Differentiation not working for leaf nodes!");
+                DemographicFunction demoFunction = demoModel.getDemographicFunction();
+                final int i = getNodeInterval(node);
+                deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold(), i);
+            }
+		} else {
+            DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
+
+            deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
+
+        }
+
+        if (Double.isNaN(deriv) || Double.isInfinite(deriv)) {
+            Logger.getLogger("warning").severe("Derivative of CoalescentLikelihood is " + Double.toString(deriv));
+        }
+
+		return deriv;
+
 	}
 
 	// **************************************************************

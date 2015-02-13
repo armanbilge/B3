@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +38,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "J", surname = "Adachi"), @Author(initials = "M", surname = "Hasegawa")},
+		title = "Model of amino acid substitution in proteins encoded by mitochondrial DNA",
+		year = 1996,
+		journal = "J Mol Evol",
+		volume = 42, startpage = 459, endpage = 468,
+		status = Status.PUBLISHED)
 public class MTREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final MTREV INSTANCE = new MTREV();
@@ -182,20 +189,4 @@ public class MTREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("J", "Adachi"),
-                    new Author("M", "Hasegawa")
-            },
-            "Model of amino acid substitution in proteins encoded by mitochondrial DNA",
-            1996,
-            "J Mol Evol",
-            42,
-            459, 468,
-            Citation.Status.PUBLISHED
-    );
 }

@@ -21,6 +21,7 @@
 package beast.inference.model;
 
 import beast.util.NumberFormatter;
+import beast.util.Serializer.Resumable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
@@ -47,7 +48,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable {
+public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -469,11 +470,19 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return id;
     }
 
+    @Override
+    public void resume() {
+        if (threadCount > 0)
+            pool = Executors.newFixedThreadPool(threadCount);
+        else
+            pool = null;
+    }
+
     private boolean used = false;
 
     private final int threadCount;
 
-    private final ExecutorService pool;
+    private transient ExecutorService pool;
 
     private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");

@@ -45,11 +45,17 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      */
 	double getDemographic(double t);
 
-    default double differentiateDemographic(double t) {
+    default double getDifferentiatedDemographic(double t) {
         throw new UnsupportedOperationException();
-    };
+    }
 
-    double getLogDemographic(double t);
+    default double getDifferentiatedDemographicRespectingT(double t) {
+        throw new UnsupportedOperationException();
+    }
+
+    default double getLogDemographic(double t) {
+        return Math.log(getDemographic(t));
+    }
 
     /**
      * @return value of demographic intensity function at time t (= integral 1/N(x) dx from 0 to t).
@@ -73,10 +79,12 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      * @param finish point
      * @return integral value
      */
-	double getIntegral(double start, double finish);
+	default double getIntegral(double start, double finish) {
+        return getIntensity(finish) - getIntensity(start);
+    }
 
     default double getDifferentiatedIntegral(double start, double finish) {
-        throw new UnsupportedOperationException();
+        return getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
     };
 
 	/**
@@ -120,7 +128,114 @@ public interface DemographicFunction extends UnivariateFunction, Units {
      * needs a non zero value to prevent a numerical problem. 
      * @return
      */
-    double getThreshold();
+    default double getThreshold() {
+        return 0;
+    }
+
+    RombergIntegrator numericalIntegrator = new RombergIntegrator();
+
+    /**
+     * Returns the integral of 1/N(x) between start and finish, calling either the getAnalyticalIntegral or
+     * getNumericalIntegral function as appropriate.
+     */
+    default double getNumericalIntegral(double start, double finish) {
+        // AER 19th March 2008: I switched this to use the RombergIntegrator from
+        // commons-math v1.2.
+
+        if (start > finish) {
+            throw new RuntimeException("NumericalIntegration start > finish");
+        }
+
+        if (start == finish) {
+            return 0.0;
+        }
+
+        try {
+            return numericalIntegrator.integrate(Integer.MAX_VALUE, this, start, finish);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
+    }
+
+    // **************************************************************
+    // UnivariateRealFunction IMPLEMENTATION
+    // **************************************************************
+
+    /**
+     * Return the intensity at a given time for numerical integration
+     * @param x the time
+     * @return the intensity
+     */
+    default double value(double x) {
+        return 1.0 / getDemographic(x);
+    }
+
+    default double getInterval(double U, int lineageCount, double timeOfLastCoalescent) {
+        final double intensity = getIntensity(timeOfLastCoalescent);
+        final double tmp = -Math.log(U)/CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2) + intensity;
+
+        return getInverseIntensity(tmp) - timeOfLastCoalescent;
+    }
+
+    default double getInterval(double U, int lineageCount, double timeOfLastCoalescent, double earliestTimeOfFinalCoalescent){
+        if(timeOfLastCoalescent>earliestTimeOfFinalCoalescent){
+            throw new IllegalArgumentException("Given maximum height is smaller than given final coalescent time");
+        }
+        final double fullIntegral = getIntegral(timeOfLastCoalescent,
+                earliestTimeOfFinalCoalescent);
+        final double normalisation = 1-Math.exp(-CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2)*fullIntegral);
+        final double intensity = getIntensity(timeOfLastCoalescent);
+
+        double tmp = -Math.log(1-U*normalisation)/CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2) + intensity;
+
+        return getInverseIntensity(tmp) - timeOfLastCoalescent;
+
+    }
+
+    /**
+     * @return a random interval size selected from the Kingman prior of the demographic model.
+     */
+    default double getSimulatedInterval(int lineageCount, double timeOfLastCoalescent)
+    {
+        final double U = MathUtils.nextDouble(); // create unit uniform random variate
+        return getInterval(U, lineageCount, timeOfLastCoalescent);
+    }
+
+    default double getSimulatedInterval(int lineageCount, double timeOfLastCoalescent, double earliestTimeOfFirstCoalescent){
+        final double U = MathUtils.nextDouble();
+        return getInterval(U, lineageCount, timeOfLastCoalescent, earliestTimeOfFirstCoalescent);
+    }
+
+    default double getMedianInterval(int lineageCount, double timeOfLastCoalescent)
+    {
+        return getInterval(0.5, lineageCount, timeOfLastCoalescent);
+    }
+
+    /**
+     * This function tests the consistency of the
+     * getIntensity and getInverseIntensity methods
+     * of this demographic model. If the model is
+     * inconsistent then a RuntimeException will be thrown.
+     * @param steps the number of steps between 0.0 and maxTime to test.
+     * @param maxTime the maximum time to test.
+     */
+    default void testConsistency( int steps, double maxTime) {
+
+        double delta = maxTime / (double)steps;
+
+        for (int i = 0; i <= steps; i++) {
+            double time = (double)i * delta;
+            double intensity = getIntensity(time);
+            double newTime = getInverseIntensity(intensity);
+
+            if (Math.abs(time - newTime) > 1e-12) {
+                throw new RuntimeException(
+                        "Demographic model not consistent! error size = " +
+                                Math.abs(time-newTime));
+            }
+        }
+    }
 
     public abstract class Abstract implements DemographicFunction
 	{
@@ -129,142 +244,12 @@ public interface DemographicFunction extends UnivariateFunction, Units {
 //        private static final double INTEGRATION_PRECISION = 1.0e-5;
 //        private static final double INTEGRATION_MAX_ITERATIONS = 50;
 
-        RombergIntegrator numericalIntegrator = null;
 
         /**
 		 * Construct demographic model with default settings
 		 */
 		public Abstract(Type units) {
 			setUnits(units);
-        }
-
-		// general functions
-
-        /**
-         * Default implementation
-         * @param t
-         * @return log(demographic at t)
-         */
-        public double getLogDemographic(double t) {
-            return Math.log(getDemographic(t));
-        }
-
-        public double getThreshold() {
-            return 0;
-        }
-
-        /**
-		 * Calculates the integral 1/N(x) dx between start and finish.
-		 */
-		public double getIntegral(double start, double finish)
-		{
-			return getIntensity(finish) - getIntensity(start);
-		}
-
-        public double getDifferentiatedIntegral(double start, double finish) {
-            return getDifferentiatedIntensity(finish) - getDifferentiatedIntensity(start);
-        }
-
-        /**
-         * Returns the integral of 1/N(x) between start and finish, calling either the getAnalyticalIntegral or
-         * getNumericalIntegral function as appropriate.
-         */
-		public double getNumericalIntegral(double start, double finish) {
-            // AER 19th March 2008: I switched this to use the RombergIntegrator from
-            // commons-math v1.2.
-
-            if (start > finish) {
-                throw new RuntimeException("NumericalIntegration start > finish");
-            }
-
-            if (start == finish) {
-                return 0.0;
-            }
-
-            if (numericalIntegrator == null) {
-                numericalIntegrator = new RombergIntegrator();
-            }
-
-            try {
-                return numericalIntegrator.integrate(Integer.MAX_VALUE, this, start, finish);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-
-//            double lastST = LARGE_NEGATIVE_NUMBER;
-//            double lastS = LARGE_NEGATIVE_NUMBER;
-//
-//            assert(finish > start);
-//
-//            for (int j = 1; j <= INTEGRATION_MAX_ITERATIONS; j++) {
-//                // iterate doTrapezoid() until answer obtained
-//
-//                double st = doTrapezoid(j, start, finish, lastST);
-//                double s = (4.0 * st - lastST) / 3.0;
-//
-//                // If answer is within desired accuracy then return
-//                if (Math.abs(s - lastS) < INTEGRATION_PRECISION * Math.abs(lastS)) {
-//                    return s;
-//                }
-//                lastS = s;
-//                lastST = st;
-//            }
-//
-//            throw new RuntimeException("Too many iterations in getNumericalIntegral");
-        }
-
-        /**
-         * Performs the trapezoid rule.
-         */
-//        private double doTrapezoid(int n, double low, double high, double lastS) {
-//
-//            double s;
-//
-//            if (n == 1) {
-//                // On the first iteration s is reset
-//                double demoLow = getDemographic(low); // Value of N(x) obtained here
-//                assert(demoLow > 0.0);
-//
-//                double demoHigh = getDemographic(high);
-//                assert(demoHigh > 0.0);
-//
-//                s = 0.5 * (high - low) * ( (1.0 / demoLow) + (1.0 / demoHigh) );
-//            } else {
-//                int it=1;
-//                for (int j = 1; j < n - 1; j++) {
-//                    it *= 2;
-//                }
-//
-//                double tnm = it;	// number of points
-//                double del = (high - low) / tnm;	// width of spacing between points
-//
-//                double x = low + 0.5 * del;
-//
-//                double sum = 0.0;
-//                for (int j = 1; j <= it; j++) {
-//                    double demoX = getDemographic(x); // Value of N(x) obtained here
-//                    assert(demoX > 0.0);
-//
-//                    sum += (1.0 / demoX);
-//                    x += del;
-//                }
-//                s =  0.5 * (lastS + (high - low) * sum / tnm);	// New s uses previous s value
-//            }
-//
-//            return s;
-//        }
-
-        // **************************************************************
-	    // UnivariateRealFunction IMPLEMENTATION
-	    // **************************************************************
-
-        /**
-         * Return the intensity at a given time for numerical integration
-         * @param x the time
-         * @return the intensity
-         */
-        public double value(double x) {
-            return 1.0 / getDemographic(x);
         }
 
         // **************************************************************
@@ -295,53 +280,30 @@ public interface DemographicFunction extends UnivariateFunction, Units {
 		}
 	}
 
+    @Deprecated
 	public static class Utils
 	{
-        private static double getInterval(double U, DemographicFunction demographicFunction,
-                                          int lineageCount, double timeOfLastCoalescent) {
-            final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
-            final double tmp = -Math.log(U)/CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2) + intensity;
-
-            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
-        }
-
-        private static double getInterval(double U, DemographicFunction demographicFunction, int lineageCount,
-                                          double timeOfLastCoalescent, double earliestTimeOfFinalCoalescent){
-            if(timeOfLastCoalescent>earliestTimeOfFinalCoalescent){
-                throw new IllegalArgumentException("Given maximum height is smaller than given final coalescent time");
-            }
-            final double fullIntegral = demographicFunction.getIntegral(timeOfLastCoalescent,
-                    earliestTimeOfFinalCoalescent);
-            final double normalisation = 1-Math.exp(-CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2)*fullIntegral);
-            final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
-
-            double tmp = -Math.log(1-U*normalisation)/CombinatoricsUtils.binomialCoefficientDouble(lineageCount, 2) + intensity;
-
-            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
-
-        }
-
         /**
          * @return a random interval size selected from the Kingman prior of the demographic model.
          */
+        @Deprecated
 		public static double getSimulatedInterval(DemographicFunction demographicFunction,
                                                   int lineageCount, double timeOfLastCoalescent)
 		{
-			final double U = MathUtils.nextDouble(); // create unit uniform random variate
-            return getInterval(U, demographicFunction, lineageCount, timeOfLastCoalescent);
+			return demographicFunction.getSimulatedInterval(lineageCount, timeOfLastCoalescent);
 		}
 
+        @Deprecated
         public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount,
                                                   double timeOfLastCoalescent, double earliestTimeOfFirstCoalescent){
-            final double U = MathUtils.nextDouble();
-            return getInterval(U, demographicFunction, lineageCount, timeOfLastCoalescent,
-                    earliestTimeOfFirstCoalescent);
+            return demographicFunction.getSimulatedInterval(lineageCount, timeOfLastCoalescent, earliestTimeOfFirstCoalescent);
         }
 
+        @Deprecated
 		public static double getMedianInterval(DemographicFunction demographicFunction,
                                                int lineageCount, double timeOfLastCoalescent)
 		{
-             return getInterval(0.5, demographicFunction, lineageCount, timeOfLastCoalescent);
+             return demographicFunction.getMedianInterval(lineageCount, timeOfLastCoalescent);
 		}
 
 		/**
@@ -353,21 +315,9 @@ public interface DemographicFunction extends UnivariateFunction, Units {
 		 * @param steps the number of steps between 0.0 and maxTime to test.
 		 * @param maxTime the maximum time to test.
 		 */
+        @Deprecated
 		public static void testConsistency(DemographicFunction demographicFunction, int steps, double maxTime) {
-
-			double delta = maxTime / (double)steps;
-
-			for (int i = 0; i <= steps; i++) {
-				double time = (double)i * delta;
-				double intensity = demographicFunction.getIntensity(time);
-				double newTime = demographicFunction.getInverseIntensity(intensity);
-
-				if (Math.abs(time - newTime) > 1e-12) {
-					throw new RuntimeException(
-						"Demographic model not consistent! error size = " +
-						Math.abs(time-newTime));
-				}
-			}
+            demographicFunction.testConsistency(steps, maxTime);
 		}
 	}
 }

@@ -30,6 +30,7 @@ import beast.util.Timer;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
@@ -87,8 +88,8 @@ public final class SubstitutionModelDelegate implements Serializable {
         // two eigen buffers for each decomposition for store and restore.
         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 
-        // two matrices for each node less the root
-        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+        // four matrices for each node less the root
+        matrixBufferHelper = new BufferIndexHelper(2 * nodeCount, 0);
 
         this.extraBufferCount = branchModel.requiresMatrixConvolution() ?
                 (bufferPoolSize > 0 ? bufferPoolSize : BUFFER_POOL_SIZE_DEFAULT) : 0;
@@ -155,6 +156,7 @@ public final class SubstitutionModelDelegate implements Serializable {
     public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount) {
 
         int[][] probabilityIndices = new int[eigenCount][updateCount];
+        int[][] derivativeIndices = new int[eigenCount][updateCount];
         double[][] edgeLengths = new double[eigenCount][updateCount];
 
         int[] counts = new int[eigenCount];
@@ -170,6 +172,7 @@ public final class SubstitutionModelDelegate implements Serializable {
             if (order.length == 1) {
                 int k = order[0];
                 probabilityIndices[k][counts[k]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
+                derivativeIndices[k][counts[k]] = matrixBufferHelper.getOffsetIndex(branchIndices[i] + nodeCount);
                 edgeLengths[k][counts[k]] = edgeLength[i];
                 counts[k]++;
             } else {
@@ -180,7 +183,7 @@ public final class SubstitutionModelDelegate implements Serializable {
 
                 if (getAvailableBufferCount() < order.length) {
                     // too few buffers available, process what we have and continue...
-                    computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
+                    computeTransitionMatrices(beagle, probabilityIndices, derivativeIndices, edgeLengths, counts);
                     convolveMatrices(beagle, convolutionList);
 
                     // reset the counts
@@ -215,12 +218,12 @@ public final class SubstitutionModelDelegate implements Serializable {
 
 		}// END: i loop
 
-        computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
+        computeTransitionMatrices(beagle, probabilityIndices, derivativeIndices, edgeLengths, counts);
         convolveMatrices(beagle, convolutionList);
 
     }// END: updateTransitionMatrices
 
-    private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, double[][] edgeLengths, int[] counts) {
+    private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, int[][] derivativeIndices, double[][] edgeLengths, int[] counts) {
 
         Timer timer;
         if (MEASURE_RUN_TIME) {
@@ -240,10 +243,12 @@ public final class SubstitutionModelDelegate implements Serializable {
                 }
             }
             if (counts[i] > 0) {
+                final int[] tmp = new int[counts[i]];
+                Arrays.fill(tmp, getReserveBuffer());
                 beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(i),
                         probabilityIndices[i],
-                        null, // firstDerivativeIndices
-                        null, // secondDerivativeIndices
+                        derivativeIndices[i], // firstDerivativeIndices
+                        tmp, // secondDerivativeIndices
                         edgeLengths[i],
                         counts[i]);
             }
@@ -430,10 +435,15 @@ public final class SubstitutionModelDelegate implements Serializable {
 
     public void flipMatrixBuffer(int branchIndex) {
         matrixBufferHelper.flipOffset(branchIndex);
+        matrixBufferHelper.flipOffset(branchIndex + nodeCount);
     }
 
     public int getMatrixIndex(int branchIndex) {
         return matrixBufferHelper.getOffsetIndex(branchIndex);
+    }
+
+    public int getDerivativeMatrixIndex(int branchIndex) {
+        return matrixBufferHelper.getOffsetIndex(branchIndex + nodeCount);
     }
 
     public void storeState() {

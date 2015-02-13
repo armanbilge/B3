@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "S", surname = "Whelan"), @Author(initials = "N", surname = "Goldman")},
+		title = "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
+		year = 2001,
+		journal = "Mol Biol Evol",
+		volume = 18, startpage = 691, endpage = 699,
+		status = Status.PUBLISHED)
 public class WAG extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final WAG INSTANCE = new WAG();
@@ -197,20 +204,4 @@ public class WAG extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("S", "Whelan"),
-                    new Author("N", "Goldman")
-            },
-            "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
-            2001,
-            "Mol Biol Evol",
-            18,
-            691, 699,
-            Citation.Status.PUBLISHED
-    );
 }
