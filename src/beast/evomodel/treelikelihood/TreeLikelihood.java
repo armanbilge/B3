@@ -455,11 +455,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 // Flag everything for update
-                updateNode[node.getNumber()] = !treeModel.isRoot(node);
-                if (!treeModel.isExternal(node)) {
-                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
-                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
-                }
+//                updateNode[node.getNumber()] = !treeModel.isRoot(node);
+//                if (!treeModel.isExternal(node)) {
+//                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
+//                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
+//                }
+//                likelihoodKnown = false;
+                updateAllNodes(); // TODO Should not be necessary to update everything
 
                 return deriv;
             }

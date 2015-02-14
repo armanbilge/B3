@@ -28,6 +28,7 @@ import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
+import beast.math.Differentiable;
 import beast.math.MathUtils;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
@@ -35,8 +36,6 @@ import beast.xml.IntegerAttribute;
 import beast.xml.ObjectArrayElement;
 import beast.xml.ObjectElement;
 import beast.xml.Parseable;
-import beast.xml.SimpleXMLObjectParser;
-import beast.xml.XMLObjectParser;
 
 import java.util.Arrays;
 
@@ -116,12 +115,12 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         Arrays.fill(this.mass, 1);
     }
 
-    private static final double EPSILON_CONSTANT = 0.000244140625;
+    private static final double EPSILON_CONSTANT = 0.0625;
     protected void setDefaultEpsilon() {
         epsilon = EPSILON_CONSTANT * Math.pow(dim, -0.25);
     }
 
-    private static final int L_CONSTANT = 8;
+    private static final int L_CONSTANT = 16;
     protected void setDefaultL() {
         L = (int) Math.round(L_CONSTANT * Math.pow(dim, 0.25));
     }
@@ -153,7 +152,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
     @Override
     public String getOperatorName() {
-        StringBuilder sb = new StringBuilder(PARSER.getParserName());
+        StringBuilder sb = new StringBuilder();
         sb.append("(");
         sb.append(q.getId() != null ? q.getId() : q.getParameterName());
         sb.append(")");
@@ -198,18 +197,19 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                 q.setParameterValueQuietly(i, q_);
             }
 
+            // Make up for quiet behaviour above
+            q.fireParameterChangedEvent();
+
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i) {
                     double d = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-                    double x =d;// Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
-                    if (MathUtils.nextInt(8) == 0 && Math.abs(d - x) > 0.1)
+                    double x = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    if (MathUtils.nextInt(1) == 0 && Math.abs(d - x) > 0.1)
                         throw new RuntimeException(d + " " + x + " " + q.getMaskedParameter(i) + q.getMaskedIndex(i));
                     p[i] -= epsilon * d;
                 }
         }
 
-        // Make up for quiet behaviour above
-        q.fireParameterChangedEvent();
 
         for (int i = 0; i < dim; ++i) {
             p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
@@ -274,6 +274,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         return 0.8;
     }
 
-    public static final XMLObjectParser<HamiltonUpdate> PARSER = new SimpleXMLObjectParser<>(HamiltonUpdate.class,
-            "An operator that simulates Hamiltonian dynamics to make proposals.");
+//    public static final XMLObjectParser<HamiltonUpdate> PARSER = new SimpleXMLObjectParser<>(HamiltonUpdate.class,
+//            "An operator that simulates Hamiltonian dynamics to make proposals.");
 }
