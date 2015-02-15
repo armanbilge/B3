@@ -18,10 +18,11 @@
  * along with BEAST.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package beast.math;
+package beast.inference.hamilton;
 
 import beast.inference.model.Bounds;
 import beast.inference.model.Variable;
+import beast.math.MachineAccuracy;
 
 import java.util.function.DoubleSupplier;
 

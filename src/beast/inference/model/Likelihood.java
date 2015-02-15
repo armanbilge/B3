@@ -21,8 +21,7 @@
 package beast.inference.model;
 
 import beast.inference.loggers.Loggable;
-import beast.math.Differentiable;
-import beast.math.MachineAccuracy;
+import beast.inference.hamilton.Differentiable;
 import beast.util.Identifiable;
 
 import java.util.HashSet;
