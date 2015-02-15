@@ -107,7 +107,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         else
             setDefaultL();
 
-        this.L = L;
         setWeight(weight);
     }
 
@@ -195,13 +194,13 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
                 q.setParameterValueQuietly(i, q_);
             }
 
+            // Make up for quiet behaviour above
+            q.fireParameterChangedEvent();
+
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i)
                     p[i] -= epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
         }
-
-        // Make up for quiet behaviour above
-        q.fireParameterChangedEvent();
 
         for (int i = 0; i < dim; ++i) {
             p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
