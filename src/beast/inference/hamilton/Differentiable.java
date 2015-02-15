@@ -18,10 +18,11 @@
  * along with BEAST.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package beast.math;
+package beast.inference.hamilton;
 
 import beast.inference.model.Bounds;
 import beast.inference.model.Variable;
+import beast.math.MachineAccuracy;
 
 import java.util.function.DoubleSupplier;
 
@@ -30,12 +31,12 @@ import java.util.function.DoubleSupplier;
  */
 public interface Differentiable {
 
-    final boolean BRUTE_FORCE = true;
+    final boolean NUMERICAL = true;
 
     double evaluate();
 
     default double differentiate(Variable<Double> var, int index) {
-        if (BRUTE_FORCE) return differentiate(this::evaluate, var, index);
+        if (NUMERICAL) return differentiate(this::evaluate, var, index);
         return 0.0;
     }
 
@@ -49,16 +50,15 @@ public interface Differentiable {
         final double lower = bounds.getLowerLimit(index);
         final double value = var.getValue(index);
         final double vpe = value + epsilon;
-        final double b = vpe <= upper ? vpe : value;
+        final double b = vpe <= upper ? vpe : upper;
         var.setValue(index, b);
         final double fb = f.getAsDouble();
         final double vme = value - epsilon;
-        final double a = vme >= lower ? vme : value;
+        final double a = vme >= lower ? vme : lower;
         var.setValue(index, a);
         final double fa = f.getAsDouble();
         var.setValue(index, value);
         return (fb - fa) / (b - a);
     }
-
 
 }
