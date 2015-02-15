@@ -930,8 +930,9 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
 //                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
 //                }
-//                likelihoodKnown = false;
-                updateAllNodes(); // TODO Should not be necessary to update everything
+                // TODO Optimize
+                makeDirty();
+                getLogLikelihood();
 
                 return deriv;
 
