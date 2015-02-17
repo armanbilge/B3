@@ -147,6 +147,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             this.tipStatesModel = tipStatesModel;
 
+            this.useAmbiguities = useAmbiguities;
+
             this.categoryCount = this.siteRateModel.getCategoryCount();
 
             this.tipCount = treeModel.getExternalNodeCount();
@@ -361,7 +363,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
-        this.useAmbiguities = useAmbiguities;
+
         hasInitialized = true;
     }
 
