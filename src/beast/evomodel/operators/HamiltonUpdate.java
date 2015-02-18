@@ -56,11 +56,11 @@ public class HamiltonUpdate extends beast.inference.hamilton.HamiltonUpdate {
                           @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
                           @OperatorWeightAttribute double weight,
                           @CoercionModeAttribute CoercionMode mode) {
-        super(U, fixParameters(parameters, trees), mass, epsilon, L, weight, mode);
-        if (parameters.length == 0 && trees.length == 0)
+        super(U, fixParameters(parameters != null ? parameters : new Parameter[0], trees != null ? trees : new TreeModel[0]), mass, epsilon, L, weight, mode);
+        if ((parameters == null || parameters.length == 0) && (trees == null || trees.length == 0))
             throw new IllegalArgumentException("Must have at least one parameter or tree!");
         this.trees = trees;
-        q.removeParameter(q.getParameter(parameters.length));
+        q.removeParameter(q.getParameter(q.getParameterCount() - 1));
     }
 
     protected static Parameter[] fixParameters(final Parameter[] parameters, final TreeModel[] trees) {
