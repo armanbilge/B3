@@ -41,12 +41,12 @@ import beast.xml.XMLParser;
 import org.virion.jam.console.ConsoleApplication;
 import org.virion.jam.util.IconUtils;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JFrame;
+import javax.swing.WindowConstants;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -360,7 +360,7 @@ public class BeastMain {
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
 
                         new Arguments.Option("resume", "Resume a terminated analysis"),
-                        new Arguments.StringOption("random", "state file", "Saved state file for random number generator."),
+                        new Arguments.StringOption("random", "state file", "State file name for random number generator."),
                         new Arguments.LongOption("length", "New chain length from resuming an analysis"),
 
                         new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
@@ -431,8 +431,8 @@ public class BeastMain {
         final boolean resume = arguments.hasOption("resume");
         System.setProperty("resume", Boolean.toString(resume));
         final long chainLength = arguments.hasOption("length") ? arguments.getLongOption("length") : 0;
-        if (resume && arguments.hasOption("random"))
-            System.setProperty("resume.random", arguments.getStringOption("random"));
+        if (arguments.hasOption("random"))
+            System.setProperty("random.state", arguments.getStringOption("random"));
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
