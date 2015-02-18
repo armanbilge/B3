@@ -416,12 +416,14 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 double deriv = 0.0;
 
                 int nodeNum;
+                double rate;
                 final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
                 if (!treeModel.isRoot(node)) {
                     nodeNum = node.getNumber();
+                    rate = branchRateModel.getBranchRate(treeModel, node);
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        multiply(rateMatrix, storedMatrices[i]);
+                        multiply(rate, rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
                     updateNode[nodeNum] = true;
@@ -431,10 +433,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 if (!treeModel.isExternal(node)) {
-                    nodeNum = treeModel.getChild(node, 0).getNumber();
+                    NodeRef child = treeModel.getChild(node, 0);
+                    nodeNum = child.getNumber();
+                    rate = branchRateModel.getBranchRate(treeModel, child);
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        multiply(rateMatrix, storedMatrices[i]);
+                        multiply(rate, rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
                     updateNode[nodeNum] = true;
@@ -442,10 +446,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     for (int i = 0; i < categoryCount; i++)
                         likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
 
-                    nodeNum = treeModel.getChild(node, 1).getNumber();
+                    child = treeModel.getChild(node, 1);
+                    nodeNum = child.getNumber();
+                    rate = branchRateModel.getBranchRate(treeModel, child);
                     for (int i = 0; i < categoryCount; i++) {
                         likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                        multiply(rateMatrix, storedMatrices[i]);
+                        multiply(rate, rateMatrix, storedMatrices[i]);
                         likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
                     }
                     updateNode[nodeNum] = true;
@@ -455,13 +461,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 // Flag everything for update
-//                updateNode[node.getNumber()] = !treeModel.isRoot(node);
-//                if (!treeModel.isExternal(node)) {
-//                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
-//                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
-//                }
-                // TODO Optimize
-                makeDirty();
+                updateNode[node.getNumber()] = !treeModel.isRoot(node);
+                if (!treeModel.isExternal(node)) {
+                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
+                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
+                }
+                likelihoodKnown = false;
                 getLogLikelihood();
 
                 return deriv;
@@ -513,7 +518,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         return deriv;
     }
 
-    protected void multiply(final double[][] a, final double[] b) {
+    protected void multiply(final double c, final double[][] a, final double[] b) {
         for (int i = 0; i < stateCount; ++i) {
             for (int j = 0; j < stateCount; ++j) {
                 final int n = i * stateCount + j;
@@ -521,6 +526,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 for (int k = 0; k < stateCount; ++k) {
                     probabilities[n] += a[i][k] * b[k * stateCount + j];
                 }
+                probabilities[n] *= c;
             }
         }
     }
