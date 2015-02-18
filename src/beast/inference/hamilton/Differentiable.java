@@ -48,17 +48,61 @@ public interface Differentiable {
         final Bounds<Double> bounds = var.getBounds();
         final double upper = bounds.getUpperLimit(index);
         final double lower = bounds.getLowerLimit(index);
-        final double value = var.getValue(index);
-        final double vpe = value + epsilon;
-        final double b = vpe <= upper ? vpe : upper;
+        final double x = var.getValue(index);
+        final double xpe = x + epsilon;
+        final double b = xpe <= upper ? xpe : upper;
         var.setValue(index, b);
         final double fb = f.getAsDouble();
-        final double vme = value - epsilon;
-        final double a = vme >= lower ? vme : lower;
+        final double xme = x - epsilon;
+        final double a = xme >= lower ? xme : lower;
         var.setValue(index, a);
         final double fa = f.getAsDouble();
-        var.setValue(index, value);
+        var.setValue(index, x);
         return (fb - fa) / (b - a);
+    }
+
+    static double differentiate2(DoubleSupplier f, Variable<Double> var0, int index0, Variable<Double> var1, int index1, double epsilon) {
+
+        if (var0 == var1 && index0 == index1) {
+            return differentiate2(f, var0, index0, epsilon);
+        } else {
+
+            final Bounds<Double> bounds = var0.getBounds();
+            final double upper = bounds.getUpperLimit(index0);
+            final double lower = bounds.getLowerLimit(index0);
+            final double x = var0.getValue(index0);
+            final double xpe = x + epsilon;
+            final double b = xpe <= upper ? xpe : upper;
+            var0.setValue(index0, b);
+            final double dfb = differentiate(f, var1, index1);
+            final double xme = x - epsilon;
+            final double a = xme >= lower ? xme : lower;
+            var0.setValue(index0, a);
+            final double dfa = differentiate(f, var1, index1);
+            var0.setValue(index0, x);
+            return (dfb - dfa) / (b - a);
+
+        }
+
+    }
+
+    static double differentiate2(DoubleSupplier f, Variable<Double> var, int index, double epsilon) {
+        final Bounds<Double> bounds = var.getBounds();
+        final double upper = bounds.getUpperLimit(index);
+        final double lower = bounds.getLowerLimit(index);
+        final double x = var.getValue(index);
+        final double fx = var.getValue(index);
+        final double xpe = x + epsilon;
+        final double b = xpe <= upper ? xpe : upper;
+        var.setValue(index, b);
+        final double fb = f.getAsDouble();
+        final double xme = x - epsilon;
+        final double a = xme >= lower ? xme : lower;
+        var.setValue(index, a);
+        final double fa = f.getAsDouble();
+        var.setValue(index, x);
+        final double h = b - a;
+        return (fb - fx + fa) / (h * h);
     }
 
 }

@@ -58,12 +58,17 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
         nodeCount = treeModel.getNodeCount();
 
+        derivatives = new double[nodeCount];
+        storedDerivatives = new double[nodeCount];
+
         updateNode = new boolean[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
             updateNode[i] = true;
         }
 
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
 
     }
 
@@ -154,6 +159,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
         updateNode[node.getNumber()] = true;
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     /**
@@ -167,6 +174,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updateNode[child.getNumber()] = true;
         }
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     /**
@@ -181,6 +190,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         }
 
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     /**
@@ -191,6 +202,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updateNode[i] = true;
         }
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     /**
@@ -201,6 +214,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updatePattern[i] = true;
         }
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     /**
@@ -213,6 +228,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             }
         }
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
     }
 
     public final double[] getPatternWeights() {
@@ -246,6 +263,11 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
+
+        storedInternalDerivativesKnown = internalDerivativesKnown;
+        storedExternalDerivativesKnown = externalDerivativesKnown;
+        if (internalDerivativesKnown || externalDerivativesKnown)
+            System.arraycopy(derivatives, 0, storedDerivatives, 0, nodeCount);
     }
 
     /**
@@ -255,6 +277,14 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
+
+        internalDerivativesKnown = storedInternalDerivativesKnown;
+        externalDerivativesKnown = storedExternalDerivativesKnown;
+        if (internalDerivativesKnown || externalDerivativesKnown) {
+            final double tmp[] = derivatives;
+            derivatives = storedDerivatives;
+            storedDerivatives = tmp;
+        }
     }
 
     protected void acceptState() {
@@ -279,6 +309,26 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         }
         return logLikelihood;
     }
+
+    protected void differentiateInternalNodes() {
+        NodeRef node = treeModel.getRoot();
+        do {
+            if (!treeModel.isExternal(node))
+                derivatives[node.getNumber()] = differentiateRespectingNode(node);
+            node = treeModel.preorderSuccessor(node);
+        } while (!treeModel.isRoot(node));
+        internalDerivativesKnown = true;
+    }
+
+    protected void differentiateExternalNodes() {
+        for (int i = 0; i < treeModel.getExternalNodeCount(); ++i) {
+            final NodeRef node = treeModel.getExternalNode(i);
+            derivatives[node.getNumber()] = differentiateRespectingNode(node);
+        }
+        externalDerivativesKnown = true;
+    }
+
+    protected abstract double differentiateRespectingNode(NodeRef node);
 
     /**
      * Forces a complete recalculation of the likelihood next time getLikelihood is called
@@ -347,6 +397,13 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     private double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
+
+    protected double[] derivatives;
+    protected double[] storedDerivatives;
+    protected boolean internalDerivativesKnown;
+    protected boolean externalDerivativesKnown;
+    protected boolean storedInternalDerivativesKnown;
+    protected boolean storedExternalDerivativesKnown;
 
     protected int totalOperationCount = 0;
 }
