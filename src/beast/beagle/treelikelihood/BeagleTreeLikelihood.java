@@ -42,7 +42,7 @@ import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteRateModel;
 import beast.evomodel.tree.TreeModel;
-import beast.evomodel.treelikelihood.TipStatesModel;
+import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.treelikelihood.TreeLikelihood;
 import beast.inference.model.CompoundLikelihood;
 import beast.inference.model.Likelihood;
