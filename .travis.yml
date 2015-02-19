@@ -5,6 +5,7 @@ install:
   - svn checkout http://beagle-lib.googlecode.com/svn/trunk/ beagle-lib
   - cd beagle-lib
   - ./autogen.sh && ./configure && sudo make install
+  - cd ..
 notifications:
   email: false
 before_deploy: ant
