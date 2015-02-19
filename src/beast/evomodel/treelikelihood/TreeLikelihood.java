@@ -412,10 +412,13 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
 
                 getLogLikelihood();
-                if (treeModel.isExternal(node))
-                    if (!externalDerivativesKnown) differentiateExternalNodes();
-                else
-                    if (!internalDerivativesKnown) differentiateInternalNodes();
+                if (treeModel.isExternal(node)) {
+                    if (!externalDerivativesKnown)
+                        differentiateExternalNodes();
+                } else {
+                    if (!internalDerivativesKnown)
+                        differentiateInternalNodes();
+                }
 
                 return derivatives[node.getNumber()];
             }
