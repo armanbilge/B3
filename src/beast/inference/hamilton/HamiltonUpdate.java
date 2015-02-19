@@ -28,7 +28,6 @@ import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
-import beast.math.Differentiable;
 import beast.math.MathUtils;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
