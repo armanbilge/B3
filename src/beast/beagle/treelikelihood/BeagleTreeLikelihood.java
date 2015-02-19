@@ -937,10 +937,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             deriv -= branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
 
         if (!treeModel.isExternal(node)) {
-            NodeRef child = treeModel.getChild(node, 0);
-            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
-            child = treeModel.getChild(node, 1);
-            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
+            final NodeRef child0 = treeModel.getChild(node, 0);
+            deriv += branchRateModel.getBranchRate(treeModel, child0) * calculateDifferentiatedLogLikelihood(child0);
+            final NodeRef child1 = treeModel.getChild(node, 1);
+            deriv += branchRateModel.getBranchRate(treeModel, child1) * calculateDifferentiatedLogLikelihood(child1);
         }
 
         // Flag everything for update
