@@ -199,8 +199,10 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
-        if (updateRateCategories) {
-            setupRates();
+        synchronized (this) {
+            if (updateRateCategories) {
+                setupRates();
+            }
         }
 
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));

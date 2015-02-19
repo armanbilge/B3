@@ -260,7 +260,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
     /**
      * setup substitution matrix
      */
-    private void decompose() {
+    protected void decompose() {
 
         double normalization = setupMatrix();
 

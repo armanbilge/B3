@@ -28,6 +28,7 @@ import beast.inference.model.Parameter.Default;
 import beast.inference.operators.OperatorFailedException;
 import beast.inference.operators.SimpleMCMCOperator;
 import beast.math.MathUtils;
+import beast.xml.Description;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
 import beast.xml.IntegerAttribute;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 /**
  * @author Arman Bilge
  */
+@Description("An optimistic Hamiltonian operator.")
 public class LookAheadHamiltonUpdate extends SimpleMCMCOperator {
 
     protected final Likelihood E;
@@ -129,7 +131,7 @@ public class LookAheadHamiltonUpdate extends SimpleMCMCOperator {
 
     @Override
     public String getOperatorName() {
-        StringBuilder sb = new StringBuilder(PARSER.getParserName());
+        StringBuilder sb = new StringBuilder("lookAheadHamiltonUpdate");
         sb.append("(");
         sb.append(x.getId() != null ? x.getId() : x.getParameterName());
         sb.append(")");
@@ -238,7 +240,4 @@ public class LookAheadHamiltonUpdate extends SimpleMCMCOperator {
         }
     }
 
-    public static final XMLObjectParser<LookAheadHamiltonUpdate> PARSER =
-            new SimpleXMLObjectParser<>(LookAheadHamiltonUpdate.class,
-                    "An operator that makes nearly irresistible proposals.");
 }

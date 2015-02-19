@@ -49,14 +49,13 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         return Introspector.decapitalize(cc.toString());
     }
     
-    public SimpleXMLObjectParser(final Class<T> parsedType, final String description) throws ParserCreationException {
-        this(camelCase(parsedType.getSimpleName()), parsedType, description);
-    }
-
-    public SimpleXMLObjectParser(final String name, final Class<T> parsedType, final String description) throws ParserCreationException {
-        this.name = name;
+    public SimpleXMLObjectParser(final Class<T> parsedType) throws ParserCreationException {
+        this.name = camelCase(parsedType.getSimpleName());
         this.parsedType = parsedType;
-        this.description = description;
+        if (parsedType.isAnnotationPresent(Description.class))
+            this.description = parsedType.getAnnotation(Description.class).value();
+        else
+            this.description = "";
         constructorsToComponents = new HashMap<>();
         rulesToConstructors = new HashMap<>();
         final List<XMLSyntaxRule> rules = new ArrayList<>();
@@ -399,7 +398,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         });
     }
 
-    private static class ParserCreationException extends RuntimeException {
+    public static class ParserCreationException extends Exception {
         public ParserCreationException(final Class parsedType, final String msg) {
             super("Failed to create parser for class " + parsedType.getSimpleName() + ": "  + msg);
         }

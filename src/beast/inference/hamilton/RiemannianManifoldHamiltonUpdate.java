@@ -225,6 +225,4 @@ public class RiemannianManifoldHamiltonUpdate extends SimpleMCMCOperator {
         return 0;
     }
 
-    public static final XMLObjectParser<RiemannianManifoldHamiltonUpdate> PARSER =
-            new SimpleXMLObjectParser<>(RiemannianManifoldHamiltonUpdate.class, "");
 }

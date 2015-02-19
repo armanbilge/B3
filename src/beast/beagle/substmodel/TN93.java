@@ -80,7 +80,7 @@ public class TN93 extends BaseSubstitutionModel {
         rates[5] = 1.0;
     }
 
-    public EigenDecomposition getEigenDecomposition() {
+    protected void decompose() {
 
         if (eigenDecomposition == null) {
             double[] evec = new double[stateCount * stateCount];
@@ -101,57 +101,53 @@ public class TN93 extends BaseSubstitutionModel {
 
         }
 
-        if (updateMatrix) {
+        double[] evec = eigenDecomposition.getEigenVectors();
+        double[] ivec = eigenDecomposition.getInverseEigenVectors();
+        double[] pi = freqModel.getFrequencies();
+        double piR = pi[0] + pi[2];
+        double piY = pi[1] + pi[3];
 
-            double[] evec = eigenDecomposition.getEigenVectors();
-            double[] ivec = eigenDecomposition.getInverseEigenVectors();
-            double[] pi = freqModel.getFrequencies();
-            double piR = pi[0] + pi[2];
-            double piY = pi[1] + pi[3];
+        // left eigenvector #1
+        ivec[0 * stateCount + 0] = pi[0]; // or, evec[0] = pi;
+        ivec[0 * stateCount + 1] = pi[1];
+        ivec[0 * stateCount + 2] = pi[2];
+        ivec[0 * stateCount + 3] = pi[3];
 
-            // left eigenvector #1
-            ivec[0 * stateCount + 0] = pi[0]; // or, evec[0] = pi;
-            ivec[0 * stateCount + 1] = pi[1];
-            ivec[0 * stateCount + 2] = pi[2];
-            ivec[0 * stateCount + 3] = pi[3];
+        // left eigenvector #2
+        ivec[1 * stateCount + 0] = pi[0] * piY;
+        ivec[1 * stateCount + 1] = -pi[1] * piR;
+        ivec[1 * stateCount + 2] = pi[2] * piY;
+        ivec[1 * stateCount + 3] = -pi[3] * piR;
 
-            // left eigenvector #2
-            ivec[1 * stateCount + 0] = pi[0] * piY;
-            ivec[1 * stateCount + 1] = -pi[1] * piR;
-            ivec[1 * stateCount + 2] = pi[2] * piY;
-            ivec[1 * stateCount + 3] = -pi[3] * piR;
+        // right eigenvector #2
+        evec[0 * stateCount + 1] = 1.0 / piR;
+        evec[1 * stateCount + 1] = -1.0 / piY;
+        evec[2 * stateCount + 1] = 1.0 / piR;
+        evec[3 * stateCount + 1] = -1.0 / piY;
 
-            // right eigenvector #2
-            evec[0 * stateCount + 1] = 1.0 / piR;
-            evec[1 * stateCount + 1] = -1.0 / piY;
-            evec[2 * stateCount + 1] = 1.0 / piR;
-            evec[3 * stateCount + 1] = -1.0 / piY;
+        // right eigenvector #3
+        evec[1 * stateCount + 2] = pi[3] / piY;
+        evec[3 * stateCount + 2] = -pi[1] / piY;
 
-            // right eigenvector #3
-            evec[1 * stateCount + 2] = pi[3] / piY;
-            evec[3 * stateCount + 2] = -pi[1] / piY;
+        // right eigenvector #4
+        evec[0 * stateCount + 3] = pi[2] / piR;
+        evec[2 * stateCount + 3] = -pi[0] / piR;
 
-            // right eigenvector #4
-            evec[0 * stateCount + 3] = pi[2] / piR;
-            evec[2 * stateCount + 3] = -pi[0] / piR;
+        // eigenvectors
+        double[] eval = eigenDecomposition.getEigenValues();
 
-            // eigenvectors
-            double[] eval = eigenDecomposition.getEigenValues();
+        final double kappa1 = getKappa1();
+        final double kappa2 = getKappa2();
+        final double beta = -1.0 / (2.0 * (piR * piY + kappa1 * pi[0] * pi[2] + kappa2 * pi[1] * pi[3]));
+        final double A_R = 1.0 + piR * (kappa1 - 1);
+        final double A_Y = 1.0 + piY * (kappa2 - 1);
 
-            final double kappa1 = getKappa1();
-            final double kappa2 = getKappa2();
-            final double beta = -1.0 / (2.0 * (piR * piY + kappa1 * pi[0] * pi[2] + kappa2 * pi[1] * pi[3]));
-            final double A_R = 1.0 + piR * (kappa1 - 1);
-            final double A_Y = 1.0 + piY * (kappa2 - 1);
+        eval[1] = beta;
+        eval[2] = beta * A_Y;
+        eval[3] = beta * A_R;
 
-            eval[1] = beta;
-            eval[2] = beta * A_Y;
-            eval[3] = beta * A_R;
+        updateMatrix = false;
 
-            updateMatrix = false;
-        }
-
-        return eigenDecomposition;
     }
 
     public static final XMLObjectParser<TN93> PARSER = new AbstractXMLObjectParser<TN93>() {

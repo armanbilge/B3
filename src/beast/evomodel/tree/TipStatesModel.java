@@ -18,7 +18,7 @@
  * along with BEAST.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package beast.evomodel.treelikelihood;
+package beast.evomodel.tree;
 
 import beast.evolution.alignment.PatternList;
 import beast.evolution.tree.Tree;

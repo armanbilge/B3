@@ -42,7 +42,7 @@ import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteRateModel;
 import beast.evomodel.tree.TreeModel;
-import beast.evomodel.treelikelihood.TipStatesModel;
+import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.treelikelihood.TreeLikelihood;
 import beast.inference.model.CompoundLikelihood;
 import beast.inference.model.CompoundParameter;
@@ -148,6 +148,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             addModel(this.branchRateModel);
 
             this.tipStatesModel = tipStatesModel;
+
+            this.useAmbiguities = useAmbiguities;
 
             this.categoryCount = this.siteRateModel.getCategoryCount();
 
@@ -363,7 +365,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
-        this.useAmbiguities = useAmbiguities;
+
         hasInitialized = true;
     }
 
