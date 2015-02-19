@@ -912,29 +912,16 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
             if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
 
-                final double logL = getLogLikelihood();
-
-                double deriv = 0.0;
-
-                if (!treeModel.isRoot(node))
-                    deriv -= calculateDifferentiatedLogLikelihood(logL, node);
-
-                if (!treeModel.isExternal(node)) {
-                    deriv += calculateDifferentiatedLogLikelihood(logL, treeModel.getChild(node, 0));
-                    deriv += calculateDifferentiatedLogLikelihood(logL, treeModel.getChild(node, 1));
+                getLogLikelihood();
+                if (treeModel.isExternal(node)) {
+                    if (!externalDerivativesKnown)
+                        differentiateExternalNodes();
+                } else {
+                    if (!internalDerivativesKnown)
+                        differentiateInternalNodes();
                 }
 
-                // Flag everything for update
-//                updateNode[node.getNumber()] = !treeModel.isRoot(node);
-//                if (!treeModel.isExternal(node)) {
-//                    updateNode[treeModel.getChild(node, 0).getNumber()] = true;
-//                    updateNode[treeModel.getChild(node, 1).getNumber()] = true;
-//                }
-                // TODO Optimize
-                makeDirty();
-                getLogLikelihood();
-
-                return deriv;
+                return derivatives[node.getNumber()];
 
             }
         }
@@ -942,7 +929,31 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return super.differentiate(var, index);
     }
 
-    protected double calculateDifferentiatedLogLikelihood(double logL, NodeRef respectedNode) {
+    protected double differentiateRespectingNode(final NodeRef node) {
+
+        double deriv = 0.0;
+
+        if (!treeModel.isRoot(node))
+            deriv -= branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
+
+        if (!treeModel.isExternal(node)) {
+            NodeRef child = treeModel.getChild(node, 0);
+            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
+            child = treeModel.getChild(node, 1);
+            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
+        }
+
+        // Flag everything for update
+        updateNode[node.getNumber()] = !treeModel.isRoot(node);
+        if (!treeModel.isExternal(node)) {
+            updateNode[treeModel.getChild(node, 0).getNumber()] = true;
+            updateNode[treeModel.getChild(node, 1).getNumber()] = true;
+        }
+
+        return deriv;
+    }
+
+    protected double calculateDifferentiatedLogLikelihood(final NodeRef respectedNode) {
 
         if (differentiatedPatternLogLikelihoods == null) {
             differentiatedPatternLogLikelihoods = new double[patternCount];
@@ -1204,13 +1215,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     private boolean traverseDifferentiate(Tree tree, NodeRef node, NodeRef respectedNode) {
 
-        if (node == respectedNode) return true;
-
-        boolean update = false;
-
         int nodeNum = node.getNumber();
 
         NodeRef parent = tree.getParent(node);
+
+        boolean update = parent != null && updateNode[nodeNum];
 
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {
