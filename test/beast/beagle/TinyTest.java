@@ -22,7 +22,6 @@ package beast.beagle;
 
 import beast.beagle.branchmodel.BranchModel;
 import beast.beagle.branchmodel.HomogeneousBranchModel;
-import beast.beagle.sitemodel.BranchSubstitutionModel;
 import beast.beagle.sitemodel.GammaSiteRateModel;
 import beast.beagle.substmodel.FrequencyModel;
 import beast.beagle.substmodel.HKY;
@@ -75,14 +74,31 @@ public class TinyTest extends TraceCorrelationAssert {
 
         BranchRateModel branchRateModel = null;
 
-        BeagleTreeLikelihood treeLikelihood = new BeagleTreeLikelihood(patterns,
-                treeModel,
-                branchModel,
-                siteRateModel,
-                branchRateModel,
-                null,
-                false,
-                PartialsRescalingScheme.DEFAULT);
+        BeagleTreeLikelihood treeLikelihood;
+        try {
+            treeLikelihood = new BeagleTreeLikelihood(patterns,
+                    treeModel,
+                    branchModel,
+                    siteRateModel,
+                    branchRateModel,
+                    null,
+                    false,
+                    PartialsRescalingScheme.DEFAULT);
+        } catch (RuntimeException re) {
+            if (re.getMessage().contains("No acceptable BEAGLE library plugins found. Make sure that BEAGLE is properly installed or try changing resource requirements.")) {
+                System.setProperty("java.only", "true");
+                treeLikelihood = new BeagleTreeLikelihood(patterns,
+                        treeModel,
+                        branchModel,
+                        siteRateModel,
+                        branchRateModel,
+                        null,
+                        false,
+                        PartialsRescalingScheme.DEFAULT);
+            } else {
+                throw re;
+            }
+        }
 
         double logLikelihood = treeLikelihood.getLogLikelihood();
 
