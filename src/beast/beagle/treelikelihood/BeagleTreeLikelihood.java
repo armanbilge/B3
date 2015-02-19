@@ -42,7 +42,7 @@ import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteRateModel;
 import beast.evomodel.tree.TreeModel;
-import beast.evomodel.treelikelihood.TipStatesModel;
+import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.treelikelihood.TreeLikelihood;
 import beast.inference.model.CompoundLikelihood;
 import beast.inference.model.CompoundParameter;
@@ -939,10 +939,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             deriv -= branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
 
         if (!treeModel.isExternal(node)) {
-            NodeRef child = treeModel.getChild(node, 0);
-            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
-            child = treeModel.getChild(node, 1);
-            deriv += branchRateModel.getBranchRate(treeModel, child) * calculateDifferentiatedLogLikelihood(child);
+            final NodeRef child0 = treeModel.getChild(node, 0);
+            deriv += branchRateModel.getBranchRate(treeModel, child0) * calculateDifferentiatedLogLikelihood(child0);
+            final NodeRef child1 = treeModel.getChild(node, 1);
+            deriv += branchRateModel.getBranchRate(treeModel, child1) * calculateDifferentiatedLogLikelihood(child1);
         }
 
         // Flag everything for update
@@ -1221,7 +1221,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         NodeRef parent = tree.getParent(node);
 
-        boolean update = parent != null && updateNode[nodeNum];
+        boolean update = (parent != null && updateNode[nodeNum]) || node == respectedNode;
 
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {

@@ -29,6 +29,7 @@ import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
 import beast.math.MathUtils;
+import beast.xml.Description;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
 import beast.xml.IntegerAttribute;
@@ -41,6 +42,7 @@ import java.util.Arrays;
 /**
  * @author Arman Bilge
  */
+@Description("An operator that simulates Hamiltonian dynamics to make proposals.")
 public class HamiltonUpdate extends AbstractCoercableOperator {
 
     protected final Likelihood U;
@@ -151,7 +153,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
     @Override
     public String getOperatorName() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("hamiltonUpdate");
         sb.append("(");
         sb.append(q.getId() != null ? q.getId() : q.getParameterName());
         sb.append(")");
@@ -273,6 +275,4 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         return 0.8;
     }
 
-//    public static final XMLObjectParser<HamiltonUpdate> PARSER = new SimpleXMLObjectParser<>(HamiltonUpdate.class,
-//            "An operator that simulates Hamiltonian dynamics to make proposals.");
 }

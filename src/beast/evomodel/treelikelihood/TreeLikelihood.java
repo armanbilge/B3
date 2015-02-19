@@ -32,6 +32,7 @@ import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteModel;
 import beast.evomodel.substmodel.FrequencyModel;
+import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.CompoundParameter;
 import beast.inference.model.Model;
@@ -431,12 +432,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         double deriv = 0.0;
 
-        int nodeNum;
-        double rate;
         final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
         if (!treeModel.isRoot(node)) {
-            nodeNum = node.getNumber();
-            rate = branchRateModel.getBranchRate(treeModel, node);
+            final int nodeNum = node.getNumber();
+            final double rate = branchRateModel.getBranchRate(treeModel, node);
             for (int i = 0; i < categoryCount; i++) {
                 likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
                 multiply(rate, rateMatrix, storedMatrices[i]);
@@ -449,31 +448,37 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         }
 
         if (!treeModel.isExternal(node)) {
-            NodeRef child = treeModel.getChild(node, 0);
-            nodeNum = child.getNumber();
-            rate = branchRateModel.getBranchRate(treeModel, child);
-            for (int i = 0; i < categoryCount; i++) {
-                likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                multiply(rate, rateMatrix, storedMatrices[i]);
-                likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
-            }
-            updateNode[nodeNum] = true;
-            deriv += calculateDifferentiatedLogLikelihood();
-            for (int i = 0; i < categoryCount; i++)
-                likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
 
-            child = treeModel.getChild(node, 1);
-            nodeNum = child.getNumber();
-            rate = branchRateModel.getBranchRate(treeModel, child);
-            for (int i = 0; i < categoryCount; i++) {
-                likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                multiply(rate, rateMatrix, storedMatrices[i]);
-                likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+            {
+                final NodeRef child = treeModel.getChild(node, 0);
+                final int nodeNum = child.getNumber();
+                final double rate = branchRateModel.getBranchRate(treeModel, child);
+                for (int i = 0; i < categoryCount; i++) {
+                    likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
+                    multiply(rate, rateMatrix, storedMatrices[i]);
+                    likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+                }
+                updateNode[nodeNum] = true;
+                deriv += calculateDifferentiatedLogLikelihood();
+                for (int i = 0; i < categoryCount; i++)
+                    likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
             }
-            updateNode[nodeNum] = true;
-            deriv += calculateDifferentiatedLogLikelihood();
-            for (int i = 0; i < categoryCount; i++)
-                likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
+
+            {
+                final NodeRef child = treeModel.getChild(node, 1);
+                final int nodeNum = child.getNumber();
+                final double rate = branchRateModel.getBranchRate(treeModel, child);
+                for (int i = 0; i < categoryCount; i++) {
+                    likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
+                    multiply(rate, rateMatrix, storedMatrices[i]);
+                    likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
+                }
+                updateNode[nodeNum] = true;
+                deriv += calculateDifferentiatedLogLikelihood();
+                for (int i = 0; i < categoryCount; i++)
+                    likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
+            }
+
         }
 
         updateNode[node.getNumber()] = !treeModel.isRoot(node);

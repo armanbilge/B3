@@ -27,6 +27,7 @@ import beast.inference.model.Statistic;
 import beast.util.Attribute;
 import beast.util.Property;
 import beast.xml.SimpleXMLObjectParser;
+import beast.xml.SimpleXMLObjectParser.ParserCreationException;
 import beast.xml.UserInput;
 import beast.xml.XMLObjectParser;
 import beast.xml.XMLParser;
@@ -230,8 +231,27 @@ public class BeastParser extends XMLParser {
                         }
 
                         if (!parserFound) {
-                            throw new IllegalArgumentException(parser.getName() + " is not of type XMLObjectParser " +
-                                    "and doesn't contain any static members of this type");
+                            try {
+                                boolean replaced = addXMLObjectParser(new SimpleXMLObjectParser(parser), canReplace);
+                                if (verbose) {
+                                    System.out.println((replaced ? "Replaced" : "Loaded") + " parser: "
+                                            + "SimpleXMLObjectParser(" + parser.getName() + ")");
+                                } else if (parserWarning && replaced) {
+                                    System.out.println("WARNING: parser - " + parser.getName() + " in " + parsersFile +" is duplicated, "
+                                            + "which is REPLACING the same parser loaded previously.\n");
+                                }
+                            } catch (IllegalArgumentException iae) {
+                                System.err.println("Failed to install parser: " + iae.getMessage());
+                            } catch (ParserCreationException pce) {
+                                System.err.println("Failed to automatically create simple parser: " + pce.getMessage());
+                            }
+                            parserFound = true;
+                        }
+
+                        if (!parserFound) {
+                            throw new IllegalArgumentException(parser.getName() + " is not of type XMLObjectParser, " +
+                                    "doesn't contain any static members of this type, " +
+                                    "and cannot have a simple parser automatically generated.");
                         }
                     }
 

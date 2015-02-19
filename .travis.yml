@@ -1,6 +1,14 @@
 language: java
 jdk:
   - oraclejdk8
+install:
+  - svn checkout http://beagle-lib.googlecode.com/svn/trunk/ beagle-lib
+  - cd beagle-lib
+  - ./autogen.sh && ./configure && sudo make install
+  - cd ..
+env:
+  global:
+    - LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 notifications:
   email: false
 before_deploy: ant
@@ -14,5 +22,5 @@ deploy:
   upload-dir: beast3
   on:
     repo: armanbilge/BEAST3
-	branch: master
+    branch: master
   skip_cleanup: true
