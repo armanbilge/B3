@@ -6,8 +6,9 @@ install:
   - cd beagle-lib
   - ./autogen.sh && ./configure && sudo make install
   - cd ..
-before_script:
-  - set ANT_OPTS="-Djava.library.path=/usr/local/lib/"
+env:
+  global:
+    - LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
 notifications:
   email: false
 before_deploy: ant
