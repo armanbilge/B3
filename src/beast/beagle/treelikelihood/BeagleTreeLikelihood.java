@@ -928,7 +928,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             }
         }
 
-        return super.differentiate(var, index);
+        return 0.0;
     }
 
     protected double differentiateRespectingNode(final NodeRef node) {

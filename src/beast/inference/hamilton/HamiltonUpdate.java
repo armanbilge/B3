@@ -202,13 +202,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             q.fireParameterChangedEvent();
 
             if (l < L - 1)
-                for (int i = 0; i < dim; ++i) {
-                    double d = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-                    double x = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
-                    if (MathUtils.nextInt(1) == 0 && Math.abs(d - x) > 0.1)
-                        throw new RuntimeException(d + " " + x + " " + q.getMaskedParameter(i) + q.getMaskedIndex(i));
-                    p[i] -= epsilon * d;
-                }
+                for (int i = 0; i < dim; ++i)
+                    p[i] -= epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
         }
 
 
