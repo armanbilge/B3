@@ -335,6 +335,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      */
     public void makeDirty() {
         likelihoodKnown = false;
+        internalDerivativesKnown = false;
+        externalDerivativesKnown = false;
         updateAllNodes();
         updateAllPatterns();
     }
