@@ -1219,7 +1219,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         NodeRef parent = tree.getParent(node);
 
-        boolean update = parent != null && updateNode[nodeNum];
+        boolean update = (parent != null && updateNode[nodeNum]) || node == respectedNode;
 
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {
