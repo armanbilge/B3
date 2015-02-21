@@ -65,10 +65,6 @@ public class Serializer<T extends Serializable> {
     {
         kryo = new Kryo() {
 
-            {
-
-            }
-
             @Override
             public <T> T readObject(Input input, Class<T> type) {
                 final T object = super.readObject(input, type);
