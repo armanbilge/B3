@@ -61,7 +61,7 @@ public class PluginLoader {
         LOADED_PLUGINS = Collections.unmodifiableSet(jars.stream().map(j -> {
             final String name = j.getName();
             return loadPlugin(name.substring(0, name.length() - 4));
-        }).collect(Collectors.<Plugin>toSet()));
+        }).filter(p -> p != null).collect(Collectors.<Plugin>toSet()));
 
     }
 
@@ -84,7 +84,7 @@ public class PluginLoader {
             LOGGER.info("Loading plugin " + pluginName);
             return (Plugin) PLUGIN_CLASS_LOADER.loadClass(pluginName).newInstance();
         } catch (final Exception ex) {
-            LOGGER.severe(ex.getMessage());
+            LOGGER.severe(ex.toString());
         }
         return null;
     }

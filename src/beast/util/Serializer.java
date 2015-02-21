@@ -114,7 +114,8 @@ public class Serializer<T extends Serializable> {
     public Serializer(final File file, final Class<? extends T> objectClass, final ClassLoader classLoader) throws SerializationException {
         this.file = file;
         backup = createBackupFile();
-        object = this.deserialize(objectClass);
+        kryo.setClassLoader(classLoader);
+        object = deserialize(objectClass);
     }
 
     public void serialize() throws SerializationException {
