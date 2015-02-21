@@ -6,4 +6,5 @@
 *.jar
 *.jnilib
 *.o
+build/
 reports/

@@ -36,7 +36,6 @@ import beast.util.MessageLogHandler;
 import beast.util.Serializer;
 import beast.util.Version;
 import beast.xml.SimpleXMLObjectParser;
-import beast.xml.XMLObjectParser;
 import beast.xml.XMLParser;
 import org.virion.jam.console.ConsoleApplication;
 import org.virion.jam.util.IconUtils;
@@ -51,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Filter;
 import java.util.logging.Handler;
@@ -147,16 +145,9 @@ public class BeastMain {
             messageHandler.setLevel(Level.WARNING);
             errorLogger.addHandler(messageHandler);
 
-            for (String pluginName : PluginLoader.getAvailablePlugins()) {
-                Plugin plugin = PluginLoader.loadPlugin(pluginName);
-                if (plugin != null) {
-                    for (SimpleXMLObjectParser.XMLComponentFactory f : plugin.getComponentFactories())
-                        SimpleXMLObjectParser.registerXMLComponentFactory(f);
-                    Set<XMLObjectParser> parserSet = plugin.getParsers();
-                    for (XMLObjectParser pluginParser : parserSet) {
-                        parser.addXMLObjectParser(pluginParser);
-                    }
-                }
+            for (Plugin plugin : PluginLoader.getPlugins()) {
+                plugin.getComponentFactories().forEach(SimpleXMLObjectParser::registerXMLComponentFactory);
+                plugin.getParsers().forEach(parser::addXMLObjectParser);
             }
 
             if (!useMC3) {
@@ -283,7 +274,7 @@ public class BeastMain {
         final Logger infoLogger = Logger.getLogger("beast.app.beast");
         final Serializer<MCMC> serializer;
         try {
-            serializer = new Serializer<>(file, MCMC.class);
+            serializer = new Serializer<>(file, MCMC.class, PluginLoader.PLUGIN_CLASS_LOADER);
         } catch (Serializer.SerializationException ex) {
             infoLogger.severe("Error resuming analysis: " + ex.getMessage());
             throw new RuntimeException("Terminate");
