@@ -64,6 +64,11 @@ public class Serializer<T extends Serializable> {
 
     {
         kryo = new Kryo() {
+
+            {
+
+            }
+
             @Override
             public <T> T readObject(Input input, Class<T> type) {
                 final T object = super.readObject(input, type);
@@ -96,12 +101,21 @@ public class Serializer<T extends Serializable> {
     }
 
     public Serializer(final File file, final T object) throws SerializationException {
+        this(file, object, ClassLoader.getSystemClassLoader());
+    }
+
+    public Serializer(final File file, final T object, final ClassLoader classLoader) throws SerializationException {
         this.file = file;
         backup = createBackupFile();
         this.object = object;
+        kryo.setClassLoader(classLoader);
     }
 
     public Serializer(final File file, final Class<? extends T> objectClass) throws SerializationException {
+        this(file, objectClass, ClassLoader.getSystemClassLoader());
+    }
+
+    public Serializer(final File file, final Class<? extends T> objectClass, final ClassLoader classLoader) throws SerializationException {
         this.file = file;
         backup = createBackupFile();
         object = this.deserialize(objectClass);
