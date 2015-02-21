@@ -109,14 +109,11 @@ public class Serializer<T extends Serializable> {
 
     public void serialize() throws SerializationException {
         file.renameTo(backup);
-        final Output out;
-        try {
-            out = new Output(new FileOutputStream(file));
+        try (final Output out = new Output(new FileOutputStream(file))) {
+            kryo.writeObject(out, object);
         } catch (FileNotFoundException e) {
             throw new SerializationException(e);
         }
-        kryo.writeObject(out, object);
-        out.close();
         backup.delete();
     }
 
@@ -130,14 +127,12 @@ public class Serializer<T extends Serializable> {
 
     private T deserialize(final Class<? extends T> objectClass) throws SerializationException {
         resumables.clear();
-        final Input in;
-        try {
-            in = new Input(new FileInputStream(file));
+        final T object;
+        try (final Input in = new Input(new FileInputStream(file))) {
+            object = kryo.readObject(in, objectClass);
         } catch (FileNotFoundException e) {
             throw new SerializationException(e);
         }
-        final T object = kryo.readObject(in, objectClass);
-        in.close();
         for (final Resumable r : resumables) r.resume();
         return object;
     }
