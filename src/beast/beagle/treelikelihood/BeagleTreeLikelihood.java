@@ -913,44 +913,23 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         if (var instanceof CompoundParameter) {
             final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
             if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
-
                 getLogLikelihood();
-                if (treeModel.isExternal(node)) {
-                    if (!externalDerivativesKnown)
-                        differentiateExternalNodes();
-                } else {
-                    if (!internalDerivativesKnown)
-                        differentiateInternalNodes();
-                }
-
-                return derivatives[node.getNumber()];
-
+                differentiateBranches();
+                return differentiateRespectingNode(node);
             }
         }
 
         return 0.0;
     }
 
-    protected double differentiateRespectingNode(final NodeRef node) {
+    protected double differentiateRespectingBranch(final NodeRef node) {
+
+        final boolean isNotRoot = !treeModel.isRoot(node);
 
         double deriv = 0.0;
-
-        if (!treeModel.isRoot(node))
-            deriv -= branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
-
-        if (!treeModel.isExternal(node)) {
-            final NodeRef child0 = treeModel.getChild(node, 0);
-            deriv += branchRateModel.getBranchRate(treeModel, child0) * calculateDifferentiatedLogLikelihood(child0);
-            final NodeRef child1 = treeModel.getChild(node, 1);
-            deriv += branchRateModel.getBranchRate(treeModel, child1) * calculateDifferentiatedLogLikelihood(child1);
-        }
-
-        // Flag everything for update
-        updateNode[node.getNumber()] = !treeModel.isRoot(node);
-        if (!treeModel.isExternal(node)) {
-            updateNode[treeModel.getChild(node, 0).getNumber()] = true;
-            updateNode[treeModel.getChild(node, 1).getNumber()] = true;
-        }
+        if (isNotRoot)
+            deriv = branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
+        updateNode[node.getNumber()] = isNotRoot;
 
         return deriv;
     }
