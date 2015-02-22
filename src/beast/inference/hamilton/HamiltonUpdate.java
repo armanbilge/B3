@@ -28,7 +28,7 @@ import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
-import beast.math.MathUtils;
+import beast.math.distributions.MultivariateNormalDistribution;
 import beast.xml.Description;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
@@ -36,10 +36,6 @@ import beast.xml.IntegerAttribute;
 import beast.xml.ObjectArrayElement;
 import beast.xml.ObjectElement;
 import beast.xml.Parseable;
-import beast.xml.SimpleXMLObjectParser;
-import beast.xml.XMLObjectParser;
-
-import java.util.Arrays;
 
 /**
  * @author Arman Bilge
@@ -48,12 +44,14 @@ import java.util.Arrays;
 public class HamiltonUpdate extends AbstractCoercableOperator {
 
     protected final Likelihood U;
+    protected final MultivariateNormalDistribution K;
     protected final CompoundParameter q;
+    protected final Parameter p;
 
     private final int dim;
-    private final double[] mass;
     private double epsilon;
     private int L;
+    private double alpha;
 
     {
         setTargetAcceptanceProbability(0.65);
@@ -66,38 +64,40 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
+            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), mass, epsilon, L, weight, mode);
+        this(U, new CompoundParameter("q", parameters), mass, epsilon, L, alpha, weight, mode);
     }
 
-    @Parseable
-    public HamiltonUpdate(
-            @ObjectElement(name = "potential") Likelihood U,
-            @ObjectElement(name = "space") CompoundParameter q,
-            @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
-            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
-            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
-            @OperatorWeightAttribute double weight,
-            @CoercionModeAttribute CoercionMode mode) {
+    public HamiltonUpdate(final Likelihood U,
+                          final CompoundParameter q,
+                          final double[] diagonalMass,
+                          final double epsilon,
+                          final int L,
+                          final double alpha,
+                          final double weight,
+                          final CoercionMode mode) {
 
         super(mode);
 
         this.U = U;
         this.q = q;
         dim = q.getDimension();
+        p = new Parameter.Default("p", dim);
 
-        if (mass != null) {
-            if (mass.length != dim)
+        final double[][] mass = new double[dim][dim];
+        if (diagonalMass != null) {
+            if (diagonalMass.length != dim)
                 throw new IllegalArgumentException("mass.length != q.getDimension()");
-            else if (!Arrays.stream(mass).allMatch(m -> m > 0))
-                throw new IllegalArgumentException("All masses must be m_i > 0.");
             else
-                this.mass = mass;
+                for (int i = 0; i < dim; ++i)
+                    mass[i][i] = diagonalMass[i];
         } else {
-            this.mass = new double[dim];
-            setDefaultMass();
+            setDefaultMass(mass);
         }
+
+        K = new MultivariateNormalDistribution(new double[dim], mass);
 
         if (epsilon > 0)
             this.epsilon = epsilon;
@@ -109,11 +109,14 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         else
             setDefaultL();
 
+        this.alpha = alpha;
+
         setWeight(weight);
     }
 
-    protected void setDefaultMass() {
-        Arrays.fill(this.mass, 1);
+    protected void setDefaultMass(final double[][] mass) {
+        for (int i = 0; i < dim; ++i)
+            mass[i][i] = 1;
     }
 
     private static final double EPSILON_CONSTANT = 0.0625;
@@ -153,73 +156,103 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
     @Override
     public String getOperatorName() {
-        StringBuilder sb = new StringBuilder("hamiltonUpdate");
-        sb.append("(");
-        sb.append(q.getId() != null ? q.getId() : q.getParameterName());
-        sb.append(")");
-        return sb.toString();
+        return "hamiltonUpdate" + "(" + (q.getId() != null ? q.getId() : q.getParameterName()) + ")";
     }
 
     @Override
     public double doOperation() throws OperatorFailedException {
 
-        final double halfEpsilon = epsilon / 2;
+        flipMomentum();
+        corruptMomentum();
 
-        final double[] p = new double[dim];
-        final double[] storedP = new double[dim];
-        Arrays.setAll(p, i -> MathUtils.nextGaussian() * mass[i]);
-        Arrays.setAll(storedP, i -> p[i]);
+        p.storeParameterValues();
+        final double storedK = kineticEnergy();
 
-        for (int i = 0; i < dim; ++i)
-            p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+        simulateDynamics();
+        flipMomentum();
 
-        final Bounds<Double> bounds = q.getBounds();
-        for (int l = 0; l < L; ++l) {
-            for (int i = 0; i < dim; ++i) {
-                double q_ = q.getValue(i) - epsilon * p[i];
-                final double lower = bounds.getLowerLimit(i);
-                final double upper = bounds.getUpperLimit(i);
-                boolean qllower = q_ < lower;
-                boolean qgupper = q_ > upper;
-                do {
-                    if (qllower) {
-                        q_ = 2 * lower - q_;
-                        p[i] *= -1;
-                    } else if (qgupper) {
-                        q_ = 2 * upper - q_;
-                        p[i] *= -1;
-                    }
-                    qllower = q_ < lower;
-                    qgupper = q_ > upper;
-                } while (qllower || qgupper);
-                // Quiet due to the large overhead of multiple calls
-                q.setParameterValueQuietly(i, q_);
-            }
-
-            // Make up for quiet behaviour above
-            q.fireParameterChangedEvent();
-
-            if (l < L - 1)
-                for (int i = 0; i < dim; ++i)
-                    p[i] -= epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-        }
-
-        for (int i = 0; i < dim; ++i) {
-            p[i] -= halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-            p[i] *= -1;
-        }
-
-        final double storedK = logPDFNormal(storedP);
-        final double proposedK = logPDFNormal(p);
+        final double proposedK = kineticEnergy();
 
         return storedK - proposedK;
     }
 
-    private double logPDFNormal(double[] p) {
-        double logPDF = 0;
-        for (int i = 0; i < p.length; ++i)
-            logPDF += p[i] * p[i] / mass[i];
-        return logPDF / 2;
+    protected void corruptMomentum() {
+        final double sqrtalpha = Math.sqrt(alpha);
+        final double sqrt1malpha = Math.sqrt(1 - alpha);
+        final double[] n = K.nextMultivariateNormal();
+        for (int i = 0; i < dim; ++i) {
+            final double p_ = p.getParameterValue(i) * sqrt1malpha + n[i] * sqrtalpha;
+            p.setParameterValueQuietly(i, p_);
+        }
+        p.fireParameterChangedEvent();
+    }
+
+    protected void simulateDynamics() {
+
+        final double halfEpsilon = epsilon / 2;
+
+        for (int i = 0; i < dim; ++i) {
+            final double dU = halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double p_ = p.getParameterValue(i) - dU;
+            // Quiet due to the large overhead of multiple calls
+            p.setParameterValueQuietly(i, p_);
+        }
+        // Make up for quiet behaviour above
+        p.fireParameterChangedEvent();
+
+        final Bounds<Double> bounds = q.getBounds();
+        for (int l = 0; l < L; ++l) {
+            for (int i = 0; i < dim; ++i) {
+                double q_ = q.getParameterValue(i) - epsilon * p.getParameterValue(i);
+                final double lower = bounds.getLowerLimit(i);
+                final double upper = bounds.getUpperLimit(i);
+                while (q_ < lower || q_ > upper) {
+                    q_ = 2 * (q_ < lower ? lower : upper) - q_;
+                    final double p_i = p.getParameterValue(i);
+                    p.setParameterValue(i, -p_i);
+                }
+                q.setParameterValueQuietly(i, q_);
+            }
+
+            q.fireParameterChangedEvent();
+
+            if (l < L - 1)
+                for (int i = 0; i < dim; ++i) {
+                    final double dU = epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    final double p_ = p.getParameterValue(i) - dU;
+                    p.setParameterValueQuietly(i, p_);
+                }
+            p.fireParameterChangedEvent();
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            final double dU = halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double p_ = p.getParameterValue(i) - dU;
+            p.setParameterValueQuietly(i, p_);
+        }
+        p.fireParameterChangedEvent();
+
+    }
+
+    protected void flipMomentum() {
+        for (int i = 0; i < dim; ++i)
+            p.setParameterValue(i, - p.getParameterValue(i));
+    }
+
+    protected double kineticEnergy() {
+        return K.logPdf(p.getParameterValues());
+    }
+
+    @Override
+    public void accept(double deviation) {
+        super.accept(deviation);
+        p.acceptParameterValues();
+    }
+
+    @Override
+    public void reject() {
+        super.reject();
+        p.restoreParameterValues();
     }
 
     @Override
@@ -237,18 +270,22 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         return epsilon;
     }
 
+    @Override
     public double getMinimumAcceptanceLevel() {
         return 0.3;
     }
 
+    @Override
     public double getMaximumAcceptanceLevel() {
         return 1.00;
     }
 
+    @Override
     public double getMinimumGoodAcceptanceLevel() {
         return 0.5;
     }
 
+    @Override
     public double getMaximumGoodAcceptanceLevel() {
         return 0.8;
     }
