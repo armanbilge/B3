@@ -137,6 +137,9 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
                         likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
                     }
                 }
+
+                if (addToPool)
+                    differentiateCallers.add(new DifferentiateCaller(likelihood, index));
             }
         }
     }
@@ -153,7 +156,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
         return likelihoods;
     }
 
-    public List<Callable<Double>> getLikelihoodCallers() {
+    public List<? extends Callable<Double>> getLikelihoodCallers() {
         return likelihoodCallers;
     }
 
@@ -209,12 +212,24 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     }
 
     public double differentiate(final Variable<Double> var, final int index) {
-        double derivative = differentiateLikelihoods(earlyLikelihoods, var, index);
+        double derivative;
         if (pool == null) {
-            derivative += differentiateLikelihoods(lateLikelihoods, var, index);
+            derivative = differentiateLikelihoods(likelihoods, var, index);
         } else {
-            // TODO reconsider use of parallelStream
-            derivative += lateLikelihoods.parallelStream().mapToDouble(l -> l.differentiate(var, index)).sum();
+            derivative = 0.0;
+
+            differentiateCallers.forEach(c -> c.setRespectedVariable(var, index));
+            try {
+                List<Future<Double>> results = pool.invokeAll(differentiateCallers);
+
+                for (Future<Double> result : results)
+                    derivative += result.get();
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }
         return derivative;
     }
@@ -490,7 +505,8 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     private final ArrayList<Likelihood> earlyLikelihoods = new ArrayList<Likelihood>();
     private final ArrayList<Likelihood> lateLikelihoods = new ArrayList<Likelihood>();
 
-    private final List<Callable<Double>> likelihoodCallers = new ArrayList<Callable<Double>>();
+    private final List<LikelihoodCaller> likelihoodCallers = new ArrayList<>();
+    private final List<DifferentiateCaller> differentiateCallers = new ArrayList<>();
 
     class LikelihoodCaller implements Callable<Double> {
 
@@ -515,6 +531,38 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
 
         private final Likelihood likelihood;
         private final int index;
+    }
+
+    class DifferentiateCaller implements Callable<Double> {
+
+        public DifferentiateCaller(Likelihood likelihood, int index) {
+            this.likelihood = likelihood;
+            this.index = index;
+        }
+
+        public Double call() throws Exception {
+            if (DEBUG_PARALLEL_EVALUATION) {
+                System.err.print("Invoking thread #" + index + " for " + likelihood.getId() + ": ");
+            }
+            if (EVALUATION_TIMERS) {
+                long time = System.nanoTime();
+                double deriv = likelihood.differentiate(var, varIndex);
+                evaluationTimes[index] += System.nanoTime() - time;
+                evaluationCounts[index] ++;
+                return deriv;
+            }
+            return likelihood.differentiate(var, varIndex);
+        }
+
+        public void setRespectedVariable(Variable<Double> var, int varIndex) {
+            this.var = var;
+            this.varIndex = varIndex;
+        }
+
+        private final Likelihood likelihood;
+        private final int index;
+        private Variable<Double> var;
+        private int varIndex;
     }
 
     public static final boolean DEBUG_PARALLEL_EVALUATION = false;
