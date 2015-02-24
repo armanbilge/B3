@@ -64,7 +64,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
-            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 0) double alpha,
+            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
         this(U, new CompoundParameter("q", parameters), mass, epsilon, L, alpha, weight, mode);
@@ -165,15 +165,15 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         flipMomentum();
         corruptMomentum();
 
-        p.storeParameterValues();
         final double storedK = kineticEnergy();
+        p.storeParameterValues();
 
         simulateDynamics();
         flipMomentum();
 
         final double proposedK = kineticEnergy();
 
-        return storedK - proposedK;
+        return proposedK - storedK;
     }
 
     protected void corruptMomentum() {
