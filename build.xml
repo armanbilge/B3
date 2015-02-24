@@ -63,6 +63,8 @@
 	 		 dest="${lib}/kryo.jar"/>
  		<get src="http://sourceforge.net/projects/jebl/files/latest/download"
 			 dest="${lib}/jebl.jar"/>
+  		<get src="http://search.maven.org/remotecontent?filepath=net/java/dev/jna/jna/4.1.0/jna-4.1.0.jar"
+  			 dest="${lib}/jna.jar"/>
   		<get src="http://search.maven.org/remotecontent?filepath=com/esotericsoftware/minlog/1.3.0/minlog-1.3.0.jar"
  			 dest="${lib}/minlog.jar"/>
    		<get src="http://search.maven.org/remotecontent?filepath=org/objenesis/objenesis/2.1/objenesis-2.1.jar"
