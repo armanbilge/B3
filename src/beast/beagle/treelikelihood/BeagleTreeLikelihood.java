@@ -924,13 +924,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     protected double differentiateRespectingBranch(final NodeRef node) {
 
-        final boolean isNotRoot = !treeModel.isRoot(node);
-
         double deriv = 0.0;
-        if (isNotRoot)
+        if (!treeModel.isRoot(node)) {
             deriv = branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
-        updateNode[node.getNumber()] = isNotRoot;
-
+            updateNode[node.getNumber()] = true;
+        }
         return deriv;
     }
 

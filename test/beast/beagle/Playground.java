@@ -88,7 +88,7 @@ public class Playground extends TraceCorrelationAssert {
 
         System.out.println(treeModel.newick());
 
-        HamiltonUpdate hu = new HamiltonUpdate(treeLikelihood, new Parameter[]{treeModel.createPreOrderNodeHeightsParameter(true, true, false)}, null, 0.125, 100, 1.0, CoercionMode.COERCION_OFF);
+        HamiltonUpdate hu = new HamiltonUpdate(treeLikelihood, new Parameter[]{treeModel.createPreOrderNodeHeightsParameter(true, true, false)}, null, 0.125, 100, 1.0, 1.0, CoercionMode.COERCION_OFF);
         try {
             hu.operate();
         } catch (OperatorFailedException e) {
