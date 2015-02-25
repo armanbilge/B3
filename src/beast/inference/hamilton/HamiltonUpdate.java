@@ -61,18 +61,18 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
-            @DoubleArrayAttribute(name = "mass", optional = true) double[] mass,
+            @DoubleArrayAttribute(name = "mass", optional = true) double[] massAttribute,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), mass, epsilon, L, alpha, weight, mode);
+        this(U, new CompoundParameter("q", parameters), massAttribute, epsilon, L, alpha, weight, mode);
     }
 
     public HamiltonUpdate(final Likelihood U,
                           final CompoundParameter q,
-                          final double[] diagonalMass,
+                          final double[] massAttribute,
                           final double epsilon,
                           final int L,
                           final double alpha,
@@ -87,12 +87,16 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         p = new Parameter.Default("p", dim);
 
         final double[][] mass = new double[dim][dim];
-        if (diagonalMass != null) {
-            if (diagonalMass.length != dim)
-                throw new IllegalArgumentException("mass.length != q.getDimension()");
-            else
+        if (massAttribute != null) {
+            if (massAttribute.length == dim)
                 for (int i = 0; i < dim; ++i)
-                    mass[i][i] = diagonalMass[i];
+                    mass[i][i] = massAttribute[i];
+            else if (massAttribute.length == dim * dim)
+                for (int i = 0; i < dim; ++i)
+                    for (int j = 0; j < dim; ++j)
+                        mass[i][j] = massAttribute[i * dim + j];
+            else
+                throw new IllegalArgumentException("mass.length != q.getDimension() and mass.length != q.getDimension() ^ 2");
         } else {
             setDefaultMass(mass);
         }
