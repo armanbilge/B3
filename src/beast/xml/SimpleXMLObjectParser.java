@@ -24,6 +24,7 @@ import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -107,7 +108,9 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
 
         try {
             return constructor.newInstance(parameters);
-        } catch (final Exception ex) {
+        } catch (final InvocationTargetException ex) {
+            throw new XMLParseException(ex.getTargetException().getMessage());
+        } catch (final InstantiationException|IllegalAccessException ex) {
             throw new XMLParseException(ex.getMessage());
         }
     }
