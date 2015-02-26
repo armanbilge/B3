@@ -72,6 +72,7 @@ public class Serializer<T extends Serializable> {
                     resumables.add((Resumable) object);
                 return object;
             }
+
             @Override
             public <T> T readObject(Input input, Class<T> type, com.esotericsoftware.kryo.Serializer serializer) {
                 final T object = super.readObject(input, type, serializer);
@@ -79,6 +80,29 @@ public class Serializer<T extends Serializable> {
                     resumables.add((Resumable) object);
                 return object;
             }
+
+            @Override
+            public <T> T readObjectOrNull(Input input, Class<T> type) {
+                final T object = super.readObjectOrNull(input, type);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+            @Override
+            public <T> T readObjectOrNull(Input input, Class<T> type, com.esotericsoftware.kryo.Serializer serializer) {
+                final T object = super.readObjectOrNull(input, type, serializer);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+
+            @Override public Object readClassAndObject (Input input) {
+                final Object object = super.readClassAndObject(input);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+
         };
         kryo.setDefaultSerializer(SyntheticFieldSerializer.class);
 

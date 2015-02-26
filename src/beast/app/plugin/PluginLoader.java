@@ -73,9 +73,17 @@ public class PluginLoader {
         final Set<File> folders = new LinkedHashSet<>(2);
         {
             final String folder = java.lang.System.getProperty("beast.plugins.dir");
-            if (folder != null) folders.add(new File(folder));
+            if (folder != null) {
+                final File f = new File(folder);
+                if (f.exists())
+                    folders.add(new File(folder));
+            }
         }
-        folders.add(FileHelpers.getFile("plugins"));
+        {
+            final File folder = FileHelpers.getFile("plugins");
+            if (folder.exists())
+                folders.add(folder);
+        }
         return Collections.unmodifiableSet(folders);
     }
 

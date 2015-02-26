@@ -341,8 +341,9 @@ public class MCLogger implements Logger {
             final String line = FileHelpers.readLastLine(file);
             return Long.parseLong(line.trim().split("\\s+")[0]);
         } catch (final IOException ex) {
-            throw new RuntimeException("Problem resuming logger!", ex);
+            java.util.logging.Logger.getLogger("beast.inference").warning(ex.toString());
         }
+        return -1;
     }
 
     private String title = null;

@@ -248,8 +248,9 @@ public class TreeLogger extends MCLogger {
             }
             return Long.parseLong(line.trim().substring(TREE_STATE_.length()).split("\\s+")[0]);
         } catch (final IOException|NumberFormatException ex) {
-            throw new RuntimeException("Problem resuming logger!", ex);
+            java.util.logging.Logger.getLogger("beast.evolution").warning(ex.toString());
         }
+        return -1;
     }
 
     private static final String END = "End;";
