@@ -421,13 +421,7 @@ public class MCLogger implements Logger {
             final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
 
             if (xo.hasAttribute(FILE_NAME)) {
-                try {
-                    logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
-                } catch (XMLParseException xpe) {
-                    // File already exists
-                    if (!xpe.getMessage().contains("overwrite"))
-                        throw xpe;
-                }
+                logger.addFile(XMLParser.getFileHandle(xo, FILE_NAME));
             }
 
             String title = null;
