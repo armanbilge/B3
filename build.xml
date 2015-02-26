@@ -53,11 +53,11 @@
 
 	<target name="get-dependencies" depends="init" if="lib-unavailable">
 		<mkdir dir="${lib}"/>
-  		<get src="http://central.maven.org/maven2/org/ow2/asm/asm/5.0.3/asm-5.0.3.jar"
+  		<get src="http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/5.0.3/asm-5.0.3.jar"
   			 dest="${lib}/asm.jar"/>
 		<get src="http://beast-mcmc.googlecode.com/svn/trunk/lib/beagle.jar"
 			 dest="${lib}/beagle.jar"/>
- 		<get src="http://search.maven.org/remotecontent?filepath=org/apache/commons/commons-math3/3.3/commons-math3-3.3.jar"
+ 		<get src="http://search.maven.org/remotecontent?filepath=org/apache/commons/commons-math3/3.4.1/commons-math3-3.4.1.jar"
  			 dest="${lib}/commons-math3.jar"/>
 	 	<get src="http://search.maven.org/remotecontent?filepath=com/esotericsoftware/kryo/3.0.0/kryo-3.0.0.jar"
 	 		 dest="${lib}/kryo.jar"/>
@@ -67,7 +67,7 @@
  			 dest="${lib}/minlog.jar"/>
    		<get src="http://search.maven.org/remotecontent?filepath=org/objenesis/objenesis/2.1/objenesis-2.1.jar"
   			 dest="${lib}/objenesis.jar"/>
- 		<get src="http://central.maven.org/maven2/com/esotericsoftware/reflectasm/reflectasm/1.09/reflectasm-1.09.jar"
+ 		<get src="http://search.maven.org/remotecontent?filepath=/com/esotericsoftware/reflectasm/reflectasm/1.09/reflectasm-1.09.jar"
  			 dest="${lib}/reflectasm.jar"/>
 	</target>
 
