@@ -1200,25 +1200,16 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
         }
     }
 
-    public boolean isHeightParameterForNode(final NodeRef node, final Parameter param, final int index) {
-        if (!(param instanceof CompoundParameter)) return false;
-        final CompoundParameter compoundParam = (CompoundParameter) param;
-        final Parameter heightParameter = compoundParam.getMaskedParameter(index);
-        return ((Node) node).heightParameter == heightParameter;
+    public boolean isHeightParameterForNode(final NodeRef node, final Parameter param) {
+        return ((Node) node).heightParameter == param;
     }
 
-    public boolean isRateParameterForNode(final NodeRef node, final Parameter param, final int index) {
-        if (!(param instanceof CompoundParameter)) return false;
-        final CompoundParameter compoundParam = (CompoundParameter) param;
-        final Parameter rateParameter = compoundParam.getMaskedParameter(index);
-        return ((Node) node).rateParameter == rateParameter;
+    public boolean isRateParameterForNode(final NodeRef node, final Parameter param) {
+        return ((Node) node).rateParameter == param;
     }
 
-    public boolean isAttributeParameterForNode(final NodeRef node, final String attribute, final Parameter param, final int index) {
-        if (!(param instanceof CompoundParameter)) return false;
-        final CompoundParameter compoundParam = (CompoundParameter) param;
-        final Parameter attributeParameter = compoundParam.getMaskedParameter(index);
-        return ((Node) node).traitParameters.get(attribute) == attributeParameter;
+    public boolean isAttributeParameterForNode(final NodeRef node, final String attribute, final Parameter param) {
+        return ((Node) node).getTraitParameter(attribute) == param;
     }
 
     // **************************************************************

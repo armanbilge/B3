@@ -910,9 +910,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     public double differentiate(Variable<Double> var, int index) {
 
-        if (var instanceof CompoundParameter) {
-            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
-            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
+        if (var instanceof CompoundParameter)
+            var = ((CompoundParameter) var).getMaskedParameter(index);
+        if (var instanceof Parameter) {
+            final Parameter param = (Parameter) var;
+            final NodeRef node = treeModel.getNodeOfParameter(param);
+            if (node != null && treeModel.isHeightParameterForNode(node, param)) {
                 getLogLikelihood();
                 differentiateBranches();
                 return differentiateRespectingNode(node);

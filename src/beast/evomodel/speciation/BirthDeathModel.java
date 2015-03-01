@@ -24,6 +24,7 @@ import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
@@ -245,6 +246,10 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
     }
 
     public double differentiateLogNodeProbability(Tree tree, NodeRef node, Variable<Double> var, int index) {
+
+        if (var instanceof CompoundParameter)
+            var = ((CompoundParameter) var).getMaskedParameter(index);
+
         final double height = tree.getNodeHeight(node);
         final double r = getR();
         final double rh = r * height;
@@ -298,7 +303,7 @@ public class BirthDeathModel extends UltrametricSpeciationModel {
 
             return l;
 
-        } else if (tree instanceof TreeModel && var instanceof Parameter && ((TreeModel) tree).isHeightParameterForNode(node, (Parameter) var, index)) {
+        } else if (tree instanceof TreeModel && var instanceof Parameter && ((TreeModel) tree).isHeightParameterForNode(node, (Parameter) var)) {
 
             if (conditionalOnRoot && tree.isRoot(node)) {
                 return (tree.getTaxonCount() - 2) * differentiateLogConditioningTerm(height);

@@ -29,6 +29,7 @@ import beast.evolution.util.TaxonList;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.CompoundParameter;
+import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
@@ -97,30 +98,26 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 
 		getLogLikelihood();
 
-        double deriv = 0.0;
-
-		if (getTree() instanceof TreeModel && var instanceof CompoundParameter) {
+		if (getTree() instanceof TreeModel) {
 			final TreeModel tree = (TreeModel) getTree();
-			final NodeRef node = tree.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
-			if (node != null && tree.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
-                if (tree.isExternal(node)) throw new UnsupportedOperationException("Differentiation not working for leaf nodes!");
-                DemographicFunction demoFunction = demoModel.getDemographicFunction();
-                final int i = getNodeInterval(node);
-                deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold(), i);
+            if (var instanceof CompoundParameter)
+                var = ((CompoundParameter) var).getMaskedParameter(index);
+            if (var instanceof Parameter) {
+                final Parameter param = (Parameter) var;
+                final NodeRef node = tree.getNodeOfParameter(param);
+                if (node != null && tree.isHeightParameterForNode(node, param)) {
+                    if (tree.isExternal(node)) throw new UnsupportedOperationException("Differentiation not working for leaf nodes!");
+                    DemographicFunction demoFunction = demoModel.getDemographicFunction();
+                    final int i = getNodeInterval(node);
+                    return Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold(), i);
+                }
             }
 		} else {
             DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
-
-            deriv = Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
-
+            return Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
         }
 
-        if (Double.isNaN(deriv) || Double.isInfinite(deriv)) {
-            Logger.getLogger("warning").severe("Derivative of CoalescentLikelihood is " + Double.toString(deriv));
-        }
-
-		return deriv;
-
+		return 0;
 	}
 
 	// **************************************************************

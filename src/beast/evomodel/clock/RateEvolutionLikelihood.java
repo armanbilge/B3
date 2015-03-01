@@ -25,6 +25,7 @@ import beast.evolution.tree.Tree;
 import beast.evomodel.branchratemodel.AbstractBranchRateModel;
 import beast.evomodel.tree.TreeModel;
 import beast.evomodel.tree.TreeParameterModel;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -181,6 +182,9 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
         double deriv = 0;
         double length = treeModel.getBranchLength(node);
 
+        if (var instanceof CompoundParameter)
+            var = ((CompoundParameter) var).getMaskedParameter(index);
+
         if (var == rootRateParameter) {
 
             if (parent == treeModel.getRoot())
@@ -196,8 +200,8 @@ public abstract class RateEvolutionLikelihood extends AbstractBranchRateModel {
                 deriv += differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length, false);
 
         } else if (var instanceof Parameter) {
-            boolean respectNode = treeModel.isHeightParameterForNode(node, (Parameter) var, index);
-            boolean respectParent = treeModel.isHeightParameterForNode(parent, (Parameter) var, index);
+            boolean respectNode = treeModel.isHeightParameterForNode(node, (Parameter) var);
+            boolean respectParent = treeModel.isHeightParameterForNode(parent, (Parameter) var);
             if (respectNode || respectParent)
                 deriv += (respectParent ? 1 : -1) * differentiateBranchRateChangeLogLikelihood(getBranchRate(treeModel, parent), getBranchRate(treeModel, node), length);
         } else {

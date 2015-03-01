@@ -23,6 +23,7 @@ package beast.evomodel.branchratemodel;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evomodel.tree.TreeModel;
+import beast.inference.model.CompoundParameter;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -75,7 +76,8 @@ public class AttributeBranchRateModel extends AbstractBranchRateModel {
 
     @Override
     public boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index) {
-        return (var instanceof Parameter) && ((TreeModel) tree).isAttributeParameterForNode(node, rateAttributeName, (Parameter) var, index);
+        if (var instanceof CompoundParameter) var = ((CompoundParameter) var).getMaskedParameter(index);
+        return (var instanceof Parameter) && ((TreeModel) tree).isAttributeParameterForNode(node, rateAttributeName, (Parameter) var);
     }
 
     @Override
