@@ -36,6 +36,7 @@ import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.CompoundParameter;
 import beast.inference.model.Model;
+import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
 import beast.inference.model.Variable;
 import beast.xml.AbstractXMLObjectParser;
@@ -408,10 +409,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         if (categoryCount > 1)
             throw new UnsupportedOperationException("Differentiation unsupported when categoryCount > 1!");
 
-        if (var instanceof CompoundParameter) {
-            final NodeRef node = treeModel.getNodeOfParameter(((CompoundParameter) var).getMaskedParameter(index));
-            if (node != null && treeModel.isHeightParameterForNode(node, (CompoundParameter) var, index)) {
-
+        if (var instanceof CompoundParameter)
+            var = ((CompoundParameter) var).getMaskedParameter(index);
+        if (var instanceof Parameter) {
+            final Parameter param = (Parameter) var;
+            final NodeRef node = treeModel.getNodeOfParameter(param);
+            if (node != null && treeModel.isHeightParameterForNode(node, param)) {
                 getLogLikelihood();
                 if (treeModel.isExternal(node)) {
                     if (!externalDerivativesKnown)
@@ -420,7 +423,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     if (!internalDerivativesKnown)
                         differentiateInternalNodes();
                 }
-
                 return derivatives[node.getNumber()];
             }
         }

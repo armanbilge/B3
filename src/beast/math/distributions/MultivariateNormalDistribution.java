@@ -41,9 +41,15 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     private double[][] cholesky = null;
     private Double logDet = null;
 
-    public MultivariateNormalDistribution(double[] mean, double[][] precision) {
+    public MultivariateNormalDistribution(double[] mean, double[][] matrix, boolean precision) {
         this.mean = mean;
-        this.precision = precision;
+        if (precision) {
+            this.precision = matrix;
+            this.variance = getInverse(matrix);
+        } else {
+            this.precision = getInverse(matrix);
+            this.variance = matrix;
+        }
     }
 
     public String getType() {
@@ -51,9 +57,6 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public double[][] getVariance() {
-        if (variance == null) {
-            variance = getInverse(precision);
-        }
         return variance;
     }
 

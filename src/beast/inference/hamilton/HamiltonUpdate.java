@@ -90,20 +90,32 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
         final double[][] mass = new double[dim][dim];
         if (massAttribute != null) {
-            if (massAttribute.length == dim)
+            if (massAttribute.length == dim) { // Diagonal matrix
                 for (int i = 0; i < dim; ++i)
                     mass[i][i] = massAttribute[i];
-            else if (massAttribute.length == dim * dim)
+            } else if (massAttribute.length == dim * (dim + 1) / 2) { // Upper symmetric matrix
+                int k = 0;
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = i; j < dim; ++j) {
+                        mass[i][j] = massAttribute[k];
+                        if (i != j) mass[j][i] = massAttribute[k];
+                        ++k;
+                    }
+                }
+            } else if (massAttribute.length == dim * dim) { // Fully defined matrix
+                int k = 0;
                 for (int i = 0; i < dim; ++i)
                     for (int j = 0; j < dim; ++j)
-                        mass[i][j] = massAttribute[i * dim + j];
-            else
-                throw new IllegalArgumentException("mass.length != q.getDimension() and mass.length != q.getDimension() ^ 2");
+                        mass[i][j] = massAttribute[k++];
+            } else {
+                throw new IllegalArgumentException("Wrong number of elements in mass matrix.");
+            }
         } else {
             setDefaultMass(mass);
         }
 
-        K = new MultivariateNormalDistribution(new double[dim], mass);
+        K = new MultivariateNormalDistribution(new double[dim], mass, false);
+        p.adoptParameterValues(new Parameter.Default(K.nextMultivariateNormal()));
 
         if (epsilon > 0)
             this.epsilon = epsilon;
