@@ -134,6 +134,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return logPdf(x, mean, precision, getLogDet(), 1.0);
     }
 
+    public double differentiateLogPdf(double[] x, int i) {
+        return differentiateLogPdf(x, mean, precision, getLogDet(), 1.0, i);
+    }
+
     // scale only modifies precision
     // in one dimension, this is equivalent to:
     // PDF[NormalDistribution[mean, Sqrt[scale]*Sqrt[1/precison]], x]
@@ -163,6 +167,28 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
             SSE += tmp[i] * delta[i];
 
         return dim * logNormalize + 0.5 * (logDet - dim * Math.log(scale) - SSE / scale);   // There was an error here.
+        // Variance = (scale * Precision^{-1})
+    }
+
+    public static double differentiateLogPdf(double[] x, double[] mean, double[][] precision,
+                                double logDet, double scale, int index) {
+
+        if (logDet == Double.NEGATIVE_INFINITY)
+            return 0;
+
+        final int dim = x.length;
+        final double[] delta = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            delta[i] = i == index ? x[i] : x[i] - mean[i];
+        }
+
+        double SSE = 0;
+
+        for (int i = 0; i < dim; i++)
+            SSE += (precision[i][index] + precision[index][i]) * delta[i];
+
+        return 0.5 * SSE / scale;   // There was an error here.
         // Variance = (scale * Precision^{-1})
     }
 
