@@ -180,7 +180,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         final double[] delta = new double[dim];
 
         for (int i = 0; i < dim; i++) {
-            delta[i] = i == index ? x[i] : x[i] - mean[i];
+            delta[i] = x[i] - mean[i];
         }
 
         double SSE = 0;
@@ -188,7 +188,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         for (int i = 0; i < dim; i++)
             SSE += (precision[i][index] + precision[index][i]) * delta[i];
 
-        return 0.5 * SSE / scale;   // There was an error here.
+        return - 0.5 * SSE / scale;   // There was an error here.
         // Variance = (scale * Precision^{-1})
     }
 
