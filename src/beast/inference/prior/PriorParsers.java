@@ -23,6 +23,7 @@ package beast.inference.prior;
 import beast.inference.distribution.DistributionLikelihood;
 import beast.inference.model.Likelihood;
 import beast.inference.model.Statistic;
+import beast.inference.model.Variable;
 import beast.math.distributions.BetaDistribution;
 import beast.math.distributions.ExponentialDistribution;
 import beast.math.distributions.GammaDistribution;
@@ -30,6 +31,8 @@ import beast.math.distributions.HalfTDistribution;
 import beast.math.distributions.InverseGammaDistribution;
 import beast.math.distributions.LaplaceDistribution;
 import beast.math.distributions.LogNormalDistribution;
+import beast.math.distributions.MultivariateDistribution;
+import beast.math.distributions.MultivariateNormalDistribution;
 import beast.math.distributions.NegativeBinomialDistribution;
 import beast.math.distributions.NormalDistribution;
 import beast.math.distributions.PoissonDistribution;
@@ -42,6 +45,11 @@ import beast.xml.XMLObjectParser;
 import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 import beast.xml.XORRule;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  */
@@ -394,6 +402,96 @@ public class PriorParsers {
         }
     };
 
+    private static String VAR = "var";
+    public static XMLObjectParser MULTIVARIATE_NORMAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return "multivariateNormalPrior";
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double[] mean = xo.getDoubleArrayAttribute(MEAN);
+            double[] varAttribute = xo.getDoubleArrayAttribute(VAR);
+
+            int dim = mean.length;
+            double[][] var = new double[dim][dim];
+            if (varAttribute.length == dim) { // Diagonal matrix
+                for (int i = 0; i < dim; ++i)
+                    var[i][i] = varAttribute[i];
+            } else if (varAttribute.length == dim * (dim + 1) / 2) { // Upper symmetric matrix
+                int k = 0;
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = i; j < dim; ++j) {
+                        var[i][j] = varAttribute[k];
+                        if (i != j) var[j][i] = varAttribute[k];
+                        ++k;
+                    }
+                }
+            } else if (varAttribute.length == dim * dim) { // Fully defined matrix
+                int k = 0;
+                for (int i = 0; i < dim; ++i)
+                    for (int j = 0; j < dim; ++j)
+                        var[i][j] = varAttribute[k++];
+            } else {
+                throw new XMLParseException("Wrong number of elements in variance matrix.");
+            }
+
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new MultivariateNormalDistribution(mean, var, false));
+
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleArrayRule(MEAN),
+                AttributeRule.newDoubleArrayRule(VAR),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given normal distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    private static class MultivariateDistributionLikelihood extends Likelihood.Abstract {
+        private MultivariateDistribution distribution;
+        private List<Statistic> statistics = new ArrayList<>();
+        public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
+            super(null);
+            this.distribution = distribution;
+        }
+        public void addData(Statistic statistic) {
+            statistics.add(statistic);
+        }
+
+        @Override
+        protected double calculateLogLikelihood() {
+            return statistics.stream().mapToDouble(s -> distribution.logPdf(s.getAttributeValue())).sum();
+        }
+
+        @Override
+        public double differentiate(Variable<Double> var, int index) {
+            makeDirty();
+            return Collections.frequency(statistics, var) * distribution.differentiateLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray(), index);
+        }
+    }
+
     /**
      * A special parser that reads a convenient short form of priors on parameters.
      * <p/>
@@ -651,5 +749,7 @@ public class PriorParsers {
             return Likelihood.class;
         }
     };
-    
+
+
+
 }
