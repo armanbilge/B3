@@ -248,8 +248,9 @@ public class TreeLogger extends MCLogger {
             }
             return Long.parseLong(line.trim().substring(TREE_STATE_.length()).split("\\s+")[0]);
         } catch (final IOException|NumberFormatException ex) {
-            throw new RuntimeException("Problem resuming logger!", ex);
+            java.util.logging.Logger.getLogger("beast.evolution").warning(ex.toString());
         }
+        return -1;
     }
 
     private static final String END = "End;";
@@ -532,13 +533,7 @@ public class TreeLogger extends MCLogger {
             }
 
             if (xo.hasAttribute(FILE_NAME)) {
-                try {
-                    logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
-                } catch (XMLParseException xpe) {
-                    // File already exists
-                    if (!xpe.getMessage().contains("overwrite"))
-                        throw xpe;
-                }
+                logger.addFile(XMLParser.getFileHandle(xo, FILE_NAME));
             }
 
             return logger;

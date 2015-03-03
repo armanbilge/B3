@@ -396,7 +396,7 @@ public class XMLParser {
      * @param xo
      * @return
      */
-    private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
+    public static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
         String fileName = xo.getStringAttribute(attributeName);
 
         // Check to see if a filename prefix has been specified, check it doesn't contain directory

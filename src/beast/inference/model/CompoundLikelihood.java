@@ -37,8 +37,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -75,7 +77,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
         }
 
         if (threadCount > 0) {
-            pool = Executors.newFixedThreadPool(threadCount);
+            pool = newThreadPool();
 //        } else if (threads < 0) {
 //            // create a cached thread pool which should create one thread per likelihood...
 //            pool = Executors.newCachedThreadPool();
@@ -488,9 +490,13 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     @Override
     public void resume() {
         if (threadCount > 0)
-            pool = Executors.newFixedThreadPool(threadCount);
+            pool = newThreadPool();
         else
             pool = null;
+    }
+
+    private ExecutorService newThreadPool() {
+        return new ThreadPoolExecutor(0, threadCount, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
     }
 
     private boolean used = false;
