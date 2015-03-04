@@ -1,0 +1,311 @@
+/*
+ * CoercableHamiltonUpdate.java
+ *
+ * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
+ * Copyright (C) 2015 BEAST Developers
+ *
+ * BEAST is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with BEAST.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package beast.inference.hamilton;
+
+import beast.inference.model.Bounds;
+import beast.inference.model.CompoundParameter;
+import beast.inference.model.Likelihood;
+import beast.inference.model.Parameter;
+import beast.inference.operators.CoercionMode;
+import beast.inference.operators.CoercionMode.CoercionModeAttribute;
+import beast.inference.operators.MultiParameterMCMCOperator;
+import beast.inference.operators.OperatorFailedException;
+import beast.math.distributions.MultivariateNormalDistribution;
+import beast.xml.DoubleArrayAttribute;
+import beast.xml.DoubleAttribute;
+import beast.xml.IntegerAttribute;
+import beast.xml.ObjectArrayElement;
+import beast.xml.ObjectElement;
+import beast.xml.Parseable;
+
+import java.util.Arrays;
+
+/**
+ * @author Arman Bilge
+ */
+public class CoercableHamiltonUpdate extends MultiParameterMCMCOperator {
+
+    protected final Likelihood U;
+    protected final MultivariateNormalDistribution K;
+    protected final CompoundParameter q;
+    protected final Parameter p;
+
+    private final int dim;
+    private double[] epsilon;
+    private int L;
+    private double alpha;
+
+    {
+        setTargetAcceptanceProbability(0.65);
+    }
+
+    @Parseable
+    public CoercableHamiltonUpdate(
+            @ObjectElement(name = "potential") Likelihood U,
+            @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
+            @DoubleArrayAttribute(name = "mass", optional = true) double[] massAttribute,
+            @DoubleArrayAttribute(name = "epsilon", optional = true) double[] epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
+            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
+            @OperatorWeightAttribute double weight,
+            @CoercionModeAttribute CoercionMode mode) {
+        this(U, new CompoundParameter("q", parameters), massAttribute, epsilon, L, alpha, weight, mode);
+    }
+
+    public CoercableHamiltonUpdate(final Likelihood U,
+                                   final CompoundParameter q,
+                                   final double[] massAttribute,
+                                   final double[] epsilon,
+                                   final int L,
+                                   final double alpha,
+                                   final double weight,
+                                   final CoercionMode mode) {
+
+        super(mode, q.getDimension());
+
+        this.U = U;
+        this.q = q;
+        dim = q.getDimension();
+        p = new Parameter.Default("p", dim);
+
+        final double[][] mass = new double[dim][dim];
+        if (massAttribute != null) {
+            if (massAttribute.length == dim) { // Diagonal matrix
+                for (int i = 0; i < dim; ++i)
+                    mass[i][i] = massAttribute[i];
+            } else if (massAttribute.length == dim * (dim + 1) / 2) { // Upper symmetric matrix
+                int k = 0;
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = i; j < dim; ++j) {
+                        mass[i][j] = massAttribute[k];
+                        if (i != j) mass[j][i] = massAttribute[k];
+                        ++k;
+                    }
+                }
+            } else if (massAttribute.length == dim * dim) { // Fully defined matrix
+                int k = 0;
+                for (int i = 0; i < dim; ++i)
+                    for (int j = 0; j < dim; ++j)
+                        mass[i][j] = massAttribute[k++];
+            } else {
+                throw new IllegalArgumentException("Wrong number of elements in mass matrix.");
+            }
+        } else {
+            setDefaultMass(mass);
+        }
+
+        K = new MultivariateNormalDistribution(new double[dim], mass, false);
+        p.adoptParameterValues(new Parameter.Default(K.nextMultivariateNormal()));
+
+        if (epsilon != null)
+            if (epsilon.length == dim)
+                this.epsilon = epsilon;
+            else
+                throw new IllegalArgumentException("Wrong number of elements in epsilon vector.");
+        else
+            setDefaultEpsilon();
+
+        if (L > 0)
+            this.L = L;
+        else
+            setDefaultL();
+
+        this.alpha = alpha;
+
+        setWeight(weight);
+    }
+
+    protected void setDefaultMass(final double[][] mass) {
+        for (int i = 0; i < dim; ++i)
+            mass[i][i] = 1;
+    }
+
+    private static final double EPSILON_CONSTANT = 0.0625;
+    protected void setDefaultEpsilon() {
+        epsilon = new double[dim];
+        Arrays.fill(epsilon, EPSILON_CONSTANT * Math.pow(dim, -0.25));
+    }
+
+    private static final int L_CONSTANT = 16;
+    protected void setDefaultL() {
+        L = (int) Math.round(L_CONSTANT * Math.pow(dim, 0.25));
+    }
+
+    protected double[] getEpsilon() {
+        return epsilon;
+    }
+
+    protected void setEpsilon(double[] e) {
+        epsilon = e;
+    }
+
+    protected int getL() {
+        return L;
+    }
+
+    protected void setL(int l) {
+        L = l;
+    }
+
+    protected int getDimension() {
+        return dim;
+    }
+
+    @Override
+    public String getPerformanceSuggestion() {
+        return "No performance suggestion.";
+    }
+
+    @Override
+    public String getOperatorName() {
+        return "hamiltonUpdate" + "(" + (q.getId() != null ? q.getId() : q.getParameterName()) + ")";
+    }
+
+    @Override
+    public double doOperation() throws OperatorFailedException {
+
+        flipMomentum();
+        corruptMomentum();
+
+        final double storedK = kineticEnergy();
+        p.storeParameterValues();
+
+        simulateDynamics();
+        flipMomentum();
+
+        final double proposedK = kineticEnergy();
+
+        return proposedK - storedK;
+    }
+
+    protected void corruptMomentum() {
+        final double sqrtalpha = Math.sqrt(alpha);
+        final double sqrt1malpha = Math.sqrt(1 - alpha);
+        final double[] n = K.nextMultivariateNormal();
+        for (int i = 0; i < dim; ++i) {
+            final double p_ = p.getParameterValue(i) * sqrt1malpha + n[i] * sqrtalpha;
+            p.setParameterValueQuietly(i, p_);
+        }
+        p.fireParameterChangedEvent();
+    }
+
+    protected void simulateDynamics() {
+
+        for (int i = 0; i < dim; ++i) {
+            final double dU = epsilon[i] / 2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double p_ = p.getParameterValue(i) - dU;
+            // Quiet due to the large overhead of multiple calls
+            p.setParameterValueQuietly(i, p_);
+        }
+        // Make up for quiet behaviour above
+        p.fireParameterChangedEvent();
+
+        final Bounds<Double> bounds = q.getBounds();
+        for (int l = 0; l < L; ++l) {
+            for (int i = 0; i < dim; ++i) {
+                double q_ = q.getParameterValue(i) - epsilon[i] * p.getParameterValue(i);
+                final double lower = bounds.getLowerLimit(i);
+                final double upper = bounds.getUpperLimit(i);
+                while (q_ < lower || q_ > upper) {
+                    q_ = 2 * (q_ < lower ? lower : upper) - q_;
+                    final double p_i = p.getParameterValue(i);
+                    p.setParameterValue(i, -p_i);
+                }
+                q.setParameterValueQuietly(i, q_);
+            }
+
+            q.fireParameterChangedEvent();
+
+            if (l < L - 1)
+                for (int i = 0; i < dim; ++i) {
+                    final double dU = epsilon[i] * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    final double p_ = p.getParameterValue(i) - dU;
+                    p.setParameterValueQuietly(i, p_);
+                }
+            p.fireParameterChangedEvent();
+        }
+
+        for (int i = 0; i < dim; ++i) {
+            final double dU = epsilon[i] / 2 * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double p_ = p.getParameterValue(i) - dU;
+            p.setParameterValueQuietly(i, p_);
+        }
+        p.fireParameterChangedEvent();
+
+    }
+
+    protected void flipMomentum() {
+        for (int i = 0; i < dim; ++i)
+            p.setParameterValue(i, - p.getParameterValue(i));
+    }
+
+    protected double kineticEnergy() {
+        return K.logPdf(p.getParameterValues());
+    }
+
+    @Override
+    public void accept(double deviation) {
+        super.accept(deviation);
+        p.acceptParameterValues();
+    }
+
+    @Override
+    public void reject() {
+        super.reject();
+        p.restoreParameterValues();
+    }
+
+    @Override
+    public double getCoercableParameter() {
+        return Math.log(epsilon[getCurrentDimension()]);
+    }
+
+    @Override
+    public void setCoercableParameter(double value) {
+        epsilon[getCurrentDimension()] = Math.exp(value);
+    }
+
+    @Override
+    public double getRawParameter() {
+        return epsilon[getCurrentDimension()];
+    }
+
+    @Override
+    public double getMinimumAcceptanceLevel() {
+        return 0.3;
+    }
+
+    @Override
+    public double getMaximumAcceptanceLevel() {
+        return 1.00;
+    }
+
+    @Override
+    public double getMinimumGoodAcceptanceLevel() {
+        return 0.5;
+    }
+
+    @Override
+    public double getMaximumGoodAcceptanceLevel() {
+        return 0.8;
+    }
+
+}
