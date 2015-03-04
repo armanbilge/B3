@@ -54,7 +54,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     private double alpha;
 
     {
-        setTargetAcceptanceProbability(0.65);
+        setTargetAcceptanceProbability(0.651);
     }
 
     @Parseable
