@@ -292,7 +292,6 @@ public class MCMC implements Identifiable, Spawnable {
         public void currentState(long state, Model currentModel) {
 
             currentState = state;
-
             if (loggers != null) {
                 for (Logger logger : loggers) {
                     logger.log(state);

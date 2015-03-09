@@ -22,6 +22,7 @@ package beast.inference.prior;
 
 import beast.inference.distribution.DistributionLikelihood;
 import beast.inference.model.Likelihood;
+import beast.inference.model.Model;
 import beast.inference.model.Statistic;
 import beast.inference.model.Variable;
 import beast.math.distributions.BetaDistribution;
@@ -469,27 +470,152 @@ public class PriorParsers {
         }
     };
 
-    private static class MultivariateDistributionLikelihood extends Likelihood.Abstract {
+    private static class MultivariateDistributionLikelihood implements Likelihood {
+
         private MultivariateDistribution distribution;
         private List<Statistic> statistics = new ArrayList<>();
+
         public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-            super(null);
             this.distribution = distribution;
         }
+
+        public void modelChangedEvent(Model model, Object object, int index) {
+            makeDirty();
+        }
+
+        // by default restore is the same as changed
+        public void modelRestored(Model model) {
+            makeDirty();
+        }
+
+        // **************************************************************
+        // Likelihood IMPLEMENTATION
+        // **************************************************************
+
+        /**
+         * Get the model.
+         * @return the model.
+         */
+        public Model getModel() { return null; }
+
+        public final double getLogLikelihood() {
+            return statistics.stream().mapToDouble(s -> distribution.logPdf(s.getAttributeValue())).sum();
+        }
+
+        public void makeDirty() {
+        }
+
         public void addData(Statistic statistic) {
             statistics.add(statistic);
         }
 
-        @Override
-        protected double calculateLogLikelihood() {
-            return statistics.stream().mapToDouble(s -> distribution.logPdf(s.getAttributeValue())).sum();
-        }
-
-        @Override
         public double differentiate(Variable<Double> var, int index) {
-            makeDirty();
             return Collections.frequency(statistics, var) * distribution.differentiateLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray(), index);
         }
+
+
+//        @Override
+//        protected double calculateLogLikelihood() {
+//            return statistics.stream().mapToDouble(s -> distribution.logPdf(s.getAttributeValue())).sum();
+//        }
+//
+//        @Override
+//        public double differentiate(Variable<Double> var, int index) {
+//            makeDirty();
+//            return Collections.frequency(statistics, var) * distribution.differentiateLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray(), index);
+//        }
+
+        public String toString() {
+            // don't call any "recalculating" stuff like getLogLikelihood() in toString -
+            // this interferes with the debugger.
+
+            //return getClass().getName() + "(" + getLogLikelihood() + ")";
+            return getClass().getName() + "(" + ("??") + ")";
+        }
+
+        static public String getPrettyName(Likelihood l) {
+            final Model m = l.getModel();
+            String s = l.getClass().getName();
+            String[] parts = s.split("\\.");
+            s = parts[parts.length - 1];
+            if( m != null ) {
+                final String modelName = m.getModelName();
+                final String i = m.getId();
+                s = s + "(" + modelName;
+                if( i != null && !i.equals(modelName) ) {
+                    s = s + '[' + i + ']';
+                }
+                s = s + ")";
+            }
+            return s;
+        }
+
+        public String prettyName() {
+            return getPrettyName(this);
+        }
+
+        public boolean isUsed() {
+            return used;
+        }
+
+        public void setUsed() {
+            this.used = true;
+        }
+
+        public boolean evaluateEarly() {
+            return false;
+        }
+
+        // **************************************************************
+        // Loggable IMPLEMENTATION
+        // **************************************************************
+
+        /**
+         * @return the log columns.
+         */
+        public beast.inference.loggers.LogColumn[] getColumns() {
+            return new beast.inference.loggers.LogColumn[] {
+                    new LikelihoodColumn(getId())
+            };
+        }
+
+        private class LikelihoodColumn extends beast.inference.loggers.NumberColumn {
+            public LikelihoodColumn(String label) { super(label); }
+            public double getDoubleValue() { return getLogLikelihood(); }
+        }
+
+        // **************************************************************
+        // Identifiable IMPLEMENTATION
+        // **************************************************************
+
+        private String id = null;
+
+        public void setId(String id) { this.id = id; }
+
+        public String getId() { return id; }
+
+        private boolean used = false;
+
+//        private MultivariateDistribution distribution;
+//        private List<Statistic> statistics = new ArrayList<>();
+//        public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
+//            super(null);
+//            this.distribution = distribution;
+//        }
+//        public void addData(Statistic statistic) {
+//            statistics.add(statistic);
+//        }
+//
+//        @Override
+//        protected double calculateLogLikelihood() {
+//            return statistics.stream().mapToDouble(s -> distribution.logPdf(s.getAttributeValue())).sum();
+//        }
+//
+//        @Override
+//        public double differentiate(Variable<Double> var, int index) {
+//            makeDirty();
+//            return Collections.frequency(statistics, var) * distribution.differentiateLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray(), index);
+//        }
     }
 
     /**

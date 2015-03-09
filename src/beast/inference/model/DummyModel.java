@@ -22,9 +22,11 @@ package beast.inference.model;
 
 import beast.inference.loggers.LogColumn;
 import beast.xml.AbstractXMLObjectParser;
+import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
 import beast.xml.XMLObject;
 import beast.xml.XMLObjectParser;
+import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 
 /**
@@ -34,17 +36,34 @@ public class DummyModel extends AbstractModelLikelihood {
 
     public static final String DUMMY_MODEL = "dummyModel";
 
+    final double likelihood;
+
     public DummyModel() {
+        this(0.0);
+    }
+
+    public DummyModel(double logL) {
         super(DUMMY_MODEL);
+        likelihood = logL;
     }
 
     public DummyModel(String str) {
+        this(str, 0.0);
+    }
+
+    public DummyModel(String str, double logL) {
         super(str);
+        likelihood = logL;
     }
 
     public DummyModel(Parameter parameter) {
+        this(parameter, 0.0);
+    }
+
+    public DummyModel(Parameter parameter, double logL) {
         super(DUMMY_MODEL);
         addVariable(parameter);
+        likelihood = logL;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -72,7 +91,7 @@ public class DummyModel extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        return 0;
+        return likelihood;
     }
 
     public double differentiate(Variable<Double> var, int index) {
@@ -89,13 +108,15 @@ public class DummyModel extends AbstractModelLikelihood {
 
     public static final XMLObjectParser<DummyModel> PARSER = new AbstractXMLObjectParser<DummyModel>() {
 
+        static final String LOG_L = "logL";
+
         public String getParserName() {
             return DUMMY_MODEL;
         }
 
-        public DummyModel parseXMLObject(XMLObject xo) {
+        public DummyModel parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            DummyModel likelihood = new DummyModel();
+            DummyModel likelihood = new DummyModel(xo.getAttribute(LOG_L, 0.0));
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
@@ -122,7 +143,8 @@ public class DummyModel extends AbstractModelLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+                AttributeRule.newDoubleRule(LOG_L, true)
         };
     };
 

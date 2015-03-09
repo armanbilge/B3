@@ -236,6 +236,14 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i) {
+//                    if (MathUtils.nextInt(8) == 0) {
+//                        final double x = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+//                        final double y = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
+//                        if (Math.abs(y - x) / x > 0.000001) {
+//                            System.err.println(x + " " + y);
+//                            U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+//                            Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));                        }
+//                    }
                     final double dU = epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
                     final double p_ = p.getParameterValue(i) - dU;
                     p.setParameterValueQuietly(i, p_);

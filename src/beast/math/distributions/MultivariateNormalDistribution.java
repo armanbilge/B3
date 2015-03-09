@@ -258,8 +258,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     // TODO should be a junit test
     public static void main(String[] args) {
-        testPdf();
-        testRandomDraws();
+//        testPdf();
+//        testRandomDraws();
+        MultivariateNormalDistribution N = new MultivariateNormalDistribution(new double[]{0.9948, 7.435E-2}, new double[][]{{2.619581e-03, 4.580598e-05},{4.580598e-05, 1.949741e-04}}, false);
+        System.out.println(N.logPdf(new double[]{0.1347090198630364, 0.13429109725786867}));
     }
 
     public static void testPdf() {
