@@ -470,7 +470,7 @@ public class PriorParsers {
         }
     };
 
-    private static class MultivariateDistributionLikelihood implements Likelihood {
+    public static class MultivariateDistributionLikelihood implements Likelihood {
 
         private MultivariateDistribution distribution;
         private List<Statistic> statistics = new ArrayList<>();
