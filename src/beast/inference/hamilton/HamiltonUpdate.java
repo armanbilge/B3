@@ -184,14 +184,18 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         corruptMomentum();
 
         final double storedK = kineticEnergy();
+        final double storedU = potentialEnergy();
         p.storeParameterValues();
 
         simulateDynamics();
         flipMomentum();
 
         final double proposedK = kineticEnergy();
+        final double proposedU = potentialEnergy();
 
-        return proposedK - storedK;
+        final double error = -(proposedK + proposedU) + (storedK + storedU);
+
+        return storedK - proposedK;
     }
 
     protected void corruptMomentum() {
@@ -210,7 +214,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         final double halfEpsilon = epsilon / 2;
 
         for (int i = 0; i < dim; ++i) {
-            final double dU = halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double dU = halfEpsilon * differentiatePotentialEnergy(i);
             final double p_ = p.getParameterValue(i) - dU;
             // Quiet due to the large overhead of multiple calls
             p.setParameterValueQuietly(i, p_);
@@ -221,7 +225,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
             for (int i = 0; i < dim; ++i) {
-                double q_ = q.getParameterValue(i) - epsilon * p.getParameterValue(i);
+                double q_ = q.getParameterValue(i) + epsilon * p.getParameterValue(i);
                 final double lower = bounds.getLowerLimit(i);
                 final double upper = bounds.getUpperLimit(i);
                 while (q_ < lower || q_ > upper) {
@@ -244,7 +248,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 //                            U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
 //                            Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));                        }
 //                    }
-                    final double dU = epsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+                    final double dU = epsilon * differentiatePotentialEnergy(i);
                     final double p_ = p.getParameterValue(i) - dU;
                     p.setParameterValueQuietly(i, p_);
                 }
@@ -253,7 +257,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
 
         for (int i = 0; i < dim; ++i) {
-            final double dU = halfEpsilon * U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double dU = halfEpsilon * differentiatePotentialEnergy(i);
             final double p_ = p.getParameterValue(i) - dU;
             p.setParameterValueQuietly(i, p_);
         }
@@ -266,8 +270,16 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             p.setParameterValue(i, - p.getParameterValue(i));
     }
 
+    protected double potentialEnergy() {
+        return - U.getLogLikelihood();
+    }
+
+    protected double differentiatePotentialEnergy(int i) {
+        return - U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+    }
+
     protected double kineticEnergy() {
-        return K.logPdf(p.getParameterValues());
+        return - K.logPdf(p.getParameterValues());
     }
 
     private double calculateDistance(double[] a, double[] b) {
