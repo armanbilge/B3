@@ -56,7 +56,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     private double distance;
 
     {
-        setTargetAcceptanceProbability(0.65);
+        setTargetAcceptanceProbability(0.651);
     }
 
     @Parseable
@@ -193,8 +193,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         final double proposedK = kineticEnergy();
         final double proposedU = potentialEnergy();
 
-        final double error = -(proposedK + proposedU) + (storedK + storedU);
-
         return storedK - proposedK;
     }
 
@@ -225,7 +223,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
             for (int i = 0; i < dim; ++i) {
-                double q_ = q.getParameterValue(i) + epsilon * p.getParameterValue(i);
+                double q_ = q.getParameterValue(i) + epsilon * differentiateKineticEnergy(i);
                 final double lower = bounds.getLowerLimit(i);
                 final double upper = bounds.getUpperLimit(i);
                 while (q_ < lower || q_ > upper) {
@@ -240,14 +238,6 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
             if (l < L - 1)
                 for (int i = 0; i < dim; ++i) {
-//                    if (MathUtils.nextInt(8) == 0) {
-//                        final double x = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-//                        final double y = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
-//                        if (Math.abs(y - x) / x > 0.000001) {
-//                            System.err.println(x + " " + y);
-//                            U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-//                            Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));                        }
-//                    }
                     final double dU = epsilon * differentiatePotentialEnergy(i);
                     final double p_ = p.getParameterValue(i) - dU;
                     p.setParameterValueQuietly(i, p_);
@@ -282,15 +272,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         return - K.logPdf(p.getParameterValues());
     }
 
-    private double calculateDistance(double[] a, double[] b) {
-        double d = 0.0;
-        for (int i = 0; i < a.length; ++i)
-            d += (a[i] - b[i]) * (a[i] - b[i]);
-        return Math.sqrt(d);
-    }
-
-    public double getDistance() {
-        return distance;
+    protected double differentiateKineticEnergy(int i) {
+        return - K.differentiateLogPdf(p.getParameterValues(), i);
     }
 
     @Override
