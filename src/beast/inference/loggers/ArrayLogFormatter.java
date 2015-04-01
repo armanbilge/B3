@@ -91,4 +91,6 @@ public class ArrayLogFormatter implements LogFormatter {
             System.out.println();
         }
     }
+
+
 }

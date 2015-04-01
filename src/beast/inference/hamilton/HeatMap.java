@@ -52,7 +52,7 @@ public class HeatMap {
         final double base = 1.25;
 
         Arrays.stream(positions)
-//                .parallel()
+                .parallel()
                 .forEach(ij -> {
             Parameter q = new Parameter.Default("q", 2);
 //            q.setParameterValue(0, 0.07447646);

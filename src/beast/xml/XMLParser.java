@@ -360,8 +360,9 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
-                    if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
-                        ((Spawnable) obj).run();
+                    if (obj instanceof Spawnable) {
+                        if (((Spawnable) obj).getSpawnable())
+                            ((Spawnable) obj).run();
                     } else {
                         Thread thread = new Thread((Runnable) obj);
                         thread.start();

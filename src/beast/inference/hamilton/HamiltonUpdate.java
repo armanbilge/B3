@@ -59,7 +59,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         setTargetAcceptanceProbability(0.651);
     }
 
-    @Parseable
+//    @Parseable
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
@@ -70,6 +70,19 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
         this(U, new CompoundParameter("q", parameters), massAttribute, epsilon, L, alpha, weight, mode);
+    }
+
+    @Parseable
+    public HamiltonUpdate(
+            @ObjectElement(name = "potential") Likelihood U,
+            @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
+            @ObjectElement(name = "mass") MassMatrix mm,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
+            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
+            @OperatorWeightAttribute double weight,
+            @CoercionModeAttribute CoercionMode mode) {
+        this(U, new CompoundParameter("q", parameters), mm.getMassMatrix(), epsilon, L, alpha, weight, mode);
     }
 
     public HamiltonUpdate(final Likelihood U,
