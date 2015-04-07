@@ -184,27 +184,35 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         return logLikelihood;
     }
 
-    protected void differentiateBranches() {
+    protected void differentiateBranchSubstitutions() {
         if (!derivativesKnown) {
             NodeRef node = treeModel.getRoot();
             do {
-                derivatives[node.getNumber()] = differentiateRespectingBranch(node);
+                derivatives[node.getNumber()] = differentiateRespectingBranchSubstitutions(node);
                 node = treeModel.preorderSuccessor(node);
             } while (!treeModel.isRoot(node));
             derivativesKnown = true;
         }
     }
 
+    protected double getDerivativeRespectingBranchSubstitutions(final NodeRef node) {
+        return derivatives[node.getNumber()];
+    }
+
     protected double differentiateRespectingNode(final NodeRef node) {
-        double deriv = -derivatives[node.getNumber()];
+        double deriv = - differentiateRespectingBranch(node);
         if (!treeModel.isExternal(node)) {
-            deriv += derivatives[treeModel.getChild(node, 0).getNumber()];
-            deriv += derivatives[treeModel.getChild(node, 1).getNumber()];
+            deriv += differentiateRespectingBranch(treeModel.getChild(node, 0));
+            deriv += differentiateRespectingBranch(treeModel.getChild(node, 1));
         }
         return deriv;
     }
 
+    protected abstract double differentiateRespectingBranchSubstitutions(NodeRef node);
+
     protected abstract double differentiateRespectingBranch(NodeRef node);
+
+    protected abstract double differentiateRespectingRate(NodeRef node);
 
     /**
      * Forces a complete recalculation of the likelihood next time getLikelihood is called

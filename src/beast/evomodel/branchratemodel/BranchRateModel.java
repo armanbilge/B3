@@ -28,6 +28,8 @@ import beast.evolution.tree.TreeTraitProvider;
 import beast.inference.model.Model;
 import beast.inference.model.Variable;
 
+import java.util.stream.IntStream;
+
 /**
  * Date: Dec 13, 2004
  * Time: 1:59:24 PM
@@ -42,4 +44,11 @@ public interface BranchRateModel extends Model, BranchRates, TreeTraitProvider, 
     // This is inherited from BranchRates:
     // double getBranchRate(Tree tree, NodeRef node);
     boolean isVariableForNode(Tree tree, NodeRef node, Variable<Double> var, int index);
+
+    default NodeRef[] getNodesForVariable(final Tree tree, final Variable<Double> var, final int index) {
+        return IntStream.range(0, tree.getNodeCount())
+                .mapToObj(tree::getNode)
+                .filter(node -> isVariableForNode(tree, node, var, index))
+                .toArray(NodeRef[]::new);
+    }
 }
