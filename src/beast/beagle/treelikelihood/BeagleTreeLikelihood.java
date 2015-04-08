@@ -41,8 +41,8 @@ import beast.evolution.util.TaxonList;
 import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteRateModel;
-import beast.evomodel.tree.TreeModel;
 import beast.evomodel.tree.TipStatesModel;
+import beast.evomodel.tree.TreeModel;
 import beast.evomodel.treelikelihood.TreeLikelihood;
 import beast.inference.model.CompoundLikelihood;
 import beast.inference.model.CompoundParameter;
@@ -910,29 +910,46 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     public double differentiate(Variable<Double> var, int index) {
 
+        getLogLikelihood();
+        differentiateBranchSubstitutions();
+
+        double deriv = 0.0;
+
+        for (final NodeRef node : branchRateModel.getNodesForVariable(treeModel, var, index))
+            deriv += differentiateRespectingRate(node);
+
         if (var instanceof CompoundParameter)
             var = ((CompoundParameter) var).getMaskedParameter(index);
         if (var instanceof Parameter) {
             final Parameter param = (Parameter) var;
             final NodeRef node = treeModel.getNodeOfParameter(param);
             if (node != null && treeModel.isHeightParameterForNode(node, param)) {
-                getLogLikelihood();
-                differentiateBranches();
-                return differentiateRespectingNode(node);
+                deriv += differentiateRespectingNode(node);
             }
         }
 
-        return 0.0;
+        return deriv;
     }
 
-    protected double differentiateRespectingBranch(final NodeRef node) {
+    @Override
+    protected double differentiateRespectingBranchSubstitutions(final NodeRef node) {
 
         double deriv = 0.0;
         if (!treeModel.isRoot(node)) {
-            deriv = branchRateModel.getBranchRate(treeModel, node) * calculateDifferentiatedLogLikelihood(node);
+            deriv = calculateDifferentiatedLogLikelihood(node);
             updateNode[node.getNumber()] = true;
         }
         return deriv;
+    }
+
+    @Override
+    protected double differentiateRespectingBranch(final NodeRef node) {
+        return branchRateModel.getBranchRate(treeModel, node) * getDerivativeRespectingBranchSubstitutions(node);
+    }
+
+    @Override
+    protected double differentiateRespectingRate(final NodeRef node) {
+        return treeModel.getBranchLength(node) * getDerivativeRespectingBranchSubstitutions(node);
     }
 
     protected double calculateDifferentiatedLogLikelihood(final NodeRef respectedNode) {
