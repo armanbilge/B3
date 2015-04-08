@@ -33,6 +33,7 @@ import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  * @author Alexei Drummond
@@ -80,6 +81,14 @@ public class StrictClockBranchRates extends AbstractBranchRateModel {
 
     public boolean isVariableForNode(final Tree tree, final NodeRef node, final Variable<Double> var, final int index) {
         return var == rateParameter;
+    }
+
+    public NodeRef[] getNodesForVariable(final Tree tree, final Variable<Double> var, final int index) {
+        if (var == rateParameter)
+            return IntStream.range(0, tree.getNodeCount())
+                    .mapToObj(tree::getNode)
+                    .toArray(NodeRef[]::new);
+        return new NodeRef[0];
     }
 
     public static final XMLObjectParser<StrictClockBranchRates> PARSER = new AbstractXMLObjectParser<StrictClockBranchRates>() {
