@@ -112,12 +112,11 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
                     return Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold(), i);
                 }
             }
-		} else {
-            DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
-            return Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
-        }
+		}
 
-		return 0;
+		DemographicFunction demoFunction = demoModel.getDifferentiatedDemographicFunction(var, index);
+		return Coalescent.differentiateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
+
 	}
 
 	// **************************************************************
