@@ -59,7 +59,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         setTargetAcceptanceProbability(0.651);
     }
 
-//    @Parseable
+    @Parseable
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
@@ -72,7 +72,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         this(U, new CompoundParameter("q", parameters), massAttribute, epsilon, L, alpha, weight, mode);
     }
 
-    @Parseable
+//    @Parseable
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
@@ -278,7 +278,12 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     }
 
     protected double differentiatePotentialEnergy(int i) {
-        return - U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+        final double analytic = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
+        if (i == 0) {
+            final double numerical = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
+            final double d = analytic - numerical;
+        }
+        return - analytic;
     }
 
     protected double kineticEnergy() {
