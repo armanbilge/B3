@@ -30,10 +30,7 @@ import beast.beagle.treelikelihood.PartialsRescalingScheme;
 import beast.evolution.alignment.SitePatterns;
 import beast.evolution.datatype.Nucleotides;
 import beast.evomodel.branchratemodel.BranchRateModel;
-import beast.inference.hamilton.HamiltonUpdate;
 import beast.inference.model.Parameter;
-import beast.inference.operators.CoercionMode;
-import beast.inference.operators.OperatorFailedException;
 import beast.inference.trace.TraceCorrelationAssert;
 import org.junit.Test;
 
@@ -88,12 +85,12 @@ public class Playground extends TraceCorrelationAssert {
 
         System.out.println(treeModel.newick());
 
-        HamiltonUpdate hu = new HamiltonUpdate(treeLikelihood, new Parameter[]{treeModel.createPreOrderNodeHeightsParameter(true, true, false)}, null, 0.125, 100, 1.0, 1.0, CoercionMode.COERCION_OFF);
-        try {
-            hu.operate();
-        } catch (OperatorFailedException e) {
-            e.printStackTrace();
-        }
+//        HamiltonUpdate hu = new HamiltonUpdate(treeLikelihood, new Parameter[]{treeModel.createPreOrderNodeHeightsParameter(true, true, false)}, null, 0.125, 100, 1.0, 1.0, CoercionMode.COERCION_OFF);
+//        try {
+//            hu.operate();
+//        } catch (OperatorFailedException e) {
+//            e.printStackTrace();
+//        }
 
         System.out.println(treeModel.newick());
         System.out.println(treeLikelihood.getLogLikelihood());
