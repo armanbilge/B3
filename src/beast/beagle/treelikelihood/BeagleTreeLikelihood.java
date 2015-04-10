@@ -934,25 +934,26 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     @Override
     protected double differentiateRespectingBranchSubstitutions(final NodeRef node) {
 
-        double deriv = 0.0;
-        if (!treeModel.isRoot(node)) {
-            deriv = calculateDifferentiatedLogLikelihood(node);
-            updateNode[node.getNumber()] = true;
-        }
-        return deriv;
+        if (treeModel.isRoot(node))
+            return 0.0;
+        return calculateDifferentiatedLogLikelihood(node);
     }
 
     @Override
     protected double differentiateRespectingBranch(final NodeRef node) {
+        if (treeModel.isRoot(node))
+            return 0.0;
         return branchRateModel.getBranchRate(treeModel, node) * getDerivativeRespectingBranchSubstitutions(node);
     }
 
     @Override
     protected double differentiateRespectingRate(final NodeRef node) {
+        if (treeModel.isRoot(node))
+            return 0.0;
         return treeModel.getBranchLength(node) * getDerivativeRespectingBranchSubstitutions(node);
     }
 
-    protected double calculateDifferentiatedLogLikelihood(final NodeRef respectedNode) {
+    protected double calculateDifferentiatedLogLikelihood(final NodeRef respectedBranch) {
 
         if (differentiatedPatternLogLikelihoods == null) {
             differentiatedPatternLogLikelihoods = new double[patternCount];
@@ -969,7 +970,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
 
         final NodeRef root = treeModel.getRoot();
-        traverseDifferentiate(treeModel, root, respectedNode);
+        traverseDifferentiate(treeModel, root, respectedBranch);
 
         if (hasRestrictedPartials) {
             for (int i = 0; i <= numRestrictedPartials; i++) {
@@ -988,15 +989,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         for (int i = 0; i < patternCount; ++i)
             deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
 
-        //********************************************************************
-        // after traverse all nodes and patterns have been updated --
-        //so change flags to reflect this.
-        for (int i = 0; i < nodeCount; i++) {
-            updateNode[i] = false;
-        }
-
-        //********************************************************************
-
         return deriv;
     }
 
@@ -1006,7 +998,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         if (partials == null)
             partials = new double[stateCount * patternCount * categoryCount];
 
-        getPartials(treeModel.getRoot().getNumber(), partials);
+        getDifferentiatedPartials(treeModel.getRoot().getNumber(), partials);
 
         final double[] categoryWeights = this.siteRateModel.getCategoryProportions();
         final double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
@@ -1028,6 +1020,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         int cumulativeBufferIndex = Beagle.NONE;
         /* No need to rescale partials */
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
+    }
+
+    public void getDifferentiatedPartials(int number, double[] partials) {
+        int cumulativeBufferIndex = Beagle.NONE;
+        /* No need to rescale partials */
+        beagle.getPartials(getDerivativePartialsBuffer(number), cumulativeBufferIndex, partials);
     }
 
     public boolean arePartialsRescaled() {
@@ -1212,23 +1210,21 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     }
 
-    private boolean traverseDifferentiate(Tree tree, NodeRef node, NodeRef respectedNode) {
+    private boolean traverseDifferentiate(Tree tree, NodeRef node, NodeRef respectedBranch) {
 
         int nodeNum = node.getNumber();
 
-        NodeRef parent = tree.getParent(node);
-
-        boolean update = (parent != null && updateNode[nodeNum]) || node == respectedNode;
+        boolean update = node == respectedBranch;
 
         // If the node is internal, update the partial likelihoods.
         if (!tree.isExternal(node)) {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverseDifferentiate(tree, child1, respectedNode);
+            final boolean update1 = traverseDifferentiate(tree, child1, respectedBranch);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverseDifferentiate(tree, child2, respectedNode);
+            final boolean update2 = traverseDifferentiate(tree, child2, respectedBranch);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -1237,7 +1233,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                 final int[] operations = this.operations[operationListCount];
 
-                operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
+                operations[x] = getDerivativePartialsBuffer(node.getNumber());
 
                 if (useScaleFactors) {
                     // get the index of this scaling buffer
@@ -1267,10 +1263,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                     operations[x + 2] = Beagle.NONE;
                 }
 
-                operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
-                operations[x + 4] = child1 == respectedNode ? substitutionModelDelegate.getDerivativeMatrixIndex(child1.getNumber()) : substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-                operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
-                operations[x + 6] = child2 == respectedNode ? substitutionModelDelegate.getDerivativeMatrixIndex(child2.getNumber()) : substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
+                operations[x + 3] = (update1 && child1 != respectedBranch) ? getDerivativePartialsBuffer(child1.getNumber()) : partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
+                operations[x + 4] = child1 == respectedBranch ? substitutionModelDelegate.getDerivativeMatrixIndex(child1.getNumber()) : substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
+                operations[x + 5] = (update2 && child2 != respectedBranch) ? getDerivativePartialsBuffer(child2.getNumber()) : partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
+                operations[x + 6] = child2 == respectedBranch ? substitutionModelDelegate.getDerivativeMatrixIndex(child2.getNumber()) : substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
 
                 operationCount[operationListCount]++;
 
@@ -1538,6 +1534,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return siteLogLikelihoods;
     }
 
+    protected int getDerivativePartialsBuffer(final int i) {
+        return i + partialBufferHelper.getBufferCount() - treeModel.getExternalNodeCount();
+    }
+
     @Override
     public void resume() {
         reloadBeagle();
@@ -1556,7 +1556,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     protected void loadBeagleInstance() {
         beagle = BeagleFactory.loadBeagleInstance(
                 tipCount,
-                partialBufferHelper.getBufferCount(),
+                partialBufferHelper.getBufferCount() + internalNodeCount,
                 compactPartialsCount,
                 stateCount,
                 patternCount,
