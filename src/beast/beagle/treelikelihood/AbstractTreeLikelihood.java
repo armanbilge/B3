@@ -186,11 +186,10 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     protected void differentiateBranchSubstitutions() {
         if (!derivativesKnown) {
-            NodeRef node = treeModel.getRoot();
-            do {
-                derivatives[node.getNumber()] = differentiateRespectingBranchSubstitutions(node);
-                node = treeModel.preorderSuccessor(node);
-            } while (!treeModel.isRoot(node));
+            for (int i = 0; i < treeModel.getNodeCount(); ++i) {
+                final NodeRef n = treeModel.getNode(i);
+                derivatives[n.getNumber()] = differentiateRespectingBranchSubstitutions(n);
+            }
             derivativesKnown = true;
         }
     }
