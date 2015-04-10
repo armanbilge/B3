@@ -1,5 +1,5 @@
 /*
- * ParserFrame.java
+ * OrRulePaneFactory.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
  * Copyright (C) 2015 BEAST Developers
@@ -20,33 +20,40 @@
 
 package beast.app.beauti;
 
-import beast.xml.AndRule;
+import beast.xml.OrRule;
 import beast.xml.XMLObject;
 import beast.xml.XMLSyntaxRule;
-
-import javax.swing.BoxLayout;
+import javafx.scene.control.CheckBox;
 
 /**
  * @author Arman Bilge
  */
-final class AndRulePanelFactory extends RulePanelFactory<AndRule> {
+final class OrRulePaneFactory extends RulePaneFactory<OrRule> {
 
     @Override
-    protected Class<AndRule> getRuleType() {
-        return AndRule.class;
+    protected Class<OrRule> getRuleType() {
+        return OrRule.class;
     }
 
     @Override
-    protected RulePanel createPanel(final XMLObject xo, final AndRule rule) {
-        return new AndRulePanel(xo, rule);
+    protected RulePane createPane(final XMLObject xo, final OrRule rule) {
+        return new OrRulePane(xo, rule);
     }
 
-    private static final class AndRulePanel extends RulePanel<AndRule> {
-        protected AndRulePanel(final XMLObject xo, final AndRule rule) {
+    private static final class OrRulePane extends RulePane<OrRule> {
+        protected OrRulePane(final XMLObject xo, final OrRule rule) {
             super(xo, rule);
-            setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-            for (final XMLSyntaxRule r : rule.getRules())
-                add(createRulePanel(xo, r));
+            int row = 0;
+            for (final XMLSyntaxRule r : rule.getRules()) {
+                final CheckBox cb = new CheckBox();
+                final RulePane<?> rp = createRulePane(xo, r);
+                cb.selectedProperty().addListener((ov, oldValue, newValue) -> {
+                    rp.setDisable(!newValue);
+                });
+                add(cb, 0, row);
+                add(rp, 1, row);
+                ++row;
+            }
         }
     }
 }

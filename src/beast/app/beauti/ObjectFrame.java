@@ -68,6 +68,7 @@ import java.util.Set;
 /**
 * @author Arman Bilge
 */
+@Deprecated
 class ObjectFrame<T> extends JFrame implements DocumentListener {
 
     protected final Beauti beauti;

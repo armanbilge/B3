@@ -1,5 +1,5 @@
 /*
- * ParserFrame.java
+ * RulePane.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
  * Copyright (C) 2015 BEAST Developers
@@ -21,21 +21,24 @@
 package beast.app.beauti;
 
 import beast.xml.XMLObject;
-import beast.xml.XMLObjectParser;
-
-import javax.swing.JFrame;
+import beast.xml.XMLSyntaxRule;
+import javafx.scene.layout.GridPane;
 
 /**
  * @author Arman Bilge
  */
-public abstract class ParserFrame<P extends XMLObjectParser<?>> extends JFrame {
+public abstract class RulePane<R extends XMLSyntaxRule> extends GridPane {
 
     private final XMLObject xo;
+    private final R rule;
 
-    protected ParserFrame(final XMLObject xo) {
+    protected RulePane(final XMLObject xo, final R rule) {
         this.xo = xo;
+        this.rule = rule;
     }
 
-    protected abstract Class<P> getParserType();
+    public XMLObject getXMLObject() {
+        return xo;
+    }
 
 }

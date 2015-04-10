@@ -1,5 +1,5 @@
 /*
- * ParserFrameFactory.java
+ * ParserPaneFactory.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
  * Copyright (C) 2015 BEAST Developers
@@ -29,23 +29,23 @@ import java.util.Map;
 /**
  * @author Arman Bilge
  */
-public abstract class ParserFrameFactory<P extends XMLObjectParser<?>,F extends DefaultParserFrame<P>> {
+public abstract class ParserPaneFactory<P extends XMLObjectParser<?>,F extends DefaultParserPane<P>> {
 
     protected abstract Class<P> getParserType();
 
     protected abstract F createFrame(XMLObject xo);
 
-    private static final Map<Class<? extends XMLObjectParser<?>>,ParserFrameFactory<?,?>> factories = new HashMap<>();
+    private static final Map<Class<? extends XMLObjectParser<?>>,ParserPaneFactory<?,?>> factories = new HashMap<>();
 
-    public static <X extends XMLObjectParser<?>> DefaultParserFrame<X> createParserFrame(final X parser, final XMLObject xo) {
-        final ParserFrameFactory factory = factories.get(parser.getClass());
+    public static <X extends XMLObjectParser<?>> DefaultParserPane<X> createParserFrame(final X parser, final XMLObject xo) {
+        final ParserPaneFactory factory = factories.get(parser.getClass());
         if (factory != null)
             return factory.createFrame(xo);
         else
-            return new DefaultParserFrame(parser, xo);
+            return new DefaultParserPane(parser, xo);
     }
 
-    public static void registerFactory(final ParserFrameFactory<?,?> factory) {
+    public static void registerFactory(final ParserPaneFactory<?,?> factory) {
         factories.put(factory.getParserType(), factory);
     }
 

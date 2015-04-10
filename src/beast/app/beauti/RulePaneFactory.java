@@ -1,5 +1,5 @@
 /*
- * ParserFrame.java
+ * RulePaneFactory.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
  * Copyright (C) 2015 BEAST Developers
@@ -22,45 +22,43 @@ package beast.app.beauti;
 
 import beast.xml.XMLObject;
 import beast.xml.XMLSyntaxRule;
+import javafx.scene.control.Label;
 
-import javax.swing.JLabel;
-import java.awt.FlowLayout;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Arman Bilge
  */
-public abstract class RulePanelFactory<R extends XMLSyntaxRule> {
+public abstract class RulePaneFactory<R extends XMLSyntaxRule> {
 
     protected abstract Class<R> getRuleType();
 
-    protected abstract RulePanel<? super R> createPanel(XMLObject xo, R rule);
+    protected abstract RulePane<? super R> createPane(XMLObject xo, R rule);
 
-    private static final Map<Class<? extends XMLSyntaxRule>,RulePanelFactory> factories = new HashMap<>();
+    private static final Map<Class<? extends XMLSyntaxRule>,RulePaneFactory> factories = new HashMap<>();
 
-    public static <X extends XMLSyntaxRule> RulePanel<? super X> createRulePanel(final XMLObject xo, final X rule) {
-        final RulePanelFactory factory = factories.get(rule.getClass());
+    public static <X extends XMLSyntaxRule> RulePane<? super X> createRulePane(final XMLObject xo, final X rule) {
+        final RulePaneFactory factory = factories.get(rule.getClass());
         if (factory != null)
-            return factory.createPanel(xo, rule);
+            return factory.createPane(xo, rule);
         else
-            return new UnsupportedRulePanel(xo, rule);
+            return new UnsupportedRulePane(xo, rule);
     }
 
-    public static void registerFactory(final RulePanelFactory<?> factory) {
+    public static void registerFactory(final RulePaneFactory<?> factory) {
         factories.put(factory.getRuleType(), factory);
     }
 
-    private static final class UnsupportedRulePanel extends RulePanel<XMLSyntaxRule> {
-        private UnsupportedRulePanel(final XMLObject xo, final XMLSyntaxRule rule) {
+    private static final class UnsupportedRulePane extends RulePane<XMLSyntaxRule> {
+        private UnsupportedRulePane(final XMLObject xo, final XMLSyntaxRule rule) {
             super(xo, rule);
-            setLayout(new FlowLayout());
-            add(new JLabel("Rule of type " + rule.getClass() + " is currently unsupported!"));
+            add(new Label("Rule of type " + rule.getClass() + " is currently unsupported!"), 0, 0);
         }
     }
 
     static {
-        registerFactory(new AndRulePanelFactory());
+        registerFactory(new AndRulePaneFactory());
         // TODO: Register all built-in factories here
     }
 
