@@ -1265,7 +1265,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                 operations[x + 3] = (update1 && child1 != respectedBranch) ? getDerivativePartialsBuffer(child1.getNumber()) : partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
                 operations[x + 4] = child1 == respectedBranch ? substitutionModelDelegate.getDerivativeMatrixIndex(child1.getNumber()) : substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-                operations[x + 5] = (update2 && child2 != respectedBranch) ? getDerivativePartialsBuffer(child1.getNumber()) : partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
+                operations[x + 5] = (update2 && child2 != respectedBranch) ? getDerivativePartialsBuffer(child2.getNumber()) : partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
                 operations[x + 6] = child2 == respectedBranch ? substitutionModelDelegate.getDerivativeMatrixIndex(child2.getNumber()) : substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
 
                 operationCount[operationListCount]++;
