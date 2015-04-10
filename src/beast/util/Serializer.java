@@ -64,6 +64,7 @@ public class Serializer<T extends Serializable> {
 
     {
         kryo = new Kryo() {
+
             @Override
             public <T> T readObject(Input input, Class<T> type) {
                 final T object = super.readObject(input, type);
@@ -71,6 +72,7 @@ public class Serializer<T extends Serializable> {
                     resumables.add((Resumable) object);
                 return object;
             }
+
             @Override
             public <T> T readObject(Input input, Class<T> type, com.esotericsoftware.kryo.Serializer serializer) {
                 final T object = super.readObject(input, type, serializer);
@@ -78,6 +80,29 @@ public class Serializer<T extends Serializable> {
                     resumables.add((Resumable) object);
                 return object;
             }
+
+            @Override
+            public <T> T readObjectOrNull(Input input, Class<T> type) {
+                final T object = super.readObjectOrNull(input, type);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+            @Override
+            public <T> T readObjectOrNull(Input input, Class<T> type, com.esotericsoftware.kryo.Serializer serializer) {
+                final T object = super.readObjectOrNull(input, type, serializer);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+
+            @Override public Object readClassAndObject (Input input) {
+                final Object object = super.readClassAndObject(input);
+                if (object instanceof Resumable)
+                    resumables.add((Resumable) object);
+                return object;
+            }
+
         };
         kryo.setDefaultSerializer(SyntheticFieldSerializer.class);
 
@@ -96,27 +121,34 @@ public class Serializer<T extends Serializable> {
     }
 
     public Serializer(final File file, final T object) throws SerializationException {
+        this(file, object, ClassLoader.getSystemClassLoader());
+    }
+
+    public Serializer(final File file, final T object, final ClassLoader classLoader) throws SerializationException {
         this.file = file;
         backup = createBackupFile();
         this.object = object;
+        kryo.setClassLoader(classLoader);
     }
 
     public Serializer(final File file, final Class<? extends T> objectClass) throws SerializationException {
+        this(file, objectClass, ClassLoader.getSystemClassLoader());
+    }
+
+    public Serializer(final File file, final Class<? extends T> objectClass, final ClassLoader classLoader) throws SerializationException {
         this.file = file;
         backup = createBackupFile();
-        object = this.deserialize(objectClass);
+        kryo.setClassLoader(classLoader);
+        object = deserialize(objectClass);
     }
 
     public void serialize() throws SerializationException {
         file.renameTo(backup);
-        final Output out;
-        try {
-            out = new Output(new FileOutputStream(file));
+        try (final Output out = new Output(new FileOutputStream(file))) {
+            kryo.writeObject(out, object);
         } catch (FileNotFoundException e) {
             throw new SerializationException(e);
         }
-        kryo.writeObject(out, object);
-        out.close();
         backup.delete();
     }
 
@@ -130,14 +162,12 @@ public class Serializer<T extends Serializable> {
 
     private T deserialize(final Class<? extends T> objectClass) throws SerializationException {
         resumables.clear();
-        final Input in;
-        try {
-            in = new Input(new FileInputStream(file));
+        final T object;
+        try (final Input in = new Input(new FileInputStream(file))) {
+            object = kryo.readObject(in, objectClass);
         } catch (FileNotFoundException e) {
             throw new SerializationException(e);
         }
-        final T object = kryo.readObject(in, objectClass);
-        in.close();
         for (final Resumable r : resumables) r.resume();
         return object;
     }

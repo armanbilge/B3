@@ -21,6 +21,7 @@
 package beast.inference.model;
 
 import beast.util.NumberFormatter;
+import beast.util.Serializer.Resumable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
@@ -36,8 +37,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -47,7 +50,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable {
+public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -74,7 +77,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }
 
         if (threadCount > 0) {
-            pool = Executors.newFixedThreadPool(threadCount);
+            pool = newThreadPool();
 //        } else if (threads < 0) {
 //            // create a cached thread pool which should create one thread per likelihood...
 //            pool = Executors.newCachedThreadPool();
@@ -450,11 +453,23 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return id;
     }
 
+    @Override
+    public void resume() {
+        if (threadCount > 0)
+            pool = newThreadPool();
+        else
+            pool = null;
+    }
+
+    private ExecutorService newThreadPool() {
+        return new ThreadPoolExecutor(0, threadCount, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
+    }
+
     private boolean used = false;
 
     private final int threadCount;
 
-    private final ExecutorService pool;
+    private transient ExecutorService pool;
 
     private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");

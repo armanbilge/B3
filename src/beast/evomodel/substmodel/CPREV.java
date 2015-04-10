@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "J", surname = "Adachi"), @Author(initials = "PJ", surname = "Waddell"), @Author(initials = "W", surname = "Martin"), @Author(initials = "M", surname = "Hasegawa")},
+		title = "Plastid Genome Phylogeny and a Model of Amino Acid Substitution for Proteins Encoded by Chloroplast DNA",
+		year = 2000,
+		journal = "J Mol Evol",
+		volume = 50, startpage = 348, endpage = 358,
+		status = Status.PUBLISHED)
 public class CPREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final CPREV INSTANCE = new CPREV();
@@ -197,22 +204,4 @@ public class CPREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("J", "Adachi"),
-                    new Author("PJ", "Waddell"),
-                    new Author("W", "Martin"),
-                    new Author("M", "Hasegawa")
-            },
-            "Plastid Genome Phylogeny and a Model of Amino Acid Substitution for Proteins Encoded by Chloroplast DNA",
-            2000,
-            "J Mol Evol",
-            50,
-            348, 358,
-            Citation.Status.PUBLISHED
-    );
 }

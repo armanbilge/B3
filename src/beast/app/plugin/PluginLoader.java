@@ -2,7 +2,7 @@
  * PluginLoader.java
  *
  * BEAST: Bayesian Evolutionary Analysis by Sampling Trees
- * Copyright (C) 2014 BEAST Developers
+ * Copyright (C) 2015 BEAST Developers
  *
  * BEAST is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by
@@ -19,146 +19,82 @@
  */
 
 package beast.app.plugin;
+
+import beast.util.FileHelpers;
+
 import java.io.File;
-import java.io.FileFilter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-public class PluginLoader {	 
+/**
+ * @author Arman Bilge
+ */
+public class PluginLoader {
 
-		public static File getPluginFolder() {
-			String pluginFolderFromProperty = null;
-			try {
-				pluginFolderFromProperty =  java.lang.System.getProperty("beast.plugins.dir");
-			} catch (Exception ex) {
-                //
-			}
-			if (pluginFolderFromProperty != null) {
-				return new File(pluginFolderFromProperty);
-			}
-			final String PLUGIN_FOLDER = "plugins";
-			final File PLUGIN_FILE = new File(PLUGIN_FOLDER);
-			return PLUGIN_FILE;
+    public static final ClassLoader PLUGIN_CLASS_LOADER;
+    private static final Set<Plugin> LOADED_PLUGINS;
+    private static final Logger LOGGER = Logger.getLogger("beast.app.plugin");
 
-	   }
+    static {
 
-	public static List<String> getAvailablePlugins() {
-		File pluginFile = PluginLoader.getPluginFolder();
-		return getAvailablePlugins(pluginFile);
-	}
+        final List<File> jars = new ArrayList<>();
+        for (final File folder : getPluginFolders())
+            jars.addAll(Arrays.asList(folder.listFiles(p -> !p.isDirectory() && p.getAbsolutePath().endsWith(".jar"))));
 
-	   public static List<String> getAvailablePlugins(File pluginFile){
+        PLUGIN_CLASS_LOADER = new URLClassLoader(jars.stream().map(j -> {
+            try {
+                return j.toURI().toURL();
+            } catch (MalformedURLException ex) {
+                throw new RuntimeException(ex);
+            }
+        }).toArray(URL[]::new), ClassLoader.getSystemClassLoader());
 
-	       List<String> plugins = new ArrayList<String> ();
+        LOADED_PLUGINS = Collections.unmodifiableSet(jars.stream().map(j -> {
+            final String name = j.getName();
+            return loadPlugin(name.substring(0, name.length() - 4));
+        }).filter(p -> p != null).collect(Collectors.<Plugin>toSet()));
 
-	       Logger.getLogger("beast.app.plugin").info("Looking for plugins in " + pluginFile.getAbsolutePath());
+    }
 
-           File[] classFolderFiles = pluginFile.listFiles(new FileFilter() {
-	           public boolean accept(File pathname) {
-	               String name = pathname.getName();
-	               if(!pathname.isDirectory() || name.endsWith("CVS") || name.endsWith(".classes"))
-	                   return false;
-	               File[] directoryContents = pathname.listFiles(new FileFilter() {
-	                   public boolean accept(File pathname) {
-	                       String name = pathname.getName();
-	                       return name.endsWith(".jar");
-	                   }
-	               });
-	               return directoryContents.length != 0;
-	           }
-	       });
+    public static Set<Plugin> getPlugins() {
+        return LOADED_PLUGINS;
+    }
 
-	       if (classFolderFiles != null) {
-	           for (File folder : classFolderFiles) {
-	               plugins.add(folder.getName());
-	           }
-	       }
+    private static Set<File> getPluginFolders() {
+        final Set<File> folders = new LinkedHashSet<>(2);
+        {
+            final String folder = java.lang.System.getProperty("beast.plugins.dir");
+            if (folder != null) {
+                final File f = new File(folder);
+                if (f.exists())
+                    folders.add(new File(folder));
+            }
+        }
+        {
+            final File folder = FileHelpers.getFile("plugins");
+            if (folder.exists())
+                folders.add(folder);
+        }
+        return Collections.unmodifiableSet(folders);
+    }
 
-	       File[] pluginJarFiles = pluginFile.listFiles(new FileFilter() {
-	           public boolean accept(File pathname) {
-	               return !pathname.isDirectory() && pathname.getAbsolutePath().endsWith(".jar");
-	           }
-	       });
+    private static Plugin loadPlugin(final String pluginName) {
+        try {
+            LOGGER.info("Loading plugin " + pluginName);
+            return (Plugin) PLUGIN_CLASS_LOADER.loadClass(pluginName).newInstance();
+        } catch (final Exception ex) {
+            LOGGER.severe(ex.toString());
+        }
+        return null;
+    }
 
-	       if (pluginJarFiles != null) {
-	           for (File jarFile : pluginJarFiles) {
-	               String name = jarFile.getName();
-	               name =name.substring(0, name.length()- 4);
-	               if(! plugins.contains(name))
-	                   plugins.add(name);
-	           }
-	       }
-
-	       return plugins;
-	   }
-
-	  public static Plugin loadPlugin(final String pluginName/*, boolean pluginEnabled*/) {
-          //the class loader must still be assigned if the plugin isnt enabled so
-	      //documents from that plugin can still be displayed.
-          final String loggerName = "beast.app.plugin";
-          Logger.getLogger(loggerName).info("Loading plugin " + pluginName);
-	      File pluginDir = PluginLoader.getPluginFolder();
-	      File file = new File(pluginDir, pluginName);
-
-	      try {
-	          URL[] urls;
-	          if (!file.exists()) {
-	        	  Logger.getLogger(loggerName).info("Loading jar file");
-	              file = new File(pluginDir, pluginName + ".jar");
-	              urls = new URL[]{file.toURI().toURL()};
-	          }
-	          else {
-	              File classFiles = new File(pluginDir, "classes");
-	              final boolean classesExist = classFiles.exists();
-
-	              File[] files = file.listFiles(new FileFilter() {
-	                  public boolean accept(File pathname) {
-	                      String name = pathname.getName();
-	                      if(!name.endsWith(".jar")) return false;
-	                      name = name.substring(0, name.length()- 4);
-	                      return !(name.equals(pluginName) && classesExist);
-	                  }
-	              });
-	              if(files == null) files = new File[0];
-
-	              int length = files.length+1;
-	              if(classesExist) length ++;
-
-	              urls = new URL[length];
-	              int count = 0;
-	              if( classesExist ) {
-	                  urls[ count ++ ] = classFiles.toURI().toURL();
-	              }
-	              urls[ count ++ ] = file.toURI().toURL();
-
-                  Logger.getLogger(loggerName).info("Adding " + file + " to class path");
-
-	              for (File jarFile : files) {
-	                  urls[count++] = jarFile.toURI().toURL();
-	              }
-	          }
-	          final URLClassLoader classLoader = new URLClassLoader(urls);
-
-	          for (URL url : classLoader.getURLs()) {
-	        	  Logger.getLogger(loggerName).info("URL from loader: " + url.toString() + "\n");
-	          }
-
-	          final Class myClass = classLoader.loadClass(pluginName);
-
-	          final Object plugin = myClass.newInstance();
-
-              // isn't that covered by the cast failing?
-	          if (!(plugin instanceof Plugin)){
-	              throw new Exception("Class should be " + Plugin.class.getName());
-	          }
-	          return (Plugin)plugin;
-
-	      } catch (Exception e) {
-	    	  Logger.getLogger(loggerName).severe(e.getMessage());
-	      }
-	      return null;
-	  }
 }

@@ -22,6 +22,7 @@ package beast.inference.operators;
 
 import beast.inference.model.Parameter;
 import beast.math.MathUtils;
+import beast.util.Serializer.Resumable;
 import beast.xml.AbstractXMLObjectParser;
 import beast.xml.AttributeRule;
 import beast.xml.ElementRule;
@@ -40,7 +41,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class SwapOperator extends SimpleMCMCOperator {
+public class SwapOperator extends SimpleMCMCOperator implements Resumable {
 
     public final static String SWAP_OPERATOR = "swapOperator";
 
@@ -96,10 +97,19 @@ public class SwapOperator extends SimpleMCMCOperator {
         return "No suggestions";
     }
 
+    public void resume() {
+        int dimension = parameter.getDimension();
+        List<Integer> list = new ArrayList<Integer>();
+        for (int i = 0; i < dimension; i++) {
+            list.add(i);
+        }
+        masterList = Collections.unmodifiableList(list);
+    }
+
     //PRIVATE STUFF
 
     private Parameter parameter = null;
-    private List<Integer> masterList = null;
+    private transient List<Integer> masterList = null;
 
     public static final XMLObjectParser<SwapOperator> PARSER = new AbstractXMLObjectParser<SwapOperator>() {
 

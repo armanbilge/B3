@@ -32,6 +32,7 @@ import beast.evomodel.branchratemodel.BranchRateModel;
 import beast.evomodel.branchratemodel.DefaultBranchRateModel;
 import beast.evomodel.sitemodel.SiteModel;
 import beast.evomodel.substmodel.FrequencyModel;
+import beast.evomodel.tree.TipStatesModel;
 import beast.evomodel.tree.TreeModel;
 import beast.inference.model.Model;
 import beast.inference.model.Statistic;

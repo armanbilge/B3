@@ -169,6 +169,16 @@ public interface MCMCOperator {
 
     long getTotalEvaluationTime();
 
+    default double getAcceptanceProbability() {
+        final int accepted = getAcceptCount();
+        final int rejected = getRejectCount();
+        return (double) accepted / (double) (accepted + rejected);
+    }
+
+    default int getOperationCount() {
+        return getAcceptCount() + getRejectCount();
+    }
+
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
@@ -194,16 +204,17 @@ public interface MCMCOperator {
                 }
             };
 
+    @Deprecated
     class Utils {
 
+        @Deprecated
         public static double getAcceptanceProbability(MCMCOperator op) {
-            final int accepted = op.getAcceptCount();
-            final int rejected = op.getRejectCount();
-            return (double) accepted / (double) (accepted + rejected);
+            return op.getAcceptanceProbability();
         }
 
+        @Deprecated
         public static int getOperationCount(MCMCOperator op) {
-            return op.getAcceptCount() + op.getRejectCount();
+            return op.getOperationCount();
         }
 
     }

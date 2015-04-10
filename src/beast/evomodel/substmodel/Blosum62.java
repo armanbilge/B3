@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +37,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "S", surname = "Henikoff"), @Author(initials = "JG", surname = "Henikoff")},
+		title = "Amino acid substitution matrices from protein blocks",
+		year = 1992,
+		journal = "Proc Natl Acad Sci, USA",
+		volume = 89, startpage = 10915, endpage = 10919,
+		status = Status.PUBLISHED)
 public class Blosum62 extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final Blosum62 INSTANCE = new Blosum62();
@@ -183,20 +190,4 @@ public class Blosum62 extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("S", "Henikoff"),
-                    new Author("JG", "Henikoff")
-            },
-            "Amino acid substitution matrices from protein blocks",
-            1992,
-            "Proc Natl Acad Sci, USA",
-            89,
-            10915, 10919,
-            Citation.Status.PUBLISHED
-    );
 }

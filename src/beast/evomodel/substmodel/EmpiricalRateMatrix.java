@@ -22,7 +22,6 @@ package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
 import beast.evolution.datatype.DataType;
-import beast.util.Citable;
 
 /**
  * An interface for empirical rate matrices.
@@ -32,7 +31,7 @@ import beast.util.Citable;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface EmpiricalRateMatrix extends Citable {
+public interface EmpiricalRateMatrix {
 
 	String getName();
 	DataType getDataType();

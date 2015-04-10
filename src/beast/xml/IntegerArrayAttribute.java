@@ -36,7 +36,6 @@ public @interface IntegerArrayAttribute {
 
     String name();
     boolean optional() default false;
-    int defaultValue() default 0;
     String description() default "";
 
 }

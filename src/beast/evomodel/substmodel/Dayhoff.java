@@ -21,8 +21,9 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.AminoAcids;
-import beast.util.Author;
 import beast.util.Citation;
+import beast.util.Citation.Author;
+import beast.util.Citation.Status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +40,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
+@Citation(authors = {@Author(initials = "MO", surname = "Dayhoff"), @Author(initials = "RM", surname = "Schwartz"), @Author(initials = "BC", surname = "Orcutt")},
+		title = "A model of evolutionary change in proteins",
+		year = 1972,
+		journal = "in Dayhoff, M.O. (ed.) Atlas of Protein Sequence Structur., Vol 5, Suppl. 3",
+		volume = 5, startpage = 345, endpage = 352,
+		status = Status.PUBLISHED)
 public class Dayhoff extends EmpiricalRateMatrix.AbstractAminoAcid {
 	
 	public static final Dayhoff INSTANCE = new Dayhoff();
@@ -185,23 +192,5 @@ public class Dayhoff extends EmpiricalRateMatrix.AbstractAminoAcid {
 
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
-
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
-
-    public static Citation CITATION = new Citation(
-            new Author[]{
-                    new Author("MO", "Dayhoff"),
-                    new Author("RM", "Schwartz"),
-                    new Author("BC", "Orcutt")
-            },
-            "A model of evolutionary change in proteins",
-            1972,
-            "in Dayhoff, M.O. (ed.) Atlas of Protein Sequence Structur., Vol 5, Suppl. 3",
-            5,
-            345, 352,
-            Citation.Status.PUBLISHED
-    );
 
 }

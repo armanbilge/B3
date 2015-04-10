@@ -341,8 +341,9 @@ public class MCLogger implements Logger {
             final String line = FileHelpers.readLastLine(file);
             return Long.parseLong(line.trim().split("\\s+")[0]);
         } catch (final IOException ex) {
-            throw new RuntimeException("Problem resuming logger!", ex);
+            java.util.logging.Logger.getLogger("beast.inference").warning(ex.toString());
         }
+        return -1;
     }
 
     private String title = null;
@@ -419,8 +420,9 @@ public class MCLogger implements Logger {
             // added a performance measurement delay to avoid the full evaluation period.
             final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
 
-            if (xo.hasAttribute(FILE_NAME))
-                logger.addFile(XMLParser.getLogFile(xo, FILE_NAME));
+            if (xo.hasAttribute(FILE_NAME)) {
+                logger.addFile(XMLParser.getFileHandle(xo, FILE_NAME));
+            }
 
             String title = null;
             if (xo.hasAttribute(TITLE)) {

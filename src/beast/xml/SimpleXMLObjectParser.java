@@ -24,6 +24,7 @@ import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,14 +50,13 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         return Introspector.decapitalize(cc.toString());
     }
     
-    public SimpleXMLObjectParser(final Class<T> parsedType, final String description) throws ParserCreationException {
-        this(camelCase(parsedType.getSimpleName()), parsedType, description);
-    }
-
-    public SimpleXMLObjectParser(final String name, final Class<T> parsedType, final String description) throws ParserCreationException {
-        this.name = name;
+    public SimpleXMLObjectParser(final Class<T> parsedType) throws ParserCreationException {
+        this.name = camelCase(parsedType.getSimpleName());
         this.parsedType = parsedType;
-        this.description = description;
+        if (parsedType.isAnnotationPresent(Description.class))
+            this.description = parsedType.getAnnotation(Description.class).value();
+        else
+            this.description = "";
         constructorsToComponents = new HashMap<>();
         rulesToConstructors = new HashMap<>();
         final List<XMLSyntaxRule> rules = new ArrayList<>();
@@ -108,7 +108,9 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
 
         try {
             return constructor.newInstance(parameters);
-        } catch (final Exception ex) {
+        } catch (final InvocationTargetException ex) {
+            throw new XMLParseException(ex.getTargetException().getMessage());
+        } catch (final InstantiationException|IllegalAccessException ex) {
             throw new XMLParseException(ex.getMessage());
         }
     }
@@ -399,7 +401,7 @@ public final class SimpleXMLObjectParser<T> extends AbstractXMLObjectParser<T> {
         });
     }
 
-    private static class ParserCreationException extends RuntimeException {
+    public static class ParserCreationException extends Exception {
         public ParserCreationException(final Class parsedType, final String msg) {
             super("Failed to create parser for class " + parsedType.getSimpleName() + ": "  + msg);
         }

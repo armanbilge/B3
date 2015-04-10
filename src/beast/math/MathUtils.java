@@ -62,7 +62,7 @@ public class MathUtils {
 		final boolean resume = Boolean.valueOf(System.getProperty("resume", "false"));
 		if (resume) {
 			try {
-				final String fileName = System.getProperty("resume.random", defaultStateFile.getCanonicalPath());
+				final String fileName = System.getProperty("random.state", defaultStateFile.getCanonicalPath());
 				final File stateFile = new File(fileName);
 				serializer = new Serializer<>(stateFile, MersenneTwisterFast.class);
 				random = serializer.getObject();
@@ -72,8 +72,9 @@ public class MathUtils {
 		} else {
 			random = MersenneTwisterFast.DEFAULT_INSTANCE;
 			try {
-				serializer = new Serializer<>(defaultStateFile, random);
-			} catch (Serializer.SerializationException e) {
+                final String fileName = System.getProperty("random.state", defaultStateFile.getCanonicalPath());
+                serializer = new Serializer<>(new File(fileName), random);
+			} catch (Serializer.SerializationException|IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
