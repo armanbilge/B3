@@ -36,6 +36,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,12 +45,15 @@ import java.util.Set;
  */
 public final class Beauti extends Application {
 
+    private static Beauti instance;
+
     private final XMLParser parser;
     private final Document document;
     private final Map<Class<?>, XMLObjectParser<?>> class2Parser;
     private final Map<XMLObjectParser<?>,Integer> instanceCounts;
 
     {
+        instance = this;
         try {
             document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         } catch (ParserConfigurationException e) {
@@ -61,40 +65,10 @@ public final class Beauti extends Application {
 
     public Beauti() {
         parser = new BeastParser(new String[0], Collections.<String>emptyList(), true, true, true);
-//        for (final Iterator<XMLObjectParser<?>> iter = this.parser.getParsers(); iter.hasNext();) {
-//            final XMLObjectParser<?> parser = iter.next();
-//            class2Parser.put(parser.getReturnType(), parser);
-//        }
-//        final ObjectFrame frame = new ObjectFrame<>(new XMLObject(document, MCMC.PARSER.getParserName()), this, MCMC.PARSER);
-//        final XMLObject xo = frame.getXMLObject();
-//        document.appendChild(xo.getWrappedElement());
-//        try {
-//            TransformerFactory.newInstance().newTransformer().transform(new DOMSource(document), new StreamResult(System.out));
-//        } catch (TransformerException e) {
-//            throw new RuntimeException(e);
-//        }
-    }
-
-    /**
-     * The main entry point for all JavaFX applications.
-     * The start method is called after the init method has returned,
-     * and after the system is ready for the application to begin running.
-     * <p>
-     * <p>
-     * NOTE: This method is called on the JavaFX Application Thread.
-     * </p>
-     *
-     * @param primaryStage the primary stage for this application, onto which
-     *                     the application scene can be set. The primary stage will be embedded in
-     *                     the browser if the application was launched as an applet.
-     *                     Applications may create other stages, if needed, but they will not be
-     *                     primary stages and will not be embedded in the browser.
-     */
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        primaryStage.setTitle("BEAUti 3");
-        primaryStage.setScene(new Scene(new DefaultParserPane<>(MCMC.PARSER, new XMLObject(document, MCMC.PARSER.getParserName()))));
-        primaryStage.show();
+        for (final Iterator<XMLObjectParser<?>> iter = this.parser.getParsers(); iter.hasNext();) {
+            final XMLObjectParser<?> parser = iter.next();
+            class2Parser.put(parser.getReturnType(), parser);
+        }
     }
 
     public Beauti(final XMLParser parser) {
@@ -133,6 +107,17 @@ public final class Beauti extends Application {
         final int c = instanceCounts.get(p);
         instanceCounts.put(p, c+1);
         return c;
+    }
+
+    public static Beauti getInstance() {
+        return instance;
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        primaryStage.setTitle("BEAUti 3");
+        primaryStage.setScene(new Scene(new DefaultParserPane<>(MCMC.PARSER, new XMLObject(document, MCMC.PARSER.getParserName()))));
+        primaryStage.show();
     }
 
     public static void main(final String... args) throws Exception {

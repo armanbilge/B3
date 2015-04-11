@@ -39,9 +39,10 @@ final class DefaultParserPane<P extends XMLObjectParser<?>> extends ParserPane<P
         parserType = (Class<P>) parser.getClass();
 
         final GridPane idPane = new GridPane();
-        idPane.add(new Label("id: "), 0, 0);
-        final TextField idField = new TextField(parser.getParserName() + "_##");
-        idPane.add(idField, 1, 0);
+        idPane.add(new Label("id: "), 1, 0);
+        final TextField idField =
+                new TextField(parser.getParserName() + "_" + Beauti.getInstance().getInstanceCount(parser));
+        idPane.add(idField, 2, 0);
         add(idPane, 0, 0);
         int row = 1;
         for (final XMLSyntaxRule rule : parser.getSyntaxRules())

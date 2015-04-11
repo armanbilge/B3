@@ -23,7 +23,8 @@ package beast.app.beauti;
 import beast.xml.XMLObject;
 import beast.xml.XMLSyntaxRule;
 import beast.xml.XORRule;
-import javafx.scene.control.CheckBox;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 
 /**
  * @author Arman Bilge
@@ -44,13 +45,15 @@ final class XORRulePaneFactory extends RulePaneFactory<XORRule> {
         protected XORRulePane(final XMLObject xo, final XORRule rule) {
             super(xo, rule);
             int row = 0;
+            final ToggleGroup tg = new ToggleGroup();
             for (final XMLSyntaxRule r : rule.getRules()) {
-                final CheckBox cb = new CheckBox();
+                final RadioButton rb = new RadioButton();
+                rb.setToggleGroup(tg);
                 final RulePane<?> rp = createRulePane(xo, r);
-                cb.selectedProperty().addListener((ov, oldValue, newValue) -> {
+                rb.selectedProperty().addListener((ov, oldValue, newValue) -> {
                     rp.setDisable(!newValue);
                 });
-                add(cb, 0, row);
+                add(rb, 0, row);
                 add(rp, 1, row);
                 ++row;
             }

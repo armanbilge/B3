@@ -59,6 +59,9 @@ public abstract class RulePaneFactory<R extends XMLSyntaxRule> {
 
     static {
         registerFactory(new AndRulePaneFactory());
+        registerFactory(new OrRulePaneFactory());
+        registerFactory(new XORRulePaneFactory());
+        registerFactory(new AttributeRulePaneFactory());
         // TODO: Register all built-in factories here
     }
 
