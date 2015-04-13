@@ -38,14 +38,14 @@ public class MassMatrix {
         List<Trace> traces = f.getTraces().subList(start, stop);
         for (int i = 0; i < traces.size(); ++i) {
             int j = 0;
-            covar[i] = new double[traces.get(i).getValuesSize() - traces.get(i).getValuesSize() / 10 + 1];
-            for (Object d : traces.get(i).getValues(traces.get(i).getValuesSize() / 10 + 1, traces.get(i).getValuesSize()))
+            covar[i] = new double[traces.get(i).getValuesSize() - traces.get(i).getValuesSize() / 10];
+            for (Object d : traces.get(i).getValues(traces.get(i).getValuesSize() / 10, traces.get(i).getValuesSize()))
                 covar[i][j++] = (Double) d;
         }
         Covariance C = new Covariance(new BlockRealMatrix(covar).transpose());
         final RealMatrix M = C.getCovarianceMatrix();
         final RealMatrix Minv = MatrixUtils.inverse(M);
-        return Arrays.stream(Minv.getData()).flatMapToDouble(Arrays::stream).map(d->Math.round(d * 100000)/100000).toArray();
+        return Arrays.stream(Minv.getData()).flatMapToDouble(Arrays::stream).map(d->Math.round(d * 1000000)/1000000).toArray();
 
     }
 
