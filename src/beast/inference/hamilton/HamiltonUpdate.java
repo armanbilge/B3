@@ -67,7 +67,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), massAttributeToMass(massAttribute, parameters.length), epsilon, L, alpha, weight, mode);
+        this(U, new CompoundParameter("q", parameters), massAttributeToMass(massAttribute, new CompoundParameter("q", parameters).getDimension()), epsilon, L, alpha, weight, mode);
     }
 
     public HamiltonUpdate(final Likelihood U,
