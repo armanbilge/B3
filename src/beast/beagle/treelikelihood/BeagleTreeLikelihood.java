@@ -1233,7 +1233,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                 final int[] operations = this.operations[operationListCount];
 
-                operations[x] = getDerivativePartialsBuffer(node.getNumber());
+                operations[x] = getDerivativePartialsBuffer(nodeNum);
 
                 if (useScaleFactors) {
                     // get the index of this scaling buffer

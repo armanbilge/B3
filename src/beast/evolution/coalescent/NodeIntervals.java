@@ -51,20 +51,20 @@ public class NodeIntervals implements IntervalList {
 
     public void copyIntervals(NodeIntervals source) {
         intervalsKnown = source.intervalsKnown;
+        intervalCount = source.intervalCount;
         eventCount = source.eventCount;
         sampleCount = source.sampleCount;
 
-        //don't copy the actual events..
-    /*
-      for (int i = 0; i < events.length; i++) {
-          events[i].time = source.events[i].time;
-          events[i].type = source.events[i].type;
-      }*/
+        for (int i = 0; i < events.length; i++) {
+            events[i].time = source.events[i].time;
+            events[i].type = source.events[i].type;
+        }
 
         if (intervalsKnown) {
             System.arraycopy(source.intervals, 0, intervals, 0, intervals.length);
             System.arraycopy(source.intervalTypes, 0, intervalTypes, 0, intervals.length);
             System.arraycopy(source.lineageCounts, 0, lineageCounts, 0, intervals.length);
+            System.arraycopy(source.nodeIntervals, 0, nodeIntervals, 0, nodeIntervals.length);
         }
     }
 
