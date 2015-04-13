@@ -21,18 +21,21 @@
 package beast.app.beauti;
 
 import beast.app.beast.BeastParser;
-import beast.inference.mcmc.MCMC;
 import beast.xml.Reference;
 import beast.xml.XMLObject;
 import beast.xml.XMLObjectParser;
 import beast.xml.XMLParser;
+import com.sun.javafx.collections.ObservableListWrapper;
 import javafx.application.Application;
-import javafx.scene.Scene;
+import javafx.collections.ObservableList;
+import javafx.scene.control.ListView;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -116,7 +119,12 @@ public final class Beauti extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setTitle("BEAUti 3");
-        primaryStage.setScene(new Scene(new DefaultParserPane<>(MCMC.PARSER, new XMLObject(document, MCMC.PARSER.getParserName()))));
+        final BorderPane pane = new BorderPane();
+        final ObservableList<XMLObject> observableList = new ObservableListWrapper<>(new ArrayList<>());
+        final ListView<XMLObject> listView = new ListView<>();
+//        pane.setLeft();
+//        final Scene scene = new Scene();
+//        primaryStage.setScene(new Scene(new DefaultParserPane<>(MCMC.PARSER, new XMLObject(document, MCMC.PARSER.getParserName()))));
         primaryStage.show();
     }
 

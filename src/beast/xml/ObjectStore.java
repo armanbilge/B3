@@ -54,4 +54,12 @@ public interface ObjectStore {
      * @return a collection of the objects in this store.
      */
     public Collection getObjects();
+
+    void addListener(ObjectStoreListener listener);
+
+    void removeListener(ObjectStoreListener listener);
+
+    interface ObjectStoreListener {
+        void fireIdentifiableObjectAdded(Identifiable object);
+    }
 }

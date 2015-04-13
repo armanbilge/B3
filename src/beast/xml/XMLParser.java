@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -560,6 +561,18 @@ public class XMLParser {
                 }
             }
         }
+
+        private Set<ObjectStoreListener> listeners = new HashSet<>();
+        public void addListener(final ObjectStoreListener listener) {
+            listeners.add(listener);
+        }
+        public void removeListener(final ObjectStoreListener listener) {
+            listeners.remove(listener);
+        }
+        private void fireIdentifiableObjectAdded(final Identifiable object) {
+            listeners.forEach(l -> l.fireIdentifiableObjectAdded(object));
+        }
+
     };
 
     public <T> void addGlobalElementCollection(final Class<T> c, final Collection<T> collection) {
