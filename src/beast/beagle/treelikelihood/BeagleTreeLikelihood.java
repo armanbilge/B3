@@ -657,6 +657,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //            storedRescalingCount = rescalingCount;
         }
 
+        System.arraycopy(patternLogLikelihoods, 0, storedPatternLogLikelihoods, 0, patternLogLikelihoods.length);
+
         super.storeState();
 
     }
@@ -678,6 +680,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //            rescalingCount = storedRescalingCount;
         }
 
+        double[] tmp = storedPatternLogLikelihoods;
+        storedPatternLogLikelihoods = patternLogLikelihoods;
+        patternLogLikelihoods = tmp;
+
         updateRestrictedNodePartials = true;
 
         super.restoreState();
@@ -698,6 +704,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         if (patternLogLikelihoods == null) {
             patternLogLikelihoods = new double[patternCount];
+            storedPatternLogLikelihoods = new double[patternCount];
         }
 
         if (branchUpdateIndices == null) {
@@ -1367,6 +1374,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      * the pattern likelihoods
      */
     protected double[] patternLogLikelihoods = null;
+
+    protected double[] storedPatternLogLikelihoods = null;
 
     protected double[] differentiatedPatternLogLikelihoods = null;
 

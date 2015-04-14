@@ -69,7 +69,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), massAttribute, epsilon, L, alpha, weight, mode);
+        this(U, new CompoundParameter("q", parameters), massAttributeToMass(massAttribute, new CompoundParameter("q", parameters).getDimension()), epsilon, L, alpha, weight, mode);
     }
 
     @Parseable
@@ -82,12 +82,12 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), mm.getMassMatrix(), epsilon, L, alpha, weight, mode);
+        this(U, new CompoundParameter("q", parameters), massAttributeToMass(mm.getMassMatrix(), new CompoundParameter("q", parameters).getDimension()), epsilon, L, alpha, weight, mode);
     }
 
     public HamiltonUpdate(final Likelihood U,
                           final CompoundParameter q,
-                          final double[] massAttribute,
+                          final double[][] mass,
                           final double epsilon,
                           final int L,
                           final double alpha,
@@ -101,6 +101,25 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         dim = q.getDimension();
         p = new Parameter.Default("p", dim);
 
+        K = new MultivariateNormalDistribution(new double[dim], mass, false);
+        p.adoptParameterValues(new Parameter.Default(K.nextMultivariateNormal()));
+
+        if (epsilon > 0)
+            this.epsilon = epsilon;
+        else
+            setDefaultEpsilon();
+
+        if (L > 0)
+            this.L = L;
+        else
+            setDefaultL();
+
+        this.alpha = alpha;
+
+        setWeight(weight);
+    }
+
+    private static double[][] massAttributeToMass(final double[] massAttribute, final int dim) {
         final double[][] mass = new double[dim][dim];
         if (massAttribute != null) {
             if (massAttribute.length == dim) { // Diagonal matrix
@@ -126,27 +145,11 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         } else {
             setDefaultMass(mass);
         }
-
-        K = new MultivariateNormalDistribution(new double[dim], mass, false);
-        p.adoptParameterValues(new Parameter.Default(K.nextMultivariateNormal()));
-
-        if (epsilon > 0)
-            this.epsilon = epsilon;
-        else
-            setDefaultEpsilon();
-
-        if (L > 0)
-            this.L = L;
-        else
-            setDefaultL();
-
-        this.alpha = alpha;
-
-        setWeight(weight);
+        return mass;
     }
 
-    protected void setDefaultMass(final double[][] mass) {
-        for (int i = 0; i < dim; ++i)
+    private static void setDefaultMass(final double[][] mass) {
+        for (int i = 0; i < mass.length; ++i)
             mass[i][i] = 1;
     }
 
