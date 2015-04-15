@@ -27,7 +27,7 @@ public interface MultivariateDistribution {
 
     public double logPdf(double[] x);
 
-    public double differentiateLogPdf(double[] x, int i);
+    public double[] gradientLogPdf(double[] x);
 
     public double[][] getScaleMatrix();
 

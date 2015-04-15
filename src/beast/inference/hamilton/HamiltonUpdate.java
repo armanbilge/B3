@@ -28,7 +28,6 @@ import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
-import beast.math.distributions.MultivariateNormalDistribution;
 import beast.xml.Description;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
@@ -44,7 +43,7 @@ import beast.xml.Parseable;
 public class HamiltonUpdate extends AbstractCoercableOperator {
 
     protected final Likelihood U;
-    protected final MultivariateNormalDistribution K;
+    protected final KineticEnergy K;
     protected final CompoundParameter q;
     protected final Parameter.Default p;
 
@@ -61,18 +60,35 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
+            @ObjectElement(name = "mass") OnlineVariance variance,
+            @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
+            @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
+            @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
+            @OperatorWeightAttribute double weight,
+            @CoercionModeAttribute CoercionMode mode) {
+        this(U, new CompoundParameter("q", parameters),
+                new KineticEnergy.OnlineDiagonal(variance.getVariance()),
+                epsilon, L, alpha, weight, mode);
+    }
+
+    @Parseable
+    public HamiltonUpdate(
+            @ObjectElement(name = "potential") Likelihood U,
+            @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
             @DoubleArrayAttribute(name = "mass", optional = true) double[] massAttribute,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
-        this(U, new CompoundParameter("q", parameters), massAttributeToMass(massAttribute, new CompoundParameter("q", parameters).getDimension()), epsilon, L, alpha, weight, mode);
+        this(U, new CompoundParameter("q", parameters),
+                new KineticEnergy.Fixed(massAttributeToMass(massAttribute, new CompoundParameter("q", parameters).getDimension())),
+                epsilon, L, alpha, weight, mode);
     }
 
     public HamiltonUpdate(final Likelihood U,
                           final CompoundParameter q,
-                          final double[][] mass,
+                          final KineticEnergy K,
                           final double epsilon,
                           final int L,
                           final double alpha,
@@ -86,8 +102,8 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
         dim = q.getDimension();
         p = new Parameter.Default("p", dim);
 
-        K = new MultivariateNormalDistribution(new double[dim], mass, false);
-        p.adoptParameterValues(new Parameter.Default(K.nextMultivariateNormal()));
+        this.K = K;
+        p.adoptParameterValues(new Parameter.Default(K.next()));
 
         if (epsilon > 0)
             this.epsilon = epsilon;
@@ -198,7 +214,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     protected void corruptMomentum() {
         final double sqrtalpha = Math.sqrt(alpha);
         final double sqrt1malpha = Math.sqrt(1 - alpha);
-        final double[] n = K.nextMultivariateNormal();
+        final double[] n = K.next();
         for (int i = 0; i < dim; ++i) {
             final double p_ = p.getParameterValue(i) * sqrt1malpha + n[i] * sqrtalpha;
             p.setParameterValueQuietly(i, p_);
@@ -221,8 +237,9 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
         final Bounds<Double> bounds = q.getBounds();
         for (int l = 0; l < L; ++l) {
+            final double[] dKdt = gradientKineticEnergy();
             for (int i = 0; i < dim; ++i) {
-                double q_ = q.getParameterValue(i) + epsilon * differentiateKineticEnergy(i);
+                double q_ = q.getParameterValue(i) + epsilon * dKdt[i];
                 final double lower = bounds.getLowerLimit(i);
                 final double upper = bounds.getUpperLimit(i);
                 while (q_ < lower || q_ > upper) {
@@ -267,11 +284,11 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     }
 
     protected double kineticEnergy() {
-        return - K.logPdf(p.inspectParameterValues());
+        return K.energy(p.inspectParameterValues());
     }
 
-    protected double differentiateKineticEnergy(int i) {
-        return - K.differentiateLogPdf(p.inspectParameterValues(), i);
+    protected double[] gradientKineticEnergy() {
+        return K.gradient(p.inspectParameterValues());
     }
 
     @Override

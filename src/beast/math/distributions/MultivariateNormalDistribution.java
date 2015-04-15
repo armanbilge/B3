@@ -136,8 +136,8 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return logPdf(x, mean, precision, getLogDet(), 1.0);
     }
 
-    public double differentiateLogPdf(double[] x, int i) {
-        return differentiateLogPdf(x, mean, precision, getLogDet(), 1.0, i);
+    public double[] gradientLogPdf(double[] x) {
+        return gradientLogPdf(x, mean, precision, getLogDet(), 1.0);
     }
 
     // scale only modifies precision
@@ -172,26 +172,31 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         // Variance = (scale * Precision^{-1})
     }
 
-    public static double differentiateLogPdf(double[] x, double[] mean, double[][] precision,
-                                double logDet, double scale, int index) {
-
-        if (logDet == Double.NEGATIVE_INFINITY)
-            return 0;
+    public static double[] gradientLogPdf(double[] x, double[] mean, double[][] precision,
+                                          double logDet, double scale) {
 
         final int dim = x.length;
+
+        if (logDet == Double.NEGATIVE_INFINITY)
+            return new double[dim];
+
         final double[] delta = new double[dim];
 
         for (int i = 0; i < dim; i++) {
             delta[i] = x[i] - mean[i];
         }
 
-        double SSE = 0;
+        final double[] SSE = new double[dim];
 
-        for (int i = 0; i < dim; i++)
-            SSE += (precision[i][index] + precision[index][i]) * delta[i];
+        for (int i = 0; i < dim; ++i)
+            for (int j = 0; j < dim; j++)
+                SSE[i] += (precision[i][j] + precision[j][i]) * delta[j];
 
-        return - 0.5 * SSE / scale;   // There was an error here.
-        // Variance = (scale * Precision^{-1})
+        for (int i = 0; i < dim; ++i)
+            SSE[i] *= - 0.5 / scale;
+
+        return SSE;
+
     }
 
     /* Equal precision, independent dimensions */
