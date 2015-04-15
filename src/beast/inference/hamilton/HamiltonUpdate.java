@@ -46,7 +46,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     protected final Likelihood U;
     protected final MultivariateNormalDistribution K;
     protected final CompoundParameter q;
-    protected final Parameter p;
+    protected final Parameter.Default p;
 
     private final int dim;
     private double epsilon;
@@ -267,11 +267,11 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     }
 
     protected double kineticEnergy() {
-        return - K.logPdf(p.getParameterValues());
+        return - K.logPdf(p.inspectParameterValues());
     }
 
     protected double differentiateKineticEnergy(int i) {
-        return - K.differentiateLogPdf(p.getParameterValues(), i);
+        return - K.differentiateLogPdf(p.inspectParameterValues(), i);
     }
 
     @Override
