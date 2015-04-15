@@ -69,7 +69,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     public double getLogDet() {
         if (logDet == null) {
-            logDet = Math.log(calculatePrecisionMatrixDeterminate(getCholeskyDecomposition()));
+            logDet = calculatePrecisionMatrixLogDeterminate(getCholeskyDecomposition());
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -126,7 +126,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
 
-    public static double calculatePrecisionMatrixDeterminate(double[][] cholesky) {
+    public static double calculatePrecisionMatrixLogDeterminate(double[][] cholesky) {
         return IntStream.range(0, cholesky.length)
                 .mapToDouble(i -> 2 * Math.log(cholesky[i][i]))
                 .sum();
@@ -271,7 +271,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         double[] stop = {0, 0};
         double[][] precision = {{2, 0.5}, {0.5, 1}};
         double scale = 0.2;
-        System.err.println("logPDF = " + logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixDeterminate(precision)), scale));
+        System.err.println("logPDF = " + logPdf(start, stop, precision, Math.log(calculatePrecisionMatrixLogDeterminate(precision)), scale));
         System.err.println("Should = -19.94863\n");
 
         System.err.println("logPDF = " + logPdf(start, stop, 2, 0.2));
