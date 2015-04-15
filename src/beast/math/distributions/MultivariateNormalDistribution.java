@@ -23,10 +23,10 @@ package beast.math.distributions;
 import beast.math.MathUtils;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.CholeskyDecomposition;
-import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 /**
  * @author Marc Suchard
@@ -69,7 +69,7 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
 
     public double getLogDet() {
         if (logDet == null) {
-            logDet = Math.log(calculatePrecisionMatrixDeterminate(precision));
+            logDet = Math.log(calculatePrecisionMatrixDeterminate(getCholeskyDecomposition()));
         }
         if (Double.isInfinite(logDet)) {
             if (isDiagonal(precision)) {
@@ -126,8 +126,10 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
 
-    public static double calculatePrecisionMatrixDeterminate(double[][] precision) {
-        return new LUDecomposition(new Array2DRowRealMatrix(precision)).getDeterminant();
+    public static double calculatePrecisionMatrixDeterminate(double[][] cholesky) {
+        return IntStream.range(0, cholesky.length)
+                .mapToDouble(i -> 2 * Math.log(cholesky[i][i]))
+                .sum();
     }
 
     public double logPdf(double[] x) {
