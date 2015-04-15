@@ -75,7 +75,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
     public HamiltonUpdate(
             @ObjectElement(name = "potential") Likelihood U,
             @ObjectArrayElement(name = "dimensions") Parameter[] parameters,
-            @DoubleArrayAttribute(name = "mass", optional = true) double[] massAttribute,
+            @DoubleArrayAttribute(name = "mass") double[] massAttribute,
             @DoubleAttribute(name = "epsilon", optional = true, defaultValue = 0.0) double epsilon,
             @IntegerAttribute(name = "iterations", optional = true, defaultValue = 0) int L,
             @DoubleAttribute(name = "alpha", optional = true, defaultValue = 1.0) double alpha,

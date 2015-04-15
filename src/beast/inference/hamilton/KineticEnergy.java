@@ -79,8 +79,8 @@ public interface KineticEnergy {
                 final double[][] mass = new double[dim][dim];
                 for (int i = 0; i < dim; ++i) {
                     final double var = this.var.getValue(i);
-                    if (var == 0)
-                        mass[i][i] = 1;
+                    if (var <= 1E-10)
+                        mass[i][i] = 1E-9;
                     else
                         mass[i][i] = var;
                 }
@@ -105,6 +105,7 @@ public interface KineticEnergy {
 
         @Override
         public double[] next() {
+            update();
             return K.nextMultivariateNormal();
         }
 
