@@ -30,7 +30,6 @@ import beast.util.Timer;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
@@ -243,12 +242,10 @@ public final class SubstitutionModelDelegate implements Serializable {
                 }
             }
             if (counts[i] > 0) {
-                final int[] tmp = new int[counts[i]];
-                Arrays.fill(tmp, getReserveBuffer());
                 beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(i),
                         probabilityIndices[i],
                         derivativeIndices[i], // firstDerivativeIndices
-                        tmp, // secondDerivativeIndices
+                        null, // secondDerivativeIndices
                         edgeLengths[i],
                         counts[i]);
             }
