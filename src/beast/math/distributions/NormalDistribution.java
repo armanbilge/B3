@@ -20,9 +20,9 @@
 
 package beast.math.distributions;
 
-import beast.math.ErrorFunction;
 import beast.math.MathUtils;
 import beast.math.UnivariateFunction;
+import org.apache.commons.math3.special.Erf;
 
 /**
  * normal distribution (pdf, cdf, quantile)
@@ -155,7 +155,7 @@ public class NormalDistribution implements Distribution/*, RandomGenerator*/ {
      * @return icdf at z
      */
     public static double quantile(double z, double m, double sd) {
-        return m + Math.sqrt(2.0) * sd * ErrorFunction.inverseErf(2.0 * z - 1.0);
+        return m + Math.sqrt(2.0) * sd * Erf.erfInv(2.0 * z - 1.0);
     }
 
     /**
@@ -491,8 +491,4 @@ public class NormalDistribution implements Distribution/*, RandomGenerator*/ {
         return eps;
     }
 
-    public double logPdf(Object x) {
-        double v = (Double) x;
-        return logPdf(x);
-    }
 }

@@ -203,6 +203,7 @@ public class GammaDistribution implements Distribution {
         if (x < 0.0 || shape <= 0.0) {
             return 0;
         }
+
         return GammaFunction.incompleteGammaP(shape, x / scale);
     }
 
