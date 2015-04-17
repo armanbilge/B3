@@ -56,7 +56,7 @@ public abstract class AbstractSinglePartitionTreeLikelihood extends AbstractTree
         if (updatePattern != null) {
             updatePattern[i] = true;
         }
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class AbstractSinglePartitionTreeLikelihood extends AbstractTree
                 updatePattern[i] = true;
             }
         }
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     public final double[] getPatternWeights() {

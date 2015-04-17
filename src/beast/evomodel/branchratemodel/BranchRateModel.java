@@ -32,9 +32,16 @@ import beast.inference.model.Model;
  * @author Alexei Drummond
  * @version $Id: BranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
-public interface BranchRateModel extends Model, BranchRates, TreeTraitProvider, TreeTrait<Double> {
+public abstract class BranchRateModel extends Model implements BranchRates, TreeTraitProvider, TreeTrait<Double> {
     public static final String BRANCH_RATES = "branchRates";
     public static final String RATE = "rate";
+
+    /**
+     * @param name Model Name
+     */
+    public BranchRateModel(String name) {
+        super(name);
+    }
 
     // This is inherited from BranchRates:
     // double getBranchRate(Tree tree, NodeRef node);

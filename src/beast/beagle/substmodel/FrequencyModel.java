@@ -22,7 +22,6 @@ package beast.beagle.substmodel;
 
 import beast.evolution.alignment.PatternList;
 import beast.evolution.datatype.DataType;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -49,7 +48,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: FrequencyModel.java,v 1.26 2005/05/24 20:25:58 rambaut Exp $
  */
-public class FrequencyModel extends AbstractModel {
+public class FrequencyModel extends Model {
 
     public static final String FREQUENCY_MODEL = "frequencyModel";
     public static final String FREQUENCIES = "frequencies";
@@ -155,7 +154,7 @@ public class FrequencyModel extends AbstractModel {
     } // no state apart from parameters to accept
 
     public Element createElement(Document doc) {
-        throw new RuntimeException("Not implemented!");
+        super.createElement(null);
     }
 
     private DataType dataType = null;

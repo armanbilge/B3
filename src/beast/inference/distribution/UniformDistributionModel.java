@@ -20,7 +20,6 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -41,7 +40,7 @@ import beast.xml.XORRule;
  *         $Id$
  */
 
-public class UniformDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class UniformDistributionModel extends ParametricDistributionModel {
 
     public static final String UNIFORM_DISTRIBUTION_MODEL = "uniformDistributionModel";
 

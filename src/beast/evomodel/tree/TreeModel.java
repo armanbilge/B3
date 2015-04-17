@@ -29,7 +29,6 @@ import beast.evolution.tree.Tree;
 import beast.evolution.util.MutableTaxonListListener;
 import beast.evolution.util.Taxon;
 import beast.evolution.util.TaxonList;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Bounds;
 import beast.inference.model.CompoundParameter;
 import beast.inference.model.Model;
@@ -61,7 +60,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MultivariateTraitTree {
+public class TreeModel extends MultivariateTraitTree {
 
     //
     // Public stuff

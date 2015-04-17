@@ -23,7 +23,6 @@ package beast.evomodel.tree;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTrait;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -37,7 +36,7 @@ import beast.inference.model.Variable;
  *
  * @author Alexei Drummond
  */
-public class TreeParameterModel extends AbstractModel implements TreeTrait<Double> {
+public class TreeParameterModel extends Model implements TreeTrait<Double> {
 
     protected final TreeModel tree;
 

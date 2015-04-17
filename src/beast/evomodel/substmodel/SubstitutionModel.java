@@ -31,7 +31,14 @@ import beast.inference.model.Model;
  * @author Alexei Drummond
  * @version $Id: SubstitutionModel.java,v 1.13 2005/05/24 20:25:58 rambaut Exp $
  */
-public interface SubstitutionModel extends Model {
+public abstract class SubstitutionModel extends Model {
+
+    /**
+     * @param name Model Name
+     */
+    public SubstitutionModel(String name) {
+        super(name);
+    }
 
     /**
      * Get the complete transition probability matrix for the given distance.
@@ -39,36 +46,36 @@ public interface SubstitutionModel extends Model {
      * @param distance the time (branch length)
      * @param matrix   an array to store the matrix
      */
-    void getTransitionProbabilities(double distance, double[] matrix);
+    public abstract void getTransitionProbabilities(double distance, double[] matrix);
 
     /**
      * This function returns the Eigen vectors.
      * @return the array
      */
-    double[][] getEigenVectors();
+    public abstract double[][] getEigenVectors();
 
     /**
      * This function returns the inverse Eigen vectors.
      * @return the array
      */
-    double[][] getInverseEigenVectors();
+    public abstract double[][] getInverseEigenVectors();
 
     /**
      * This function returns the Eigen values.
      * @return the Eigen values
      */
-    double[] getEigenValues();
+    public abstract double[] getEigenValues();
 
     /**
      * get the state frequencies
      *
      * @return the frequencies
      */
-    FrequencyModel getFrequencyModel();
+    public abstract FrequencyModel getFrequencyModel();
 
     /**
      * @return the data type
      */
-    DataType getDataType();
+    public abstract DataType getDataType();
 
 }

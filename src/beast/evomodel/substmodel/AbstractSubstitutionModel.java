@@ -21,7 +21,6 @@
 package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.DataType;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -41,7 +40,7 @@ import java.util.List;
  * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
  */
 
-public abstract class AbstractSubstitutionModel extends AbstractModel implements SubstitutionModel {
+public abstract class AbstractSubstitutionModel extends SubstitutionModel {
 
     public static final String MODEL = "model";
 

@@ -22,8 +22,7 @@ package beast.beagle.treelikelihood;
 
 import beast.evolution.tree.NodeRef;
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.AbstractModelLikelihood;
-import beast.inference.model.CompoundLikelihood;
+import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -37,16 +36,15 @@ import beast.xml.Reportable;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
-public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
+public abstract class AbstractTreeLikelihood extends Likelihood implements Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
 
     public AbstractTreeLikelihood(String name, TreeModel treeModel) {
 
-        super(name);
+        super(treeModel);
 
         this.treeModel = treeModel;
-        addModel(treeModel);
 
         nodeCount = treeModel.getNodeCount();
 
@@ -55,7 +53,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updateNode[i] = true;
         }
 
-        likelihoodKnown = false;
+        super.makeDirty();
 
     }
 
@@ -66,7 +64,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     protected void updateNode(NodeRef node) {
 
         updateNode[node.getNumber()] = true;
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     /**
@@ -79,7 +77,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             NodeRef child = treeModel.getChild(node, i);
             updateNode[child.getNumber()] = true;
         }
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     /**
@@ -93,7 +91,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updateNodeAndDescendents(child);
         }
 
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     /**
@@ -103,7 +101,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         for (int i = 0; i < nodeCount; i++) {
             updateNode[i] = true;
         }
-        likelihoodKnown = false;
+        super.makeDirty();
     }
 
     // **************************************************************
@@ -121,51 +119,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (COUNT_TOTAL_OPERATIONS)
             totalModelChangedCount++;
-        likelihoodKnown = false;
-    }
-
-    /**
-     * Stores the additional state other than model components
-     */
-    protected void storeState() {
-
-        storedLikelihoodKnown = likelihoodKnown;
-        storedLogLikelihood = logLikelihood;
-    }
-
-    /**
-     * Restore the additional stored state
-     */
-    protected void restoreState() {
-
-        likelihoodKnown = storedLikelihoodKnown;
-        logLikelihood = storedLogLikelihood;
-    }
-
-    protected void acceptState() {
-    } // nothing to do
-
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
-
-    public final Model getModel() {
-        return this;
-    }
-
-    public final double getLogLikelihood() {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalGetLogLikelihoodCount++;
-        if (CompoundLikelihood.DEBUG_PARALLEL_EVALUATION) {
-            System.err.println((likelihoodKnown ? "lazy" : "evaluate"));
-        }
-        if (!likelihoodKnown) {
-            if (COUNT_TOTAL_OPERATIONS)
-                totalCalculateLikelihoodCount++;
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        return logLikelihood;
+        super.makeDirty();
     }
 
     /**
@@ -174,12 +128,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     public void makeDirty() {
         if (COUNT_TOTAL_OPERATIONS)
             totalMakeDirtyCount++;
-        likelihoodKnown = false;
+        super.makeDirty();
         updateAllNodes();
-    }
-    
-    public boolean isLikelihoodKnown() {
-    	return likelihoodKnown;
     }
 
     protected abstract double calculateLogLikelihood();
@@ -219,11 +169,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
      * Flags to specify which nodes are to be updated
      */
     protected boolean[] updateNode;
-
-    private double logLikelihood;
-    private double storedLogLikelihood;
-    protected boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
 
     protected boolean hasInitialized = false;
 

@@ -21,6 +21,8 @@
 package beast.inference.model;
 
 import beast.util.Identifiable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,78 +37,296 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public interface Model extends Identifiable  {
+public abstract class Model implements Identifiable, ModelListener, VariableListener, StatisticList {
+
+	protected final String name;
+	private final ArrayList<Model> models = new ArrayList<Model>();
+	private final ArrayList<Variable> variables = new ArrayList<Variable>();
+	private final ArrayList<Statistic> statistics = new ArrayList<Statistic>();
+	protected ListenerHelper listenerHelper = new ListenerHelper();
+	boolean isValidState = true;
+	private String id = null;
+
+	public Model(String name) {
+		this.name = name;
+	}
+
+	public final void addVariable(Variable variable) {
+        if (!variables.contains(variable)) {
+            variables.add(variable);
+            variable.addVariableListener(this);
+        }
+
+        // parameters are also statistics
+        if (variable instanceof Statistic) addStatistic((Statistic) variable);
+    }
+
+	public final void removeVariable(Variable variable) {
+        variables.remove(variable);
+        variable.removeVariableListener(this);
+
+        // parameters are also statistics
+        if (variable instanceof Statistic) removeStatistic((Statistic) variable);
+    }
 
 	/**
-	 * Adds a listener that is notified when the this model changes.
-	 */
-	void addModelListener(ModelListener listener);
-
-    /**
-     * Remove a listener previously addeed by addModelListener
-     * @param listener
+     * @param parameter
+     * @return true of the given parameter is contained in this model
      */
-    void removeModelListener(ModelListener listener);
+    public final boolean hasVariable(Variable parameter) {
+        return variables.contains(parameter);
+    }
 
 	/**
-	 * This function should be called to store the state of the
-	 * entire model. This makes the model state invalid until either
-	 * an acceptModelState or restoreModelState is called.
-	 */
-	void storeModelState();
+     * Adds a model listener.
+     */
+    public void addModelListener(ModelListener listener) {
+        listenerHelper.addModelListener(listener);
+    }
 
 	/**
-	 * This function should be called to restore the state of the entire model.
-	 */
-	void restoreModelState();
+     * remove a model listener.
+     */
+    public void removeModelListener(ModelListener listener) {
+        listenerHelper.removeModelListener(listener);
+    }
+
+	public final void modelChangedEvent(Model model, Object object, int index) {
+
+//		String message = "  model: " + getModelName() + "/" + getId() + "  component: " + model.getModelName();
+//		if (object != null) {
+//			message += " object: " + object;
+//		}
+//		if (index != -1) {
+//			message += " index: " + index;
+//		}
+//		System.out.println(message);
+
+        handleModelChangedEvent(model, object, index);
+    }
+
+	// do nothing by default
+    public void modelRestored(Model model) {
+    }
+
+	abstract protected void handleModelChangedEvent(Model model, Object object, int index);
+
+	public final void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        handleVariableChangedEvent(variable, index, type);
+        listenerHelper.fireModelChanged(this, variable, index);
+    }
 
 	/**
-	 * This function should be called to accept the state of the entire model
-	 */
-	void acceptModelState();
+     * This method is called whenever a parameter is changed.
+     * <p/>
+     * It is strongly recommended that the model component sets a "dirty" flag and does no
+     * further calculations. Recalculation is typically done when the model component is asked for
+     * some information that requires them. This mechanism is 'lazy' so that this method
+     * can be safely called multiple times with minimal computational cost.
+     */
+    protected abstract void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type);
+
+	public final void storeModelState() {
+        if (isValidState) {
+            //System.out.println("STORE MODEL: " + getModelName() + "/" + getId());
+
+            for (Model m : models) {
+                m.storeModelState();
+            }
+
+            for (Variable variable : variables) {
+                variable.storeVariableValues();
+            }
+
+            storeState();
+            isValidState = false;
+        }
+    }
+
+	public final void restoreModelState() {
+        if (!isValidState) {
+            //System.out.println("RESTORE MODEL: " + getModelName() + "/" + getId());
+
+            for (Variable variable : variables) {
+                variable.restoreVariableValues();
+            }
+            for (Model m : models) {
+                m.restoreModelState();
+            }
+
+            restoreState();
+            isValidState = true;
+
+            listenerHelper.fireModelRestored(this);
+        }
+    }
+
+	public final void acceptModelState() {
+        if (!isValidState) {
+            //System.out.println("ACCEPT MODEL: " + getModelName() + "/" + getId());
+
+            for (Variable variable : variables) {
+                variable.acceptVariableValues();
+            }
+
+            for (Model m : models) {
+                m.acceptModelState();
+            }
+
+            acceptState();
+
+            isValidState = true;
+        }
+    }
+
+	public boolean isValidState() {
+        return isValidState;
+    }
 
 	/**
-	 * @return whether this model is in a valid state
-	 */
-	boolean isValidState();
+     * Adds a sub-model to this model. If the model is already in the
+     * list then it does nothing.
+     */
+    public void addModel(Model model) {
+
+        if (!models.contains(model)) {
+            models.add(model);
+            model.addModelListener(this);
+        }
+    }
+
+	public void removeModel(Model model) {
+        models.remove(model);
+        model.removeModelListener(this);
+    }
+
+	public int getModelCount() {
+        return models.size();
+    }
+
+	public final Model getModel(int i) {
+        return models.get(i);
+    }
 
 	/**
-	 * @return the total number of sub-models
-	 */
-	int getModelCount();
+     * Fires a model changed event.
+     */
+    public void fireModelChanged() {
+        listenerHelper.fireModelChanged(this, this, -1);
+    }
 
-	/**
-	 * @return the ith sub-model
-	 */
-	Model getModel(int i);
+	public void fireModelChanged(Object object) {
+        listenerHelper.fireModelChanged(this, object, -1);
+    }
 
-	/**
-	 * @return the total number of variable in this model
-	 */
-	int getVariableCount();
+	public void fireModelChanged(Object object, int index) {
+        listenerHelper.fireModelChanged(this, object, index);
+    }
 
-	/**
-	 * @return the ith variable
-	 */
-	Variable getVariable(int i);
+	public final int getVariableCount() {
+        return variables.size();
+    }
+
+	public final Variable getVariable(int i) {
+        return variables.get(i);
+    }
 
 	/**
 	 * @return the variable of the component with a given name
 	 */
 	//Parameter getParameter(String name);
 
+	public final String getModelName() {
+        return name;
+    }
+
+	public void addModelRestoreListener(ModelListener listener) {
+        listenerHelper.addModelRestoreListener(listener);
+    }
+
+	public boolean isUsed() {
+        return listenerHelper.getListenerCount() > 0;
+    }
+
 	/**
-	 * @return the name of this model
-	 */
-	String getModelName();
-
-    /**
-     * is the model being listened to by another or by a likelihood?
-     * @return
+     * Additional state information, outside of the sub-model is stored by this call.
      */
-    boolean isUsed();
+    protected abstract void storeState();
 
-    /**
+	/**
+     * After this call the model is guaranteed to have returned its extra state information to
+     * the values coinciding with the last storeState call.
+     * Sub-models are handled automatically and do not need to be considered in this method.
+     */
+    protected abstract void restoreState();
+
+	/**
+     * This call specifies that the current state is accept. Most models will not need to do anything.
+     * Sub-models are handled automatically and do not need to be considered in this method.
+     */
+    protected abstract void acceptState();
+
+	public final void addStatistic(Statistic statistic) {
+        if (!statistics.contains(statistic)) {
+            statistics.add(statistic);
+        }
+    }
+
+	public final void removeStatistic(Statistic statistic) {
+
+        statistics.remove(statistic);
+    }
+
+	/**
+     * @return the number of statistics of this component.
+     */
+    public int getStatisticCount() {
+
+        return statistics.size();
+    }
+
+	/**
+     * @return the ith statistic of the component
+     */
+    public Statistic getStatistic(int i) {
+
+        return statistics.get(i);
+    }
+
+	public final Statistic getStatistic(String name) {
+
+        for (int i = 0; i < getStatisticCount(); i++) {
+            Statistic statistic = getStatistic(i);
+            if (name.equals(statistic.getStatisticName())) {
+                return statistic;
+            }
+        }
+
+        return null;
+    }
+
+	public void setId(String id) {
+        this.id = id;
+    }
+
+	public String getId() {
+        return id;
+    }
+
+	public String toString() {
+        if (id != null) {
+            return id;
+        } else if (name != null) {
+            return name;
+        }
+        return super.toString();
+    }
+
+	public Element createElement(Document d) {
+        throw new RuntimeException("Not implemented!");
+    }
+
+	/**
 	 * A helper class for storing listeners and firing events.
 	 */
 	public class ListenerHelper {
@@ -166,7 +386,7 @@ public interface Model extends Identifiable  {
 
 
     // set to store all created models
-    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>(); 
+    public final static Set<Model> FULL_MODEL_SET = new HashSet<>();
 
 }
 

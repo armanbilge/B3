@@ -158,7 +158,7 @@ public class StrictClockTest extends TraceCorrelationAssert {
         schedule.addOperator(operator);
 
         //CompoundLikelihood
-        List<Likelihood> likelihoods = new ArrayList<Likelihood>();        
+        List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         likelihoods.add(coalescent);
         Likelihood prior = new CompoundLikelihood(0, likelihoods);
         prior.setId("prior");

@@ -35,7 +35,6 @@ import beast.evolution.util.MutableTaxonListListener;
 import beast.evolution.util.Taxon;
 import beast.evomodel.coalescent.VDdemographicFunction;
 import beast.evomodel.operators.TreeNodeSlide;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -65,7 +64,7 @@ import java.util.StringTokenizer;
  * @author Joseph Heled
  *         Date: 24/05/2008
  */
-public class SpeciesTreeModel extends AbstractModel implements MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable {
+public class SpeciesTreeModel extends Model implements MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable {
 
     public static final String SPECIES_TREE = "speciesTree";
 

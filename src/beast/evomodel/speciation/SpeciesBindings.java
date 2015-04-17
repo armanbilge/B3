@@ -25,7 +25,6 @@ import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Taxon;
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
@@ -52,7 +51,7 @@ import java.util.Map;
  * @author Joseph Heled
  *         Date: 25/05/2008
  */
-public class SpeciesBindings extends AbstractModel {
+public class SpeciesBindings extends Model {
     // all gene trees
     private final GeneTreeInfo[] geneTrees;
 

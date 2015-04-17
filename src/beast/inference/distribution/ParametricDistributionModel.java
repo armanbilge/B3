@@ -38,7 +38,14 @@ import beast.xml.XORRule;
  * @version $Id: ParametricDistributionModel.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public interface ParametricDistributionModel extends Distribution, Model {
+public abstract class ParametricDistributionModel extends Model implements Distribution {
+
+    /**
+     * @param name Model Name
+     */
+    public ParametricDistributionModel(String name) {
+        super(name);
+    }
 
     public static abstract class DistributionModelParser<D extends ParametricDistributionModel> extends AbstractXMLObjectParser<D> {
 

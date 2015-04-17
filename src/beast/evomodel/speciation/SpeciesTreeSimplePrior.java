@@ -38,7 +38,7 @@ import beast.xml.XMLSyntaxRule;
  * @author Joseph Heled
  *         Date: 8/12/2008
  */
-public class SpeciesTreeSimplePrior extends Likelihood.Abstract {
+public class SpeciesTreeSimplePrior extends Likelihood {
 
     private final SpeciesTreeModel sTree;
     //private final ParametricDistributionModel dist;
@@ -105,6 +105,16 @@ public class SpeciesTreeSimplePrior extends Likelihood.Abstract {
         }
 
         return ll;
+    }
+
+    @Override
+    protected void cacheCalculations() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void uncacheCalculations() {
+        // Nothing to do
     }
 
     protected boolean getLikelihoodKnown() {

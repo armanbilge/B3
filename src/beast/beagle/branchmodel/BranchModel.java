@@ -35,7 +35,15 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public interface BranchModel extends Model  {
+public abstract class BranchModel extends Model {
+
+    /**
+     * @param name Model Name
+     */
+    public BranchModel(String name) {
+        super(name);
+    }
+
     /**
      * Returns a mapping of substitution models to the given branch. The Mapping
      * contains a list of substitution models in order from tipward to rootward
@@ -44,33 +52,33 @@ public interface BranchModel extends Model  {
      * @param branch the branch
      * @return a Mapping object
      */
-    Mapping getBranchModelMapping(final NodeRef branch);
+    public abstract Mapping getBranchModelMapping(final NodeRef branch);
 
     /**
      * Gets the list of substitution models in order they will be referred to
      * by the indices returned by the mappings.
      * @return the list of substitution models
      */
-    List<SubstitutionModel> getSubstitutionModels();
+    public abstract List<SubstitutionModel> getSubstitutionModels();
 
     /**
      * Gets the substitution model that will be applied at the root.
      * @return the substitution model
      */
-    SubstitutionModel getRootSubstitutionModel();
+    public abstract SubstitutionModel getRootSubstitutionModel();
 
     /**
      * Gets the frequency model that will be applied at the root.
      * @return the substitution model
      */
-    FrequencyModel getRootFrequencyModel();
+    public abstract FrequencyModel getRootFrequencyModel();
 
     /**
      * Is this model going to require convolution of matrices along any branches (essentially
      * are the mappings ever going to return more than one substitution model.
      * @return does it?
      */
-    boolean requiresMatrixConvolution();
+    public abstract boolean requiresMatrixConvolution();
 
     public interface Mapping {
         int[] getOrder();

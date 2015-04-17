@@ -28,7 +28,7 @@ import beast.evolution.tree.Tree;
 import beast.evolution.util.TaxonList;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.AbstractModelLikelihood;
+import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
@@ -46,17 +46,17 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units, CoalescentIntervalProvider {
+public abstract class AbstractCoalescentLikelihood extends Likelihood implements Units, CoalescentIntervalProvider {
 
     // PUBLIC STUFF
 
     public AbstractCoalescentLikelihood(
-            String name,
+            Model model,
             Tree tree,
             TaxonList includeSubtree,
             List<TaxonList> excludeSubtrees) throws Tree.MissingTaxonException {
 
-        super(name);
+        super(model);
 
         this.tree = tree;
 
@@ -76,14 +76,12 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
 
         if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
+            ((TreeModel) tree).addModelListener(this);
         }
 
         intervals = new Intervals(tree.getNodeCount());
         storedIntervals = new Intervals(tree.getNodeCount());
         eventsKnown = false;
-
-        addStatistic(new DeltaStatistic());
 
         likelihoodKnown = false;
     }
@@ -140,27 +138,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     protected final void acceptState() {
     } // nothing to do
-
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
-
-    public final Model getModel() {
-        return this;
-    }
-
-    public final double getLogLikelihood() {
-        if (!eventsKnown) {
-            setupIntervals();
-        }
-
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-
-        return logLikelihood;
-    }
 
     public final void makeDirty() {
         likelihoodKnown = false;

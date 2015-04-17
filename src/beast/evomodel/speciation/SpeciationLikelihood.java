@@ -26,7 +26,7 @@ import beast.evolution.util.Taxon;
 import beast.evolution.util.TaxonList;
 import beast.evolution.util.Units;
 import beast.inference.distribution.DistributionLikelihood;
-import beast.inference.model.AbstractModelLikelihood;
+import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
@@ -56,7 +56,7 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: SpeciationLikelihood.java,v 1.10 2005/05/18 09:51:11 rambaut Exp $
  */
-public class SpeciationLikelihood extends AbstractModelLikelihood implements Units {
+public class SpeciationLikelihood extends Likelihood implements Units {
 
     // PUBLIC STUFF
 
@@ -79,17 +79,14 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
 
-        super(name);
+        super(speciationModel);
 
         this.tree = tree;
         this.speciationModel = speciationModel;
         this.exclude = exclude;
 
         if (tree instanceof Model) {
-            addModel((Model) tree);
-        }
-        if (speciationModel != null) {
-            addModel(speciationModel);
+            ((Model) tree).addModelListener(this);
         }
     }
 
@@ -99,61 +96,23 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     }
 
     // **************************************************************
-    // ModelListener IMPLEMENTATION
-    // **************************************************************
-
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
-        likelihoodKnown = false;
-    }
-
-    // **************************************************************
     // VariableListener IMPLEMENTATION
     // **************************************************************
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
     } // No parameters to respond to
 
-    // **************************************************************
-    // Model IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * Stores the precalculated state: likelihood
-     */
-    protected final void storeState() {
-        storedLikelihoodKnown = likelihoodKnown;
-        storedLogLikelihood = logLikelihood;
-    }
-
-    /**
-     * Restores the precalculated state: computed likelihood
-     */
-    protected final void restoreState() {
-        likelihoodKnown = storedLikelihoodKnown;
-        logLikelihood = storedLogLikelihood;
-    }
-
     protected final void acceptState() {
     } // nothing to do
 
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
-
-    public final Model getModel() {
-        return this;
+    @Override
+    protected void cacheCalculations() {
+        // Nothing to do
     }
 
-    public final double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        return logLikelihood;
-    }
-
-    public final void makeDirty() {
-        likelihoodKnown = false;
+    @Override
+    protected void uncacheCalculations() {
+        // Nothing to do
     }
 
     /**
@@ -162,7 +121,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      *
      * @return the log likelihood
      */
-    private double calculateLogLikelihood() {
+    protected double calculateLogLikelihood() {
         if (exclude != null) {
             return speciationModel.calculateTreeLogLikelihood(tree, exclude);
         }
@@ -184,7 +143,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     public final beast.inference.loggers.LogColumn[] getColumns() {
 
         String columnName = getId();
-        if (columnName == null) columnName = getModelName() + ".likelihood";
+        if (columnName == null) columnName = getModel().getModelName() + ".likelihood";
 
         return new beast.inference.loggers.LogColumn[]{
                 new LikelihoodColumn(columnName)
@@ -248,11 +207,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     private final Set<Taxon> exclude;
 
     private CalibrationPoints calibration;
-
-    private double logLikelihood;
-    private double storedLogLikelihood;
-    private boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
 
     public static final XMLObjectParser<SpeciationLikelihood> PARSER = new AbstractXMLObjectParser<SpeciationLikelihood>() {
         public static final String MODEL = "model";

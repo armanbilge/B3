@@ -20,7 +20,6 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -44,7 +43,7 @@ import org.w3c.dom.Element;
  * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel/*, RandomGenerator*/ {
+public class NormalDistributionModel extends ParametricDistributionModel/*, RandomGenerator*/ {
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "normalDistributionModel";
 
@@ -166,7 +165,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     } // no additional state needs accepting
 
     public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
+        super.createElement(null);
     }
 
     // **************************************************************

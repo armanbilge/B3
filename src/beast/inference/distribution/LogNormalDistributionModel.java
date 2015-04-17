@@ -20,7 +20,6 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -34,8 +33,6 @@ import beast.xml.XMLObjectParser;
 import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 import beast.xml.XORRule;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class that acts as a model for log-normally distributed data.
@@ -44,7 +41,7 @@ import org.w3c.dom.Element;
  * @version $Id: LogNormalDistributionModel.java,v 1.8 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class LogNormalDistributionModel extends ParametricDistributionModel {
 
     public static final String LOGNORMAL_DISTRIBUTION_MODEL = "logNormalDistributionModel";
 
@@ -239,14 +236,6 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
 
     // **************************************************************
     // Private instance variables

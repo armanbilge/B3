@@ -79,10 +79,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
         try {
             this.siteModel = siteModel;
-            addModel(siteModel);
+            siteModel.addModelListener(this);
 
             this.frequencyModel = siteModel.getFrequencyModel();
-            addModel(frequencyModel);
+            frequencyModel.addModelListener(this);
 
             this.tipStatesModel = tipStatesModel;
 
@@ -151,7 +151,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             } else {
                 this.branchRateModel = new DefaultBranchRateModel();
             }
-            addModel(this.branchRateModel);
+
+            this.branchRateModel.addModelListener(this);
 
             probabilities = new double[stateCount * stateCount];
 
@@ -179,7 +180,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     likelihoodCore.createNodePartials(i);
                 }
 
-                addModel(tipStatesModel);
+                tipStatesModel.addModelListener(this);
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList
@@ -218,7 +219,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             throw new RuntimeException(mte.toString());
         }
 
-        addStatistic(new SiteLikelihoodsStatistic());
     }
 
     public final LikelihoodCore getLikelihoodCore() {
@@ -298,19 +298,19 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     /**
      * Stores the additional state other than model components
      */
-    protected void storeState() {
+    public void cacheCalculations() {
 
         if (storePartials) {
             likelihoodCore.storeState();
         }
-        super.storeState();
+        super.cacheCalculations();
 
     }
 
     /**
      * Restore the additional stored state
      */
-    protected void restoreState() {
+    public void uncacheCalculations() {
 
         if (storePartials) {
             likelihoodCore.restoreState();
@@ -318,7 +318,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             updateAllNodes();
         }
 
-        super.restoreState();
+        super.uncacheCalculations();
 
     }
 

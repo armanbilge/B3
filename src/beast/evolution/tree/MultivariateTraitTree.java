@@ -25,9 +25,16 @@ import beast.inference.model.Model;
 /**
  * @author Marc A. Suchard
  */
-public interface MultivariateTraitTree extends MutableTree, Model {
+public abstract class MultivariateTraitTree extends Model implements MutableTree {
 
-    public double[] getMultivariateNodeTrait(NodeRef node, String name);
+    /**
+     * @param name Model Name
+     */
+    public MultivariateTraitTree(String name) {
+        super(name);
+    }
 
-    public void setMultivariateTrait(NodeRef n, String name, double[] value);
+    public abstract double[] getMultivariateNodeTrait(NodeRef node, String name);
+
+    public abstract void setMultivariateTrait(NodeRef n, String name, double[] value);
 }

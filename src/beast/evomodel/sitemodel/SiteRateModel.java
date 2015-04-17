@@ -30,12 +30,19 @@ import beast.inference.model.Model;
  *         An attempt to harmonize **.beagle.**.SiteRateModel and **.SiteModel
  */
 
-public interface SiteRateModel extends Model {
+public abstract class SiteRateModel extends Model {
+
+    /**
+     * @param name Model Name
+     */
+    public SiteRateModel(String name) {
+        super(name);
+    }
 
     /**
      * @return the number of categories of substitution processes
      */
-    int getCategoryCount();
+    public abstract int getCategoryCount();
 
     /**
      * Get an array of the relative rates of sites in each category. These
@@ -43,14 +50,14 @@ public interface SiteRateModel extends Model {
      *
      * @return an array of the rates.
      */
-    double[] getCategoryRates();
+    public abstract double[] getCategoryRates();
 
     /**
      * Get an array of the expected proportion of sites in each category.
      *
      * @return an array of the proportions.
      */
-    double[] getCategoryProportions();
+    public abstract double[] getCategoryProportions();
 
     /**
      * Get the rate for a particular category. This may include the 'mu'
@@ -59,7 +66,7 @@ public interface SiteRateModel extends Model {
      * @param category the category number
      * @return the rate.
      */
-    double getRateForCategory(int category);
+    public abstract double getRateForCategory(int category);
 
     /**
      * Get the expected proportion of sites in this category.
@@ -67,6 +74,6 @@ public interface SiteRateModel extends Model {
      * @param category the category number
      * @return the proportion.
      */
-    double getProportionForCategory(int category);
+    public abstract double getProportionForCategory(int category);
 
 }

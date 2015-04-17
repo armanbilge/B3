@@ -23,7 +23,6 @@ package beast.evomodel.speciation;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Taxon;
 import beast.evolution.util.Units;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -34,7 +33,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public abstract class SpeciationModel extends AbstractModel implements Units {
+public abstract class SpeciationModel extends Model implements Units {
     /**
      * Units in which population size is measured.
      */

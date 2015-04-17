@@ -173,7 +173,7 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
                 assert k + 1 < trees.length;
             }
         }
-        super.handleModelChangedEvent(model, object, index);
+        super.modelChangedEvent(model, object, index);
         fireModelChanged(this);
     }
 

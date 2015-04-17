@@ -23,7 +23,6 @@ package beast.evomodel.tree;
 import beast.evolution.alignment.PatternList;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.TaxonList;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -36,7 +35,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @version $Id$
  */
-public abstract class TipStatesModel extends AbstractModel {
+public abstract class TipStatesModel extends Model {
 
     // an enum which specifies if the model emits tip states or partials
     public enum Type {

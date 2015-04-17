@@ -23,7 +23,6 @@ package beast.beagle.branchmodel;
 import beast.beagle.substmodel.FrequencyModel;
 import beast.beagle.substmodel.SubstitutionModel;
 import beast.evolution.tree.NodeRef;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Variable;
 
@@ -36,7 +35,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public class HomogeneousBranchModel extends AbstractModel implements BranchModel {
+public class HomogeneousBranchModel extends BranchModel {
     private final SubstitutionModel substitutionModel;
     private final FrequencyModel rootFrequencyModel;
 

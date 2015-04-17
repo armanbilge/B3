@@ -132,10 +132,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             logger.info("Using BEAGLE TreeLikelihood");
 
             this.siteRateModel = siteRateModel;
-            addModel(this.siteRateModel);
+            this.siteRateModel.addModelListener(this);
 
             this.branchModel = branchModel;
-            addModel(this.branchModel);
+            this.branchModel.addModelListener(this);
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -143,7 +143,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             } else {
                 this.branchRateModel = new DefaultBranchRateModel();
             }
-            addModel(this.branchRateModel);
+            this.branchRateModel.addModelListener(this);
 
             this.tipStatesModel = tipStatesModel;
 
@@ -317,7 +317,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                     tipStates = new int[patternCount];
                 }
 
-                addModel(tipStatesModel);
+                tipStatesModel.addModelListener(this);
             }
 
             initTips();
@@ -562,8 +562,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
      */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        fireModelChanged();
-
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
 
@@ -644,7 +642,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     /**
      * Stores the additional state other than model components
      */
-    protected void storeState() {
+    protected void cacheCalculations() {
         partialBufferHelper.storeState();
         substitutionModelDelegate.storeState();
 
@@ -654,14 +652,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 //            storedRescalingCount = rescalingCount;
         }
 
-        super.storeState();
-
     }
 
     /**
      * Restore the additional stored state
      */
-    protected void restoreState() {
+    protected void uncacheCalculations() {
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
@@ -676,8 +672,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
 
         updateRestrictedNodePartials = true;
-
-        super.restoreState();
 
     }
 
@@ -1578,4 +1572,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         }
     };
 
+    @Override
+    public boolean isLikelihoodKnown() {
+        return getLikelihoodKnown();
+    }
 }//END: class

@@ -43,7 +43,7 @@ import java.util.Arrays;
  * @author Joseph Heled, Graham Jones
  *         Date: 26/05/2008
  */
-public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units {
+public class MultiSpeciesCoalescent extends Likelihood implements Units {
     private final SpeciesTreeModel spTree;
     private final SpeciesBindings species;
     private boolean checkCompatibility;
@@ -70,17 +70,27 @@ public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units
 
     // override this for efficiency, otherwise the overridden makeDirty, which results in additional overhead is called
     public void modelRestored(Model model) {
-        super.makeDirty();
+        super.modelChangedEvent(null, null, 0);
     }
 
     // Upon a direct "make dirty" enable all compatibility checks, since the last call to calculateLogLikelihood may have
     // found a non compatible tree and returned -inf. This case is not explicitly saved.
     public void makeDirty() {
-        super.makeDirty(); 
+        super.modelChangedEvent(null, null, 0);
         checkCompatibility = true;
         for(int i = 0; i < species.getGeneTrees().length; i++) {
             compatibleCheckRequited[i] = true;
         }
+    }
+
+    @Override
+    protected void cacheCalculations() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void uncacheCalculations() {
+        // Nothing to do
     }
 
     protected double calculateLogLikelihood() {
@@ -255,8 +265,8 @@ public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units
     public void modelChangedEvent(Model model, Object object, int index) {
         //super.modelChangedEvent(model, object, index);
         // not the above for efficiency, otherwise the overridden makeDirty, which results in additional overhead is called.
-        super.makeDirty();
-        
+        super.modelChangedEvent(null, null, 0);
+
         if( model == spTree ) {
           if( object == spTree && index != -1 ) {
             // Species tree scaling

@@ -36,10 +36,9 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  */
 
-public class OneOnXPrior extends Likelihood.Abstract {
+public class OneOnXPrior extends Likelihood {
 
     public OneOnXPrior() {
-
         super(null);
     }
 
@@ -54,6 +53,16 @@ public class OneOnXPrior extends Likelihood.Abstract {
 
 
     protected ArrayList<Statistic> dataList = new ArrayList<Statistic>();
+
+    @Override
+    public void cacheCalculations() {
+        // Nothing to do
+    }
+
+    @Override
+    public void uncacheCalculations() {
+        // Nothing to do
+    }
 
     /**
      * Overridden to always return false.

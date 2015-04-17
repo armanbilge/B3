@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
  * @version $Id: DistributionLikelihood.java,v 1.11 2005/05/25 09:35:28 rambaut Exp $
  */
 
-public class MixedDistributionLikelihood extends Likelihood.Abstract {
+public class MixedDistributionLikelihood extends Likelihood {
 
     public MixedDistributionLikelihood(ParametricDistributionModel[] distributions, Statistic data, Statistic indicators) {
         // Mixed Distribution Likelihood contains two distribution models, not necessarily constant.
@@ -99,6 +99,16 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         }
         //System.err.println("mixed: " + logL);
         return logL;
+    }
+
+    @Override
+    public void cacheCalculations() {
+        // Nothing to do
+    }
+
+    @Override
+    public void uncacheCalculations() {
+        // Nothing to do
     }
 
     /**

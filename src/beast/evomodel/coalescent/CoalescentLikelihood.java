@@ -61,16 +61,24 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
 	                            List<TaxonList> excludeSubtrees,
 	                            DemographicModel demoModel) throws Tree.MissingTaxonException {
 
-		super(COALESCENT_LIKELIHOOD, tree, includeSubtree, excludeSubtrees);
+		super(demoModel, tree, includeSubtree, excludeSubtrees);
 
 		this.demoModel = demoModel;
-
-		addModel(demoModel);
 	}
 
     // **************************************************************
 	// Likelihood IMPLEMENTATION
 	// **************************************************************
+
+	@Override
+	protected void cacheCalculations() {
+
+	}
+
+	@Override
+	protected void uncacheCalculations() {
+
+	}
 
 	/**
 	 * Calculates the log likelihood of this set of coalescent intervals,

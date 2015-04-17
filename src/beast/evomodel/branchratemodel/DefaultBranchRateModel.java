@@ -26,12 +26,18 @@ import beast.evolution.tree.TreeTrait;
 import beast.inference.model.Model;
 import beast.inference.model.ModelListener;
 import beast.inference.model.Variable;
+import beast.inference.model.Variable.ChangeType;
 
 /**
  * @author Andrew Rambaut
  * @version $Id: DefaultBranchRateModel.java,v 1.4 2005/05/24 20:25:57 rambaut Exp $
  */
-public final class DefaultBranchRateModel implements BranchRateModel {
+public final class DefaultBranchRateModel extends BranchRateModel {
+
+    public DefaultBranchRateModel() {
+        super("defaultBranchRates");
+    }
+
     public double getBranchRate(Tree tree, NodeRef node) {
         return 1.0;
     }
@@ -44,42 +50,6 @@ public final class DefaultBranchRateModel implements BranchRateModel {
         // nothing to do
     }
 
-    public void storeModelState() {
-        // nothing to do
-    }
-
-    public void restoreModelState() {
-        // nothing to do
-    }
-
-    public void acceptModelState() {
-        // nothing to do
-    }
-
-    public boolean isValidState() {
-        return true;
-    }
-
-    public int getModelCount() {
-        return 0;
-    }
-
-    public Model getModel(int i) {
-        return null;
-    }
-
-    public int getVariableCount() {
-        return 0;
-    }
-
-    public Variable getVariable(int i) {
-        return null;
-    }
-
-    public String getModelName() {
-        return null;
-    }
-
     public String getId() {
         return null;
     }
@@ -90,6 +60,31 @@ public final class DefaultBranchRateModel implements BranchRateModel {
 
     public boolean isUsed() {
         return false;
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // Nothing to do
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, ChangeType type) {
+        // Nothing to do
+    }
+
+    @Override
+    protected void storeState() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void restoreState() {
+        // Nothing to do
+    }
+
+    @Override
+    protected void acceptState() {
+        // Nothing to do
     }
 
     public String getTraitName() {

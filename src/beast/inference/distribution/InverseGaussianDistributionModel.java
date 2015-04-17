@@ -20,7 +20,6 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -34,15 +33,13 @@ import beast.xml.XMLObjectParser;
 import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 import beast.xml.XORRule;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * @author Wai Lok Sibon Li
  * @version $Id: InverseGaussianDistributionModel.java,v 1.8 2009/03/30 20:25:59 rambaut Exp $
  */
 
-public class InverseGaussianDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class InverseGaussianDistributionModel extends ParametricDistributionModel {
 
     public static final String INVERSEGAUSSIAN_DISTRIBUTION_MODEL = "inverseGaussianDistributionModel";
 
@@ -225,14 +222,6 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
 
     // **************************************************************
     // Private instance variables

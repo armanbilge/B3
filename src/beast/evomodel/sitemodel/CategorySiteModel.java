@@ -22,7 +22,6 @@ package beast.evomodel.sitemodel;
 
 import beast.evomodel.substmodel.FrequencyModel;
 import beast.evomodel.substmodel.SubstitutionModel;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -41,7 +40,7 @@ import beast.xml.XMLSyntaxRule;
  * @version $Id: CategorySiteModel.java,v 1.3 2004/10/01 22:40:04 alexei Exp $
  */
 
-public class CategorySiteModel extends AbstractModel implements SiteModel {
+public class CategorySiteModel extends Model implements SiteModel {
 
     /**
      * @param rateParameter (relative to the rate of category 1)

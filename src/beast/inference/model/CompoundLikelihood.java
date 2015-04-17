@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
+public class CompoundLikelihood extends Likelihood implements Reportable, Resumable {
 
     public final static boolean UNROLL_COMPOUND = true;
 
@@ -59,6 +59,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     public final int[] evaluationCounts;
 
     public CompoundLikelihood(int threads, Collection<Likelihood> likelihoods) {
+        super(new CompoundModel("compoundModel"));
 
         int i = 0;
         for (Likelihood l : likelihoods) {
@@ -95,6 +96,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     }
 
     public CompoundLikelihood(Collection<Likelihood> likelihoods) {
+        super(new CompoundModel("compoundModel"));
 
         pool = null;
         threadCount = 0;
@@ -126,7 +128,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
 
                 likelihoods.add(likelihood);
                 if (likelihood.getModel() != null) {
-                    compoundModel.addModel(likelihood.getModel());
+                    getModel().addModel(likelihood.getModel());
                 }
 
                 if (likelihood.evaluateEarly()) {
@@ -163,14 +165,10 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public Model getModel() {
-        return compoundModel;
-    }
-
 //    // todo: remove in release
 //    static int DEBUG = 0;
 
-    public double getLogLikelihood() {
+    public double calculateLogLikelihood() {
 
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
@@ -247,6 +245,18 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
         }
     }
 
+    @Override
+    public void cacheCalculations() {
+        for (Likelihood likelihood : likelihoods)
+            likelihood.cacheCalculations();
+    }
+
+    @Override
+    public void uncacheCalculations() {
+        for (Likelihood likelihood : likelihoods)
+            likelihood.uncacheCalculations();
+    }
+
     public boolean evaluateEarly() {
         return false;
     }
@@ -320,7 +330,7 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     }
 
     public String prettyName() {
-        return Abstract.getPrettyName(this);
+        return Likelihood.getPrettyName(this);
     }
 
     public boolean isUsed() {
@@ -472,7 +482,6 @@ public class CompoundLikelihood implements Likelihood, Reportable, Resumable {
     private transient ExecutorService pool;
 
     private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
-    private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 
     private final ArrayList<Likelihood> earlyLikelihoods = new ArrayList<Likelihood>();
     private final ArrayList<Likelihood> lateLikelihoods = new ArrayList<Likelihood>();

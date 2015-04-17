@@ -31,16 +31,23 @@ import beast.evomodel.substmodel.SubstitutionModel;
  * @version $Id: SiteModel.java,v 1.77 2005/05/24 20:25:58 rambaut Exp $
  */
 
-public interface SiteModel extends SiteRateModel {
+public abstract class SiteModel extends SiteRateModel {
 
     public static final String SITE_MODEL = "siteModel";
+
+    /**
+     * @param name Model Name
+     */
+    public SiteModel(String name) {
+        super(name);
+    }
 
     /**
      * Get this site model's substitution model
      *
      * @return the substitution model
      */
-    SubstitutionModel getSubstitutionModel();
+    public abstract SubstitutionModel getSubstitutionModel();
 
     /**
      * Specifies whether SiteModel should integrate over the different categories at
@@ -50,7 +57,7 @@ public interface SiteModel extends SiteRateModel {
      *
      * @return the boolean
      */
-    boolean integrateAcrossCategories();  // TODO Consider moving into SiteRateModel
+    public abstract boolean integrateAcrossCategories();  // TODO Consider moving into SiteRateModel
 
     /**
      * Get the category of a particular site. If integrateAcrossCategories is true.
@@ -59,12 +66,12 @@ public interface SiteModel extends SiteRateModel {
      * @param site the index of the site
      * @return the index of the category
      */
-    int getCategoryOfSite(int site);    // TODO Consider moving into SiteRateModel
+    public abstract int getCategoryOfSite(int site);    // TODO Consider moving into SiteRateModel
 
     /**
      * Get the frequencyModel for this SiteModel.
      *
      * @return the frequencyModel.
      */
-    FrequencyModel getFrequencyModel();
+    public abstract FrequencyModel getFrequencyModel();
 }

@@ -24,7 +24,7 @@ import beast.evolution.alignment.PatternList;
 import beast.evolution.datatype.DataType;
 import beast.evolution.tree.NodeRef;
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.AbstractModelLikelihood;
+import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -37,14 +37,14 @@ import beast.xml.Reportable;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
-public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
+public abstract class AbstractTreeLikelihood extends Likelihood implements Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;
 
     public AbstractTreeLikelihood(String name, PatternList patternList,
                                   TreeModel treeModel) {
 
-        super(name);
+        super(treeModel);
 
         this.patternList = patternList;
         this.dataType = patternList.getDataType();
@@ -54,7 +54,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         patternWeights = patternList.getPatternWeights();
 
         this.treeModel = treeModel;
-        addModel(treeModel);
 
         nodeCount = treeModel.getNodeCount();
 
@@ -239,24 +238,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         likelihoodKnown = false;
     }
 
-    /**
-     * Stores the additional state other than model components
-     */
-    protected void storeState() {
-
-        storedLikelihoodKnown = likelihoodKnown;
-        storedLogLikelihood = logLikelihood;
-    }
-
-    /**
-     * Restore the additional stored state
-     */
-    protected void restoreState() {
-
-        likelihoodKnown = storedLikelihoodKnown;
-        logLikelihood = storedLogLikelihood;
-    }
-
     protected void acceptState() {
     } // nothing to do
 
@@ -264,20 +245,8 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     // Likelihood IMPLEMENTATION
     // **************************************************************
 
-    public final Model getModel() {
-        return this;
-    }
-
     public final PatternList getPatternList() {
         return patternList;
-    }
-
-    public final double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        return logLikelihood;
     }
 
     /**

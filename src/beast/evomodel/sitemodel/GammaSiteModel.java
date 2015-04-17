@@ -22,7 +22,6 @@ package beast.evomodel.sitemodel;
 
 import beast.evomodel.substmodel.FrequencyModel;
 import beast.evomodel.substmodel.SubstitutionModel;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -45,7 +44,7 @@ import java.util.logging.Logger;
  * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteModel extends AbstractModel implements SiteModel {
+public class GammaSiteModel extends Model implements SiteModel {
 
     public GammaSiteModel(SubstitutionModel substitutionModel) {
         this(substitutionModel,

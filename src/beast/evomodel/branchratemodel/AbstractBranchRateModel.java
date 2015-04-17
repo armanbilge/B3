@@ -23,7 +23,6 @@ package beast.evomodel.branchratemodel;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeTrait;
-import beast.inference.model.AbstractModelLikelihood;
 import beast.inference.model.Model;
 
 /**
@@ -31,7 +30,7 @@ import beast.inference.model.Model;
  * @author Andrew Rambaut
  * @version $Id:$
  */
-public abstract class AbstractBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
+public abstract class AbstractBranchRateModel extends BranchRateModel {
     /**
      * @param name Model Name
      */

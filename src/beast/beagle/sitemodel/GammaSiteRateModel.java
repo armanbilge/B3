@@ -23,7 +23,6 @@ package beast.beagle.sitemodel;
 import beast.beagle.substmodel.SubstitutionModel;
 import beast.evomodel.sitemodel.SiteModel;
 import beast.evomodel.sitemodel.SiteRateModel;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -46,7 +45,7 @@ import java.util.logging.Logger;
  * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
+public class GammaSiteRateModel extends SiteRateModel {
 
     public GammaSiteRateModel(String name) {
         this(   name,

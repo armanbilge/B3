@@ -37,21 +37,25 @@ import beast.inference.model.Model;
  */
 
 @Deprecated // Switching to BranchModel
-public interface BranchSubstitutionModel extends Model {
+public abstract class BranchSubstitutionModel extends Model {
 
-    EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);
+    public BranchSubstitutionModel(String name) {
+        super(name);
+    }
 
-    SubstitutionModel getSubstitutionModel(int modelIndex, int categoryIndex);
+    public abstract EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);
 
-    double[] getStateFrequencies(int categoryIndex);
+    public abstract SubstitutionModel getSubstitutionModel(int modelIndex, int categoryIndex);
 
-    public int getBranchIndex(final Tree tree, final NodeRef node, int bufferIndex);
+    public abstract double[] getStateFrequencies(int categoryIndex);
 
-    public int getEigenCount();
+    public abstract int getBranchIndex(final Tree tree, final NodeRef node, int bufferIndex);
 
-    boolean canReturnComplexDiagonalization();
+    public abstract int getEigenCount();
 
-    void updateTransitionMatrices(
+    public abstract boolean canReturnComplexDiagonalization();
+
+    public abstract void updateTransitionMatrices(
             Beagle beagle,
             int eigenIndex,
             BufferIndexHelper bufferHelper,
@@ -61,11 +65,11 @@ public interface BranchSubstitutionModel extends Model {
             final double[] edgeLengths,
             int count);
 
-	int getExtraBufferCount(TreeModel treeModel);
+    public abstract int getExtraBufferCount(TreeModel treeModel);
 
-	void setFirstBuffer(int bufferCount);
+    public abstract void setFirstBuffer(int bufferCount);
 
-	void setEigenDecomposition(Beagle beagle, int eigenIndex, BufferIndexHelper bufferHelper, int dummy);
+    public abstract void setEigenDecomposition(Beagle beagle, int eigenIndex, BufferIndexHelper bufferHelper, int dummy);
 	
 	
 

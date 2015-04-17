@@ -30,7 +30,7 @@ import beast.xml.XMLSyntaxRule;
 /**
  * @author Marc Suchard
  */
-public class DummyModel extends AbstractModelLikelihood {
+public class DummyModel extends Model {
 
     public static final String DUMMY_MODEL = "dummyModel";
 

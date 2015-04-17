@@ -20,15 +20,12 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
 import beast.math.UnivariateFunction;
 import beast.math.distributions.GammaDistribution;
 import beast.xml.XMLObjectParser;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class that acts as a model for gamma distributed data.
@@ -37,7 +34,7 @@ import org.w3c.dom.Element;
  * @version $Id: GammaDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class GammaDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class GammaDistributionModel extends ParametricDistributionModel {
 
     public static final String GAMMA_DISTRIBUTION_MODEL = "gammaDistributionModel";
 
@@ -136,14 +133,6 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
 
     public double getShape() {
         return shape.getValue(0);

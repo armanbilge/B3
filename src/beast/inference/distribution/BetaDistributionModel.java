@@ -20,15 +20,12 @@
 
 package beast.inference.distribution;
 
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
 import beast.math.UnivariateFunction;
 import beast.math.distributions.BetaDistribution;
 import beast.xml.XMLObjectParser;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class that acts as a model for beta distributed data.
@@ -36,7 +33,7 @@ import org.w3c.dom.Element;
  * @author Marc A. Suchard
  */
 
-public class BetaDistributionModel extends AbstractModel implements ParametricDistributionModel {
+public class BetaDistributionModel extends ParametricDistributionModel {
 
     public static final String BETA_DISTRIBUTION_MODEL = "betaDistributionModel";
 
@@ -142,14 +139,6 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
 
     protected void acceptState() {
     } // no additional state needs accepting
-
-    // **************************************************************
-    // XMLElement IMPLEMENTATION
-    // **************************************************************
-
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
 
     // **************************************************************
     // Private methods

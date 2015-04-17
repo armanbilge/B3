@@ -27,7 +27,7 @@ import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.evolution.util.Units;
 import beast.evomodel.tree.TreeModel;
-import beast.inference.model.AbstractModelLikelihood;
+import beast.inference.model.Likelihood;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Statistic;
@@ -53,7 +53,7 @@ import java.util.ArrayList;
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
 @Deprecated
-public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood implements  Units {
+public class OldAbstractCoalescentLikelihood extends Likelihood implements  Units {
 
     // PUBLIC STUFF
 
@@ -88,44 +88,35 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     }
 
     public OldAbstractCoalescentLikelihood(MultiLociTreeSet treesSet, DemographicModel demoModel) {
-        super(CoalescentLikelihood.COALESCENT_LIKELIHOOD);
+        super(demoModel);
         this.demoModel = demoModel;
         this.tree = null;
         this.treesSet = treesSet;
 
-        if (demoModel != null) {
-            addModel(demoModel);
-        }
-
         for (int nt = 0; nt < treesSet.nLoci(); ++nt) {
             final Tree t = treesSet.getTree(nt);
             if (t instanceof Model) {
-                addModel((Model) t);
+                ((Model) t).addModelListener(this);
             }
         }
     }
 
     public OldAbstractCoalescentLikelihood(String name, Tree tree, DemographicModel demoModel, boolean setupIntervals) {
-        super(name);
+        super(demoModel);
 
         this.demoModel = demoModel;
         this.tree = tree;
 
         if (tree instanceof TreeModel) {
-            addModel((TreeModel) tree);
-        }
-
-        if (demoModel != null) {
-            addModel(demoModel);
+            ((TreeModel) tree).addModelListener(this);
         }
 
         if (setupIntervals) setupIntervals();
 
-        addStatistic(new DeltaStatistic());
     }
 
     OldAbstractCoalescentLikelihood(String name) {
-        super(name);
+        super(null);
     }
 
     // **************************************************************
@@ -161,7 +152,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             // demoModel has changed so we don't need to recalculate the intervals
         }
 
-        likelihoodKnown = false;
+        setLikelihoodUnknown();
     }
 
     // **************************************************************
@@ -180,23 +171,21 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     /**
      * Stores the precalculated state: in this case the intervals
      */
-    protected void storeState() {
+    protected void cacheCalculations() {
         if (tree != null) {
             System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
             System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
             storedIntervalsKnown = intervalsKnown;
             storedIntervalCount = intervalCount;
-            storedLikelihoodKnown = likelihoodKnown;
         } else if (treesSet != null) {
             treesSet.storeTheState();
         }
-        storedLogLikelihood = logLikelihood;
     }
 
     /**
      * Restores the precalculated state: that is the intervals of the tree.
      */
-    protected void restoreState() {
+    protected void uncacheCalculations() {
         if (tree != null) {
             System.arraycopy(storedIntervals, 0, intervals, 0, storedIntervals.length);
             System.arraycopy(storedLineageCounts, 0, lineageCounts, 0, storedLineageCounts.length);
@@ -206,35 +195,16 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
             treesSet.restoreTheState();
         }
 
-        likelihoodKnown = storedLikelihoodKnown;
-        logLikelihood = storedLogLikelihood;
-
         if (!intervalsKnown) {
-            likelihoodKnown = false;
+            setLikelihoodUnknown();
         }
     }
 
     protected final void acceptState() {
     } // nothing to do
 
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
-
-    public final Model getModel() {
-        return this;
-    }
-
-    public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            logLikelihood = calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        return logLikelihood;
-    }
-
     public final void makeDirty() {
-        likelihoodKnown = false;
+        super.makeDirty();
         intervalsKnown = false;
     }
 
@@ -830,11 +800,6 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
 
     boolean intervalsKnown = false;
     private boolean storedIntervalsKnown = false;
-
-    double logLikelihood;
-    private double storedLogLikelihood;
-    boolean likelihoodKnown = false;
-    private boolean storedLikelihoodKnown = false;
 
     int intervalCount = 0;
     private int storedIntervalCount = 0;

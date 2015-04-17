@@ -21,7 +21,6 @@
 package beast.beagle.substmodel;
 
 import beast.evolution.datatype.DataType;
-import beast.inference.model.AbstractModel;
 import beast.inference.model.Model;
 import beast.inference.model.Parameter;
 import beast.inference.model.Variable;
@@ -37,8 +36,7 @@ import java.util.Arrays;
  * @version $Id: AbstractSubstitutionModel.java,v 1.41 2005/05/24 20:25:58 rambaut Exp $
  */
 @SuppressWarnings({"SuspiciousNameCombination", "UnusedAssignment"})
-public abstract class BaseSubstitutionModel extends AbstractModel
-        implements SubstitutionModel {
+public abstract class BaseSubstitutionModel extends SubstitutionModel {
 
 
     public static final String MODEL = "model";
