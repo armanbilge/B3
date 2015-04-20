@@ -36,7 +36,9 @@ import org.w3c.dom.Element;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -210,7 +212,7 @@ public interface Parameter extends Statistic, Variable<Double> {
          * Fired when all dimensions of the parameter have changed
          */
         public void fireParameterChangedEvent() {
-            fireParameterChangedEvent(-1, Parameter.ChangeType.VALUE_CHANGED);
+            fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
         }
 
         /**
@@ -434,6 +436,10 @@ public interface Parameter extends Statistic, Variable<Double> {
                 }
             }
             return buffer.toString();
+        }
+
+        protected List<VariableListener> getListeners() {
+            return Collections.unmodifiableList(listeners);
         }
 
         public Element createElement(Document document) {

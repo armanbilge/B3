@@ -1006,13 +1006,19 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
     /**
      * @return the relevant node height parameter. Is private because it can only be called by the XMLParser
      */
-    public Parameter createNodeHeightsParameter(boolean rootNode, boolean internalNodes, boolean leafNodes) {
+    public Parameter createNodeHeightsParameter(final boolean rootNode, final boolean internalNodes, final boolean leafNodes) {
 
         if (!rootNode && !internalNodes && !leafNodes) {
             throw new IllegalArgumentException("At least one of rootNode, internalNodes or leafNodes must be true");
         }
 
-        CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")");
+        CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")") {
+            @Override
+            public void fireParameterChangedEvent() {
+                getListeners().forEach(l -> l.variableChangedEvent(this, -1, ChangeType.ALL_VALUES_CHANGED));
+            }
+        };
+        parameter.addParameterListener(this);
 
         for (int i = externalNodeCount; i < nodeCount; i++) {
             if ((rootNode && nodes[i] == root) || (internalNodes && nodes[i] != root)) {
