@@ -970,7 +970,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
      */
     public Node getNodeOfParameter(Parameter parameter) {
 
-        if (parameter == null) throw new IllegalArgumentException("Parameter is null!");
+        if (parameter == null) return null;
 
         for (Node node : nodes) {
             if (node.heightParameter == parameter) {
@@ -1015,7 +1015,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
         CompoundParameter parameter = new CompoundParameter("nodeHeights(" + getId() + ")") {
             @Override
             public void fireParameterChangedEvent() {
-                getListeners().forEach(l -> l.variableChangedEvent(this, -1, ChangeType.ALL_VALUES_CHANGED));
+                getListeners().forEach(l -> l.variableChangedEvent(null, -1, ChangeType.ALL_VALUES_CHANGED));
             }
         };
         parameter.addParameterListener(this);
