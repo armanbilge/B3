@@ -36,6 +36,8 @@ import beast.xml.ObjectArrayElement;
 import beast.xml.ObjectElement;
 import beast.xml.Parseable;
 
+import java.util.Arrays;
+
 /**
  * @author Arman Bilge
  */
@@ -82,7 +84,7 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
             @OperatorWeightAttribute double weight,
             @CoercionModeAttribute CoercionMode mode) {
         this(U, new CompoundParameter("q", parameters),
-                new KineticEnergy.Fixed(massAttributeToMass(massAttribute, new CompoundParameter("q", parameters).getDimension())),
+                new KineticEnergy.Fixed(massAttributeToMass(massAttribute, Arrays.stream(parameters).mapToInt(Parameter::getDimension).sum())),
                 epsilon, L, alpha, weight, mode);
     }
 
