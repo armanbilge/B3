@@ -131,21 +131,22 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public void setText(Double value) {
-        if (value == null && allowEmpty) {
-            setText("");
-        }
-        if (value == Double.NaN) {
-            setText(NaN);
-        } else if (value == Double.POSITIVE_INFINITY) {
-            setText(POSITIVE_INFINITY);
-        } else if (value == Double.NEGATIVE_INFINITY) {
-            setText(NEGATIVE_INFINITY);
-        } else if (value == Double.MAX_VALUE) {
-            setText(MAX_VALUE);
-        } else if (value == Double.MIN_VALUE) {
-            setText(MIN_VALUE);
+        if (value == null) {
+            if (allowEmpty) setText("");
         } else {
-            setText(Double.toString(value));
+            if (value == Double.NaN) {
+                setText(NaN);
+            } else if (value == Double.POSITIVE_INFINITY) {
+                setText(POSITIVE_INFINITY);
+            } else if (value == Double.NEGATIVE_INFINITY) {
+                setText(NEGATIVE_INFINITY);
+            } else if (value == Double.MAX_VALUE) {
+                setText(MAX_VALUE);
+            } else if (value == Double.MIN_VALUE) {
+                setText(MIN_VALUE);
+            } else {
+                setText(Double.toString(value));
+            }
         }
     }
 
