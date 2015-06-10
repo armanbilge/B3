@@ -22,6 +22,7 @@ package beast.evomodel.substmodel;
 
 import beast.evolution.datatype.DataType;
 import beast.inference.model.Model;
+import beast.inference.model.Variable;
 
 /**
  * <b>model of sequence substitution (rate matrix)</b>.
@@ -40,6 +41,10 @@ public interface SubstitutionModel extends Model {
      * @param matrix   an array to store the matrix
      */
     void getTransitionProbabilities(double distance, double[] matrix);
+
+    void getDifferentiatedTransitionProbabilities(double distance, double constant, double[] matrix);
+
+    void getDifferentiatedTransitionProbabilities(double distance, Variable<Double> parameter, double[] matrix);
 
     double[] getRelativeRates();
 
