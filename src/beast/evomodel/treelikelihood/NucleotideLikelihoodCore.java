@@ -196,8 +196,8 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3)
 	{
 
@@ -218,6 +218,7 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 				sum2 += matrices2[w + 2] * partials2[v + 2];
 				sum1 += matrices1[w + 3] * partials1[v + 3];
 				sum2 += matrices2[w + 3] * partials2[v + 3];
+				conditionals1[u] = sum1; conditionals2[u] = sum2;
 				partials3[u] = sum1 * sum2; u++;
 
 				sum1 = matrices1[w + 4] * partials1[v];
@@ -228,6 +229,7 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 				sum2 += matrices2[w + 6] * partials2[v + 2];
 				sum1 += matrices1[w + 7] * partials1[v + 3];
 				sum2 += matrices2[w + 7] * partials2[v + 3];
+				conditionals1[u] = sum1; conditionals2[u] = sum2;
 				partials3[u] = sum1 * sum2; u++;
 
 				sum1 = matrices1[w + 8] * partials1[v];
@@ -238,6 +240,7 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 				sum2 += matrices2[w + 10] * partials2[v + 2];
 				sum1 += matrices1[w + 11] * partials1[v + 3];
 				sum2 += matrices2[w + 11] * partials2[v + 3];
+				conditionals1[u] = sum1; conditionals2[u] = sum2;
 				partials3[u] = sum1 * sum2; u++;
 
 				sum1 = matrices1[w + 12] * partials1[v];
@@ -248,6 +251,7 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 				sum2 += matrices2[w + 14] * partials2[v + 2];
 				sum1 += matrices1[w + 15] * partials1[v + 3];
 				sum2 += matrices2[w + 15] * partials2[v + 3];
+				conditionals1[u] = sum1; conditionals2[u] = sum2;
 				partials3[u] = sum1 * sum2; u++;
 
 				v += 4;
@@ -258,6 +262,48 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 
 	}
 
+	protected void calculateUpperPartials(double[] upperPartials1, double[] conditionals, double[] matrices, double[] upperPartials2) {
+
+		double sum;
+
+		int u = 0;
+		int v = 0;
+		int w = 0;
+
+		for (int l = 0; l < matrixCount; l++) {
+			for (int k = 0; k < patternCount; k++) {
+
+				sum = upperPartials1[v] * conditionals[v] * matrices[w];
+				sum += upperPartials1[v + 1] * conditionals[v + 1] * matrices[w + 4];
+				sum += upperPartials1[v + 2] * conditionals[v + 2] * matrices[w + 8];
+				sum += upperPartials1[v + 3] * conditionals[v + 3] * matrices[w + 12];
+				upperPartials2[u++] = sum;
+
+				sum = upperPartials1[v] * conditionals[v] * matrices[w + 1];
+				sum += upperPartials1[v + 1] * conditionals[v + 1] * matrices[w + 5];
+				sum += upperPartials1[v + 2] * conditionals[v + 2] * matrices[w + 9];
+				sum += upperPartials1[v + 3] * conditionals[v + 3] * matrices[w + 13];
+				upperPartials2[u++] = sum;
+
+				sum = upperPartials1[v] * conditionals[v] * matrices[w + 2];
+				sum += upperPartials1[v + 1] * conditionals[v + 1] * matrices[w + 6];
+				sum += upperPartials1[v + 2] * conditionals[v + 2] * matrices[w + 10];
+				sum += upperPartials1[v + 3] * conditionals[v + 3] * matrices[w + 14];
+				upperPartials2[u++] = sum;
+
+				sum = upperPartials1[v] * conditionals[v] * matrices[w + 3];
+				sum += upperPartials1[v + 1] * conditionals[v + 1] * matrices[w + 7];
+				sum += upperPartials1[v + 2] * conditionals[v + 2] * matrices[w + 11];
+				sum += upperPartials1[v + 3] * conditionals[v + 3] * matrices[w + 15];
+				upperPartials2[u++] = sum;
+
+				v += 4;
+			}
+
+			w += matrixSize;
+		}
+
+	}
 
 	/**
 	 * Calculates partial likelihoods at a node when both children have states.
@@ -282,8 +328,8 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
@@ -338,16 +384,44 @@ public class NucleotideLikelihoodCore extends AbstractLikelihoodCore {
 		}
 	}
 
-	public void calculateDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] outDifferentiatedLogLikelihoods)
+	protected void calculateDifferentiatedLogLikelihoods(double[] upperPartials, double[] conditionals, double[] matrix, double[] partials, double[] outDifferentiatedLogLikelihoods)
 	{
+
+		double sum;
+
+		int u = 0;
 		int v = 0;
+
 		for (int k = 0; k < patternCount; k++) {
-			double sum = frequencies[0] * partials[v];	v++;
-			sum += frequencies[1] * partials[v];	v++;
-			sum += frequencies[2] * partials[v];	v++;
-			sum += frequencies[3] * partials[v];	v++;
+
+			sum = upperPartials[u] * conditionals[u] * matrix[0] * partials[v];
+			sum += upperPartials[u] * conditionals[u] * matrix[1] * partials[v + 1];
+			sum += upperPartials[u] * conditionals[u] * matrix[2] * partials[v + 2];
+			sum += upperPartials[u] * conditionals[u] * matrix[3] * partials[v + 3];
+			++u;
+
+			sum += upperPartials[u] * conditionals[u] * matrix[4] * partials[v];
+			sum += upperPartials[u] * conditionals[u] * matrix[5] * partials[v + 1];
+			sum += upperPartials[u] * conditionals[u] * matrix[6] * partials[v + 2];
+			sum += upperPartials[u] * conditionals[u] * matrix[7] * partials[v + 3];
+			++u;
+
+			sum += upperPartials[u] * conditionals[u] * matrix[8] * partials[v];
+			sum += upperPartials[u] * conditionals[u] * matrix[9] * partials[v + 1];
+			sum += upperPartials[u] * conditionals[u] * matrix[10] * partials[v + 2];
+			sum += upperPartials[u] * conditionals[u] * matrix[11] * partials[v + 3];
+			++u;
+
+			sum += upperPartials[u] * conditionals[u] * matrix[12] * partials[v];
+			sum += upperPartials[u] * conditionals[u] * matrix[13] * partials[v + 1];
+			sum += upperPartials[u] * conditionals[u] * matrix[14] * partials[v + 2];
+			sum += upperPartials[u] * conditionals[u] * matrix[15] * partials[v + 3];
+			++u;
+
 			outDifferentiatedLogLikelihoods[k] = sum;
+			v += 4;
 		}
+
 	}
 
 }

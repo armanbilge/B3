@@ -235,6 +235,32 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
         pushiexp(iexp);
     }
 
+    public void getDifferentiatedTransitionProbabilities(double distance, double[] matrix) {
+        double[] m = new double[matrix.length];
+        getTransitionProbabilities(distance, m);
+        multiply(getQ(), m, matrix);
+    }
+
+    public void getDifferentiatedTransitionProbabilities(double distance, Variable<Double> parameter, double[] matrix) {
+        // TODO
+        throw new UnsupportedOperationException();
+    }
+
+    protected final void multiply(final double[][] a, final double[] b, final double[] out) {
+        int l = 0;
+        for (int i = 0; i < stateCount; ++i) {
+            for (int j = 0; j < stateCount; ++j) {
+                out[l] = 0;
+                int m = j;
+                for (int k = 0; k < stateCount; ++k) {
+                    out[l] += a[i][k] * b[m];
+                    m += stateCount;
+                }
+                ++l;
+            }
+        }
+    }
+
     /**
      * This function returns the Eigen vectors.
      *

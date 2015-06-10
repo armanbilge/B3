@@ -32,8 +32,8 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials);
 	}
 
-	protected void calculatePartialsPartialsPruning(double[] partials1,
-			double[] matrices1, double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1,
+			double[] matrices1, double[] partials2, double[] conditionals2, double[] matrices2,
 			double[] partials3) {
 		nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3);
 	}
@@ -53,7 +53,7 @@ public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 	}
 
 	protected void calculatePartialsPartialsPruning(double[] partials1,
-			double[] matrices1, double[] partials2, double[] matrices2,
+			double[] matrices1, double[] conditionals1, double[] partials2, double[] conditionals2, double[] matrices2,
 			double[] partials3, int[] matrixMap) {
 		throw new RuntimeException("not implemented using matrixMap");
 	}

@@ -32,8 +32,8 @@ public class NativeGeneralLikelihoodCore extends AbstractLikelihoodCore {
 		nativeIntegratePartials(inPartials, proportions, patternCount, matrixCount, outPartials, stateCount);
 	}
 
-	protected void calculatePartialsPartialsPruning(double[] partials1,
-	                                                double[] matrices1, double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1,
+													double[] matrices1, double[] partials2, double[] conditionals2, double[] matrices2,
 	                                                double[] partials3) {
 		nativePartialsPartialsPruning(partials1, matrices1, partials2, matrices2, patternCount, matrixCount, partials3, stateCount);
 	}
@@ -52,8 +52,8 @@ public class NativeGeneralLikelihoodCore extends AbstractLikelihoodCore {
 		nativeStatesStatesPruning(states1, matrices1, states2, matrices2, patternCount, matrixCount, partials3, stateCount);
 	}
 
-	protected void calculatePartialsPartialsPruning(double[] partials1,
-	                                                double[] matrices1, double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1,
+													double[] matrices1, double[] partials2, double[] conditionals2, double[] matrices2,
 	                                                double[] partials3, int[] matrixMap) {
 		throw new RuntimeException("not implemented using matrixMap");
 	}

@@ -346,8 +346,8 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3)
 	{
 
@@ -406,6 +406,8 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 					sum1 +=	matrices1[x] * partials1[y];
 					sum2 +=	matrices2[x] * partials2[y]; x++; y++;
 
+					conditionals1[u] = sum1;
+					conditionals2[u] = sum2;
 					partials3[u] = sum1 * sum2;
 					u++;
 				}
@@ -442,8 +444,8 @@ public class AminoAcidLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");

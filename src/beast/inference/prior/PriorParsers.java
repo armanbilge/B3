@@ -510,7 +510,7 @@ public class PriorParsers {
         }
 
         public double differentiate(Variable<Double> var, int index) {
-            return Collections.frequency(statistics, var) * distribution.differentiateLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray(), index);
+            return Collections.frequency(statistics, var) * distribution.gradientLogPdf(Arrays.stream(var.getValues()).mapToDouble(d -> d).toArray())[index];
         }
 
 
