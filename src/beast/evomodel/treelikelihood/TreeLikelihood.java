@@ -48,6 +48,7 @@ import beast.xml.XMLParseException;
 import beast.xml.XMLSyntaxRule;
 
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 /**
  * TreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -365,7 +366,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
 
         final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root);
+        traversePostOrder(treeModel, root);
 
         double logL = 0.0;
         double ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
@@ -382,7 +383,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             // and try again...
             updateAllNodes();
             updateAllPatterns();
-            traverse(treeModel, root);
+            traversePostOrder(treeModel, root);
 
             logL = 0.0;
             ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
@@ -409,142 +410,62 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         if (categoryCount > 1)
             throw new UnsupportedOperationException("Differentiation unsupported when categoryCount > 1!");
 
+        double deriv = 0;
+
+        for (final NodeRef node : branchRateModel.getNodesForVariable(treeModel, var, index))
+            deriv += differentiateRespectingRate(node);
+
         if (var instanceof CompoundParameter)
             var = ((CompoundParameter) var).getMaskedParameter(index);
         if (var instanceof Parameter) {
             final Parameter param = (Parameter) var;
             final NodeRef node = treeModel.getNodeOfParameter(param);
             if (node != null && treeModel.isHeightParameterForNode(node, param)) {
-                getLogLikelihood();
-                if (treeModel.isExternal(node)) {
-                    if (!externalDerivativesKnown)
-                        differentiateExternalNodes();
-                } else {
-                    if (!internalDerivativesKnown)
-                        differentiateInternalNodes();
-                }
-                return derivatives[node.getNumber()];
+                deriv += differentiateRespectingNode(node);
             }
-        }
-
-        return super.differentiate(var, index);
-    }
-
-    protected double differentiateRespectingNode(final NodeRef node) {
-
-        double deriv = 0.0;
-
-        final double[][] rateMatrix = siteModel.getSubstitutionModel().getRateMatrix();
-        if (!treeModel.isRoot(node)) {
-            final int nodeNum = node.getNumber();
-            final double rate = branchRateModel.getBranchRate(treeModel, node);
-            for (int i = 0; i < categoryCount; i++) {
-                likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                multiply(rate, rateMatrix, storedMatrices[i]);
-                likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
-            }
-            updateNode[nodeNum] = true;
-            deriv -= calculateDifferentiatedLogLikelihood();
-            for (int i = 0; i < categoryCount; i++)
-                likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
-        }
-
-        if (!treeModel.isExternal(node)) {
-
-            {
-                final NodeRef child = treeModel.getChild(node, 0);
-                final int nodeNum = child.getNumber();
-                final double rate = branchRateModel.getBranchRate(treeModel, child);
-                for (int i = 0; i < categoryCount; i++) {
-                    likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                    multiply(rate, rateMatrix, storedMatrices[i]);
-                    likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
-                }
-                updateNode[nodeNum] = true;
-                deriv += calculateDifferentiatedLogLikelihood();
-                for (int i = 0; i < categoryCount; i++)
-                    likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
-            }
-
-            {
-                final NodeRef child = treeModel.getChild(node, 1);
-                final int nodeNum = child.getNumber();
-                final double rate = branchRateModel.getBranchRate(treeModel, child);
-                for (int i = 0; i < categoryCount; i++) {
-                    likelihoodCore.getNodeMatrix(nodeNum, i, storedMatrices[i]);
-                    multiply(rate, rateMatrix, storedMatrices[i]);
-                    likelihoodCore.setNodeMatrix(nodeNum, i, probabilities);
-                }
-                updateNode[nodeNum] = true;
-                deriv += calculateDifferentiatedLogLikelihood();
-                for (int i = 0; i < categoryCount; i++)
-                    likelihoodCore.setNodeMatrix(nodeNum, i, storedMatrices[i]);
-            }
-
-        }
-
-        updateNode[node.getNumber()] = !treeModel.isRoot(node);
-        if (!treeModel.isExternal(node)) {
-            updateNode[treeModel.getChild(node, 0).getNumber()] = true;
-            updateNode[treeModel.getChild(node, 1).getNumber()] = true;
         }
 
         return deriv;
     }
 
-    protected double calculateDifferentiatedLogLikelihood() {
+    protected double differentiateRespectingBranchSubstitutions(final NodeRef node) {
+        if (treeModel.isRoot(node))
+            return 0.0;
+        return calculateDifferentiatedLogLikelihood(node);
+    }
+
+    protected double differentiateRespectingBranch(final NodeRef node) {
+        if (treeModel.isRoot(node))
+            return 0.0;
+        return branchRateModel.getBranchRate(treeModel, node) * getDerivativeRespectingBranchSubstitutions(node);
+    }
+
+    protected double differentiateRespectingRate(final NodeRef node) {
+        if (treeModel.isRoot(node))
+            return 0.0;
+        return treeModel.getBranchLength(node) * getDerivativeRespectingBranchSubstitutions(node);
+    }
+
+    protected double calculateDifferentiatedLogLikelihood(NodeRef node) {
 
         if (differentiatedPatternLogLikelihoods == null)
             differentiatedPatternLogLikelihoods = new double[patternCount];
 
-        final NodeRef root = treeModel.getRoot();
-        traverseDifferentiate(treeModel, root);
+        NodeRef parent = treeModel.getParent(node);
+        NodeRef sibling = IntStream.range(0, 2)
+                .mapToObj(i -> treeModel.getChild(parent, i))
+                .filter(n -> !node.equals(n))
+                .findFirst().get();
+
+        siteModel.getSubstitutionModel().getDifferentiatedTransitionProbabilities(branchRateModel.getBranchRate(treeModel, node) * treeModel.getBranchLength(node), probabilities);
+        likelihoodCore.calculateDifferentiatedLogLikelihoods(parent.getNumber(), sibling.getNumber(), probabilities, node.getNumber(), differentiatedPatternLogLikelihoods);
 
         double deriv = 0.0;
         for (int i = 0; i < patternCount; i++) {
             deriv += differentiatedPatternLogLikelihoods[i] / Math.exp(patternLogLikelihoods[i]) * patternWeights[i];
         }
 
-//        if (logL == Double.NEGATIVE_INFINITY) {
-//            Logger.getLogger("beast.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial likelihood scaling to avoid precision loss");
-//
-//            // We probably had an underflow... turn on scaling
-//            likelihoodCore.setUseScaling(true);
-//
-//            // and try again...
-//            updateAllNodes();
-//            updateAllPatterns();
-//            traverseDifferentiate(treeModel, root);
-//
-//            logL = 0.0;
-//            ascertainmentCorrection = getAscertainmentCorrection(patternLogLikelihoods);
-//            for (int i = 0; i < patternCount; i++) {
-//                logL += (patternLogLikelihoods[i] - ascertainmentCorrection) * patternWeights[i];
-//            }
-//        }
-
-        //********************************************************************
-        // after traverse all nodes and patterns have been updated --
-        //so change flags to reflect this.
-        for (int i = 0; i < nodeCount; i++) {
-            updateNode[i] = false;
-        }
-        //********************************************************************
-
         return deriv;
-    }
-
-    protected void multiply(final double c, final double[][] a, final double[] b) {
-        for (int i = 0; i < stateCount; ++i) {
-            for (int j = 0; j < stateCount; ++j) {
-                final int n = i * stateCount + j;
-                probabilities[n] = 0;
-                for (int k = 0; k < stateCount; ++k) {
-                    probabilities[n] += a[i][k] * b[k * stateCount + j];
-                }
-                probabilities[n] *= c;
-            }
-        }
     }
 
     public double[] getPatternLogLikelihoods() {
@@ -604,7 +525,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      *
      * @return whether the partials for this node were recalculated.
      */
-    protected boolean traverse(Tree tree, NodeRef node) {
+    protected boolean traversePostOrder(Tree tree, NodeRef node) {
 
         boolean update = false;
 
@@ -641,10 +562,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             // Traverse down the two child nodes
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
+            final boolean update1 = traversePostOrder(tree, child1);
 
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
+            final boolean update2 = traversePostOrder(tree, child2);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
@@ -682,65 +603,24 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
     }
 
-    /**
-     * Traverse the tree calculating partial likelihoods.
-     *
-     * @return whether the partials for this node were recalculated.
-     */
-    protected boolean traverseDifferentiate(Tree tree, NodeRef node) {
+    protected void traversePreOrder(Tree tree, NodeRef node) {
 
-        int nodeNum = node.getNumber();
+        if (tree.isRoot(node)) {
 
-        NodeRef parent = tree.getParent(node);
+            likelihoodCore.setNodeUpperPartials(node.getNumber(), siteModel.getFrequencyModel().getFrequencies());
 
-        boolean update = parent != null && updateNode[nodeNum];
+        } else {
 
-        // If the node is internal, update the partial likelihoods.
-        if (!tree.isExternal(node)) {
-
-            // Traverse down the two child nodes
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverseDifferentiate(tree, child1);
-
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverseDifferentiate(tree, child2);
-
-            // If either child node was updated then update this node too
-            if (update1 || update2) {
-
-                final int childNum1 = child1.getNumber();
-                final int childNum2 = child2.getNumber();
-
-//                likelihoodCore.setNodePartialsForUpdate(nodeNum);
-
-                if (integrateAcrossCategories) {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum);
-                } else {
-                    likelihoodCore.calculatePartials(childNum1, childNum2, nodeNum, siteCategories);
-                }
-
-                if (COUNT_TOTAL_OPERATIONS) {
-                    totalOperationCount++;
-                }
-
-                if (parent == null) {
-                    // No parent this is the root of the tree -
-                    // calculate the pattern likelihoods
-                    double[] frequencies = frequencyModel.getFrequencies();
-
-                    double[] partials = getRootPartials();
-
-                    likelihoodCore.calculateDifferentiatedLogLikelihoods(partials, frequencies, differentiatedPatternLogLikelihoods);
-                }
-
-                update = true;
-            }
+            NodeRef parent = tree.getParent(node);
+            NodeRef sibling = IntStream.range(0, 2)
+                    .mapToObj(i -> tree.getChild(parent, i))
+                    .filter(n -> !node.equals(n))
+                    .findFirst().get();
+            likelihoodCore.calculateUpperPartials(node.getNumber(), sibling.getNumber(), parent.getNumber());
         }
 
-        return update;
-
     }
-
+    
     public final double[] getRootPartials() {
         if (rootPartials == null) {
             rootPartials = new double[patternCount * stateCount];

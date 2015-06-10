@@ -42,7 +42,7 @@ public interface SubstitutionModel extends Model {
      */
     void getTransitionProbabilities(double distance, double[] matrix);
 
-    void getDifferentiatedTransitionProbabilities(double distance, double constant, double[] matrix);
+    void getDifferentiatedTransitionProbabilities(double distance, double[] matrix);
 
     void getDifferentiatedTransitionProbabilities(double distance, Variable<Double> parameter, double[] matrix);
 

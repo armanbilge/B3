@@ -161,8 +161,8 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3)
 	{
 		double sum1, sum2;
@@ -187,8 +187,38 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 						w++;
 					}
 
+					conditionals1[u] = sum1;
+					conditionals2[u] = sum2;
 					partials3[u] = sum1 * sum2;
 					u++;
+				}
+				v += stateCount;
+			}
+		}
+	}
+
+	protected void calculateUpperPartials(double[] upperPartials1, double[] conditionals, double[] matrices, double[] upperPartials2) {
+
+		double sum;
+
+		int u = 0;
+		int v = 0;
+
+		for (int l = 0; l < matrixCount; l++) {
+
+			for (int k = 0; k < patternCount; k++) {
+
+				int w = l * matrixSize;
+
+				for (int i = 0; i < stateCount; i++) {
+
+					sum = 0.0;
+
+					for (int j = 0; j < stateCount; j++) {
+						sum += upperPartials1[v + j] * conditionals[v + j] * matrices[w + j * stateCount + i];
+					}
+
+					upperPartials2[u++] = sum;
 				}
 				v += stateCount;
 			}
@@ -311,8 +341,8 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		double sum1, sum2;
@@ -335,6 +365,8 @@ public class GeneralLikelihoodCore extends AbstractLikelihoodCore {
 					w++;
 				}
 
+				conditionals1[u] = sum1;
+				conditionals2[u] = sum2;
 				partials3[u] = sum1 * sum2;
 				u++;
 			}

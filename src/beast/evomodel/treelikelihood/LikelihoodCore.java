@@ -49,6 +49,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void setNodePartials(int nodeIndex, double[] partials);
 
+    default void setNodeUpperPartials(int nodeIndex, double[] upperPartials) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Sets states for a node
      */
@@ -99,6 +103,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3);
 
+    default void calculateUpperPartials(int nodeIndex1, int nodeIndex2, int nodeIndex3) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Calculates partial likelihoods at a node using a matrixMap.
      *
@@ -135,9 +143,7 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
      */
     void calculateLogLikelihoods(double[] partials, double[] frequencies, double[] outLogLikelihoods);
 
-    default void calculateDifferentiatedLogLikelihoods(double[] partials, double[] frequencies, double[] outDifferentiatedLogLikelihoods) {
-        throw new UnsupportedOperationException();
-    }
+    void calculateDifferentiatedLogLikelihoods(int parent, int siblings, double[] matrix, int node, double[] outDifferentiatedLogLikelihoods);
 
     void setUseScaling(boolean useScaling);
 

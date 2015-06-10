@@ -41,6 +41,8 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
     protected boolean integrateCategories;
 
     protected double[][][] partials;
+    protected double[][][] conditionals;
+    protected double[][][] upperPartials;
 
     protected int[][] states;
 
@@ -89,6 +91,8 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
         }
 
         partials = new double[2][nodeCount][];
+        conditionals = new double[2][nodeCount][];
+        upperPartials = new double[2][nodeCount][];
 
         currentMatricesIndices = new int[nodeCount];
         storedMatricesIndices = new int[nodeCount];
@@ -146,6 +150,10 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
         this.partials[0][nodeIndex] = new double[partialsSize];
         this.partials[1][nodeIndex] = new double[partialsSize];
+        this.conditionals[0][nodeIndex] = new double[partialsSize];
+        this.conditionals[1][nodeIndex] = new double[partialsSize];
+        this.upperPartials[0][nodeIndex] = new double[partialsSize];
+        this.upperPartials[1][nodeIndex] = new double[partialsSize];
     }
 
     /**
@@ -164,6 +172,18 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
             }
         } else {
             System.arraycopy(partials, 0, this.partials[0][nodeIndex], 0, partials.length);
+        }
+    }
+
+    public void setNodeUpperPartials(int nodeIndex, double[] upperPartials) {
+        if (upperPartials.length < partialsSize) {
+            int k = 0;
+            for (int i = 0; i < matrixCount; i++) {
+                System.arraycopy(upperPartials, 0, this.upperPartials[0][nodeIndex], k, upperPartials.length);
+                k += upperPartials.length;
+            }
+        } else {
+            System.arraycopy(upperPartials, 0, this.upperPartials[0][nodeIndex], 0, upperPartials.length);
         }
     }
 
@@ -260,8 +280,8 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
                         partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
                         partials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
             } else {
-                calculatePartialsPartialsPruning(partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
-                        partials[currentPartialsIndices[nodeIndex2]][nodeIndex2], matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
+                calculatePartialsPartialsPruning(partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], conditionals[currentPartialsIndices[nodeIndex1]][nodeIndex1], matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
+                        partials[currentPartialsIndices[nodeIndex2]][nodeIndex2], conditionals[currentPartialsIndices[nodeIndex2]][nodeIndex2], matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
                         partials[currentPartialsIndices[nodeIndex3]][nodeIndex3]);
             }
         }
@@ -285,6 +305,24 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 //        }
     }
 
+    public void calculateUpperPartials(int node, int sibling, int parent) {
+        if (states[node] != null) {
+            throw new UnsupportedOperationException();
+        } else {
+            if (states[sibling] != null) {
+                throw new UnsupportedOperationException();
+            } else {
+                calculateUpperPartials(upperPartials[currentPartialsIndices[parent]][parent], conditionals[currentPartialsIndices[sibling]][sibling],
+                        matrices[currentMatricesIndices[node]][node], upperPartials[currentPartialsIndices[node]][node]);
+            }
+        }
+
+        if (useScaling) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
     /**
      * Calculates partial likelihoods at a node when both children have states.
      */
@@ -302,9 +340,13 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
     /**
      * Calculates partial likelihoods at a node when both children have partials.
      */
-    protected abstract void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-                                                             double[] partials2, double[] matrices2,
+    protected abstract void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+                                                             double[] partials2, double[] conditionals2, double[] matrices2,
                                                              double[] partials3);
+
+    protected void calculateUpperPartials(double[] upperPartials1, double[] conditionals, double[] matrices, double[] upperPartials2) {
+        throw new UnsupportedOperationException();
+    };
 
     /**
      * Calculates partial likelihoods at a node.
@@ -335,8 +377,8 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
                         partials[currentPartialsIndices[nodeIndex3]][nodeIndex3], matrixMap);
             } else {
                 calculatePartialsPartialsPruning(
-                        partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
-                        partials[currentPartialsIndices[nodeIndex2]][nodeIndex2], matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
+                        partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], partials[currentPartialsIndices[nodeIndex1]][nodeIndex1], matrices[currentMatricesIndices[nodeIndex1]][nodeIndex1],
+                        partials[currentPartialsIndices[nodeIndex2]][nodeIndex2], partials[currentPartialsIndices[nodeIndex2]][nodeIndex2], matrices[currentMatricesIndices[nodeIndex2]][nodeIndex2],
                         partials[currentPartialsIndices[nodeIndex3]][nodeIndex3], matrixMap);
             }
         }
@@ -363,8 +405,8 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
     /**
      * Calculates partial likelihoods at a node when both children have partials.
      */
-    protected abstract void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-                                                             double[] partials2, double[] matrices2,
+    protected abstract void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+                                                             double[] partials2, double[] conditionals2, double[] matrices2,
                                                              double[] partials3, int[] matrixMap);
 
 
@@ -380,6 +422,18 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
      * @param outPartials an array into which the integrated partials will go
      */
     protected abstract void calculateIntegratePartials(double[] inPartials, double[] proportions, double[] outPartials);
+
+    public void calculateDifferentiatedLogLikelihoods(int parent, int sibling, double[] matrix, int node, double[] outDifferentiatedLogLikelihoods) {
+        calculateDifferentiatedLogLikelihoods(upperPartials[currentPartialsIndices[parent]][parent],
+                conditionals[currentPartialsIndices[sibling]][sibling],
+                matrix,
+                partials[currentPartialsIndices[node]][node],
+                outDifferentiatedLogLikelihoods);
+    }
+
+    protected void calculateDifferentiatedLogLikelihoods(double[] upperPartials, double[] conditionals, double[] matrix, double[] partials, double[] outDifferentiatedLogLikelihoods) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Scale the partials at a given node. This uses a scaling suggested by Ziheng Yang in

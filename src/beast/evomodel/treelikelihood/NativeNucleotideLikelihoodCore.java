@@ -65,8 +65,8 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
         s.println("};");
     }
     */
-    protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+    protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3) {
        /* if( false ) {
             System.out.println("*//*nativePartialsPartialsPruning*//* int patternCount = " +
@@ -102,8 +102,8 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	/**
 	 * Calculates partial likelihoods at a node when both children have partials.
 	 */
-	protected void calculatePartialsPartialsPruning(double[] partials1, double[] matrices1,
-													double[] partials2, double[] matrices2,
+	protected void calculatePartialsPartialsPruning(double[] partials1, double[] conditionals1, double[] matrices1,
+													double[] partials2, double[] conditionals2, double[] matrices2,
 													double[] partials3, int[] matrixMap)
 	{
 		throw new RuntimeException("calculateStatesStatesPruning not implemented using matrixMap");
