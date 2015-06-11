@@ -410,6 +410,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         if (categoryCount > 1)
             throw new UnsupportedOperationException("Differentiation unsupported when categoryCount > 1!");
 
+        getLogLikelihood();
+        traversePreOrder(treeModel, treeModel.getRoot());
+
         double deriv = 0;
 
         for (final NodeRef node : branchRateModel.getNodesForVariable(treeModel, var, index))
@@ -618,6 +621,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     .findFirst().get();
             likelihoodCore.calculateUpperPartials(node.getNumber(), sibling.getNumber(), parent.getNumber());
         }
+
+        if (!tree.isExternal(node))
+            IntStream.range(0, tree.getChildCount(node))
+                    .mapToObj(i -> tree.getChild(node, i))
+                    .forEach(n -> traversePreOrder(tree, n));
 
     }
     

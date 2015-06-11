@@ -238,7 +238,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
     public void getDifferentiatedTransitionProbabilities(double distance, double[] matrix) {
         double[] m = new double[matrix.length];
         getTransitionProbabilities(distance, m);
-        multiply(getQ(), m, matrix);
+        multiply(getRateMatrix(), m, matrix);
     }
 
     public void getDifferentiatedTransitionProbabilities(double distance, Variable<Double> parameter, double[] matrix) {

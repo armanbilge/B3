@@ -311,6 +311,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     }
 
     protected double getDerivativeRespectingBranchSubstitutions(final NodeRef node) {
+        differentiateBranchSubstitutions();
         return derivatives[node.getNumber()];
     }
 
