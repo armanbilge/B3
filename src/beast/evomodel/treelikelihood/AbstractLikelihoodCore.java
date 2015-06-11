@@ -177,13 +177,11 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
     public void setNodeUpperPartials(int nodeIndex, double[] upperPartials) {
         if (upperPartials.length < partialsSize) {
-            int k = 0;
-            for (int i = 0; i < matrixCount; i++) {
-                System.arraycopy(upperPartials, 0, this.upperPartials[0][nodeIndex], k, upperPartials.length);
-                k += upperPartials.length;
+            for (int i = 0; i < partialsSize; i += upperPartials.length) {
+                System.arraycopy(upperPartials, 0, this.upperPartials[currentPartialsIndices[nodeIndex]][nodeIndex], i, upperPartials.length);
             }
         } else {
-            System.arraycopy(upperPartials, 0, this.upperPartials[0][nodeIndex], 0, upperPartials.length);
+            System.arraycopy(upperPartials, 0, this.upperPartials[currentPartialsIndices[nodeIndex]][nodeIndex], 0, upperPartials.length);
         }
     }
 
