@@ -28,7 +28,6 @@ import beast.inference.operators.AbstractCoercableOperator;
 import beast.inference.operators.CoercionMode;
 import beast.inference.operators.CoercionMode.CoercionModeAttribute;
 import beast.inference.operators.OperatorFailedException;
-import beast.math.MathUtils;
 import beast.xml.Description;
 import beast.xml.DoubleArrayAttribute;
 import beast.xml.DoubleAttribute;
@@ -300,12 +299,12 @@ public class HamiltonUpdate extends AbstractCoercableOperator {
 
     protected double differentiatePotentialEnergy(int i) {
         final double analytic = U.differentiate(q.getMaskedParameter(i), q.getMaskedIndex(i));
-        if (MathUtils.nextInt(8) == 0) {
-            final double numerical = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
-            final double d = analytic - numerical;
-            if (Math.abs(d) > 1E-6)
-                System.out.println(d);
-        }
+//        if (MathUtils.nextInt(8) == 0) {
+//            final double numerical = Differentiable.differentiate(U::getLogLikelihood, q.getMaskedParameter(i), q.getMaskedIndex(i));
+//            final double d = analytic - numerical;
+//            if (Math.abs(d) > 1E-6)
+//                System.out.println(d);
+//        }
         return - analytic;
     }
 
