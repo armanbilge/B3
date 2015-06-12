@@ -219,12 +219,12 @@ public class HKY extends AbstractNucleotideModel {
 
     protected void setupRelativeRates() {
         final double kappa = getKappa();
-        relativeRates[0] = kappa;
-        relativeRates[1] = 1.0;
+        relativeRates[0] = 1.0;
+        relativeRates[1] = kappa;
         relativeRates[2] = 1.0;
         relativeRates[3] = 1.0;
-        relativeRates[4] = 1.0;
-        relativeRates[5] = kappa;
+        relativeRates[4] = kappa;
+        relativeRates[5] = 1.0;
     }
 
     /**

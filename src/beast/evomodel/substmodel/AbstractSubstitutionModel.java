@@ -302,6 +302,7 @@ public abstract class AbstractSubstitutionModel extends AbstractModel implements
     }
 
     protected void createRateMatrix() {
+        setupRelativeRates();
         int i, j, k = 0;
         // Set the instantaneous rate matrix
         for (i = 0; i < stateCount; i++) {
