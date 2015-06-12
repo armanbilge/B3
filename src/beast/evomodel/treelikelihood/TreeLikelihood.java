@@ -409,8 +409,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             throw new UnsupportedOperationException("Differentiation unsupported when not using ambiguities!");
         if (categoryCount > 1)
             throw new UnsupportedOperationException("Differentiation unsupported when categoryCount > 1!");
+        if (storePartials)
+            throw new UnsupportedOperationException("Differentiation unsupported when storing partials!");
 
-        getLogLikelihood();
+        calculateLogLikelihood();
         traversePreOrder(treeModel, treeModel.getRoot());
 
         double deriv = 0;
