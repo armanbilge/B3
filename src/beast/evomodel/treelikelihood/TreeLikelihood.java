@@ -412,8 +412,10 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
         if (storePartials)
             throw new UnsupportedOperationException("Differentiation unsupported when storing partials!");
 
-        calculateLogLikelihood();
-        traversePreOrder(treeModel, treeModel.getRoot());
+        if (!derivativesKnown) {
+            calculateLogLikelihood();
+            traversePreOrder(treeModel, treeModel.getRoot());
+        }
 
         double deriv = 0;
 
@@ -630,7 +632,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                     .forEach(n -> traversePreOrder(tree, n));
 
     }
-    
+
     public final double[] getRootPartials() {
         if (rootPartials == null) {
             rootPartials = new double[patternCount * stateCount];
