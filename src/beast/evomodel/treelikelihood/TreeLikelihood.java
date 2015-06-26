@@ -444,7 +444,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     protected double differentiateRespectingBranch(final NodeRef node) {
         if (treeModel.isRoot(node))
             return 0.0;
-        return branchRateModel.getBranchRate(treeModel, node) * getDerivativeRespectingBranchSubstitutions(node);
+        return siteModel.getRateForCategory(0) * branchRateModel.getBranchRate(treeModel, node) * getDerivativeRespectingBranchSubstitutions(node);
     }
 
     protected double differentiateRespectingRate(final NodeRef node) {
