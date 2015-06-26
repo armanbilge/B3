@@ -23,6 +23,13 @@ package beast.evomodel.tree;
 import beast.evolution.tree.NodeRef;
 import beast.evolution.tree.Tree;
 import beast.inference.model.Statistic;
+import beast.xml.AbstractXMLObjectParser;
+import beast.xml.AttributeRule;
+import beast.xml.ElementRule;
+import beast.xml.XMLObject;
+import beast.xml.XMLObjectParser;
+import beast.xml.XMLParseException;
+import beast.xml.XMLSyntaxRule;
 
 /**
  * A statistic that reports the total length of all the branches in the tree
@@ -67,4 +74,42 @@ public class TreeLengthStatistic extends Statistic.Abstract implements TreeStati
     }
 
     private Tree tree = null;
+
+    public static final XMLObjectParser<TreeLengthStatistic> PARSER = new AbstractXMLObjectParser<TreeLengthStatistic>() {
+
+        public static final String TREE_LENGTH_STATISTIC = "treeLengthStatistic";
+
+        public String getParserName() {
+            return TREE_LENGTH_STATISTIC;
+        }
+
+        public TreeLengthStatistic parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            String name = xo.getAttribute(Statistic.NAME, xo.getId());
+            Tree tree = xo.getChild(Tree.class);
+
+            return new TreeLengthStatistic(name, tree);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A statistic that returns the average of the branch rates";
+        }
+
+        public Class<TreeLengthStatistic> getReturnType() {
+            return TreeLengthStatistic.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule(Statistic.NAME, true),
+                new ElementRule(TreeModel.class),
+        };
+    };
 }
